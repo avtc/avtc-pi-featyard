@@ -1,0 +1,86 @@
+{
+  "name": "avtc-pi-feature-flow",
+  "version": "1.0.1",
+  "description": "Structured feature-development workflow for pi: design -> plan -> implement -> verify -> review with kanban auto-agents",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension"
+  ],
+  "scripts": {
+    "lint": "biome check .",
+    "lint:optional-params": "node scripts/no-optional-params.cjs src/ tests/",
+    "lint:bare-literals": "node scripts/no-bare-literals.cjs index.ts",
+    "lint:design-refs": "node scripts/no-design-refs.cjs index.ts README.md docs/CONFIGURATION.md",
+    "knip": "knip --production",
+    "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc.tsbuildinfo",
+    "test": "node scripts/test-low-priority.cjs \"node scripts/run-parallel.cjs \"npm run lint:optional-params :: npm run lint:bare-literals :: npm run lint:design-refs :: npm run lint:as-never :: npm run lint:bundled-imports :: npm run lint :: npm run typecheck :: npm run knip :: npm run dupes\" && vitest run\"",
+    "dupes": "jscpd src/ skills/ --exit-code --threshold 0.01",
+    "lint:as-never": "node scripts/no-as-never.cjs src/ tests/ index.ts",
+    "lint:bundled-imports": "node scripts/no-bundled-extension-imports.cjs src/ index.ts"
+  },
+  "license": "MIT",
+  "author": "avtc <tarasenkov@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avtc/avtc-pi-feature-flow.git"
+  },
+  "files": [
+    "index.ts",
+    "src/",
+    "agents/",
+    "skills/",
+    "assets/",
+    "docs/",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./index.ts",
+  "pi": {
+    "extensions": [
+      "./index.ts",
+      "node_modules/avtc-pi-subagent/index.ts",
+      "node_modules/avtc-pi-todo/index.ts",
+      "node_modules/avtc-pi-parallel-work-guardrail/index.ts",
+      "node_modules/avtc-pi-ui-components/index.ts",
+      "node_modules/avtc-pi-subagent-ui-bridge/index.ts",
+      "node_modules/avtc-pi-unstuck/index.ts"
+    ],
+    "allowedCodeDeps": [
+      "avtc-pi-logger",
+      "avtc-pi-settings-ui",
+      "avtc-pi-ui-components"
+    ],
+    "skills": [
+      "skills"
+    ]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
+    "@earendil-works/pi-agent-core": "^0.80.2",
+    "@earendil-works/pi-ai": "^0.80.2",
+    "@earendil-works/pi-coding-agent": "^0.80.2",
+    "@earendil-works/pi-tui": "^0.80.2",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.9.3",
+    "jscpd": "^5.0.10",
+    "knip": "^6.17.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "avtc-pi-logger": "^1.0.0",
+    "avtc-pi-settings-ui": "^1.0.0",
+    "avtc-pi-ui-components": "^1.0.0",
+    "avtc-pi-subagent": "^1.0.0",
+    "avtc-pi-todo": "^1.0.0",
+    "avtc-pi-parallel-work-guardrail": "^1.0.0",
+    "avtc-pi-subagent-ui-bridge": "^1.0.0",
+    "avtc-pi-unstuck": "^1.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/avtc/avtc-pi-feature-flow/issues"
+  },
+  "homepage": "https://github.com/avtc/avtc-pi-feature-flow"
+}

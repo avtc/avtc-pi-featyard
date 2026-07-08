@@ -1,0 +1,37 @@
+{
+  "$schema": "https://unpkg.com/knip@6.17.1/schema.json",
+  "entry": [
+    "index.ts",
+    "scripts/no-optional-params.cjs",
+    "scripts/no-bare-literals.cjs",
+    "scripts/test-low-priority.cjs"
+  ],
+  "project": [
+    "index.ts",
+    "src/**/*.ts",
+    "skills/**/*.ts",
+    "tests/**/*.ts",
+    "scripts/**"
+  ],
+  "ignore": [
+    "src/kanban/kanban-board-ui/app.js",
+    "src/kanban/kanban-board-ui/csv-parser.js",
+    "skills/systematic-debugging/condition-based-waiting-example.ts",
+    "**/src/snippets/**",
+    "**/docs/**"
+  ],
+  "ignoreBinaries": [
+    "jscpd"
+  ],
+  "ignoreDependencies": [
+    "better-sqlite3",
+    "avtc-pi-settings-ui",
+    "avtc-pi-logger",
+    "avtc-pi-ui-components",
+    "avtc-pi-subagent",
+    "avtc-pi-todo",
+    "avtc-pi-parallel-work-guardrail",
+    "avtc-pi-subagent-ui-bridge",
+    "avtc-pi-unstuck"
+  ]
+}

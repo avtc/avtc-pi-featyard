@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Kanban Board</h1>
+      <div class="controls">
+        <select id="project-select"><option value="">Select project...</option></select>
+        <button id="add-btn" title="Add feature" disabled>+</button>
+        <button id="import-btn" title="Import from CSV" disabled>Import</button>
+        <button id="export-btn" title="Export to CSV" disabled>Export</button>
+        <div id="export-dropdown" class="export-dropdown hidden">
+          <div class="export-dropdown-content">
+            <div class="export-dropdown-header">
+              <span>Select lanes</span>
+              <button id="export-toggle-all" class="export-toggle-btn">Deselect All</button>
+            </div>
+            <div id="export-lane-checkboxes"></div>
+            <button id="export-download-btn" class="submit-btn" style="margin-top:8px;width:100%">Download CSV</button>
+          </div>
+        </div>
+        <input type="file" id="import-file" accept=".csv,.txt" style="display:none" />
+        <button id="refresh-btn" title="Refresh">↻</button>
+      </div>
+    </header>
+    <div id="import-banner" class="import-banner hidden"></div>
+    <main id="board"></main>
+  </div>
+
+  <!-- Unified detail modal -->
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-content detail-modal-content">
+      <button class="modal-close">&times;</button>
+      <h2 id="detail-title"></h2>
+      <div id="detail-id"></div>
+      <div class="detail-meta">
+        <div>Lane: <span id="detail-meta-lane"></span></div>
+        <div>Priority: <span id="detail-meta-priority"></span></div>
+        <div>Created: <span id="detail-meta-created"></span></div>
+      </div>
+      <div class="detail-tabs">
+        <button class="detail-tab active" data-tab="details">Details</button>
+        <button class="detail-tab" data-tab="history">History</button>
+      </div>
+      <div id="detail-tab-details" class="detail-tab-content active">
+        <label class="detail-description-label">Description</label>
+        <textarea id="detail-description" rows="10"></textarea>
+        <button id="detail-save-btn" class="submit-btn detail-save-btn">Save</button>
+        <div id="detail-status-row" class="detail-row" style="display:none"></div>
+        <div id="detail-lock-row" class="detail-row" style="display:none"></div>
+        <button id="release-lock-btn" class="release-btn" style="display:none">Release Lock</button>
+        <button id="lock-btn" class="lock-btn" style="display:none">Lock Feature</button>
+        <button id="delete-btn" class="delete-btn">Delete Feature</button>
+      </div>
+      <div id="detail-tab-history" class="detail-tab-content">
+        <div id="detail-history-body" class="detail-history-scroll">
+          <p style="color:#64748b">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="add-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <h2>Add Feature</h2>
+      <div class="add-form">
+        <div class="form-group">
+          <label for="add-title">Title</label>
+          <div class="title-input-row">
+            <input type="text" id="add-title" maxlength="200" required placeholder="Feature title">
+            <button type="button" id="add-generate-title-btn" class="generate-title-btn" title="Generate title from description using AI">✨</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="add-description">Description</label>
+          <textarea id="add-description" rows="4" placeholder="Optional description"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Position</label>
+            <div class="position-toggle">
+              <button type="button" class="position-toggle-btn" data-position="top">Top</button>
+              <button type="button" class="position-toggle-btn active" data-position="bottom">Bottom</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="add-lane">Lane</label>
+            <select id="add-lane"></select>
+          </div>
+        </div>
+        <button id="add-submit-btn" class="submit-btn">Add Feature</button>
+      </div>
+    </div>
+  </div>
+  <div id="skipped-modal" class="modal hidden">
+    <div class="modal-content" style="max-width:600px">
+      <button class="modal-close">&times;</button>
+      <h2 id="skipped-title"></h2>
+      <pre id="skipped-details" class="skipped-details"></pre>
+      <button id="skipped-copy-btn" class="submit-btn" style="margin-top:12px">Copy Details</button>
+    </div>
+  </div>
+  <div id="import-confirm-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <h2>Import from CSV</h2>
+      <p id="import-confirm-count"></p>
+      <div class="form-group">
+        <label><input type="checkbox" id="import-header-check" checked /> First row is a header</label>
+      </div>
+      <div class="form-row" style="margin-top:16px">
+        <button id="import-confirm-btn" class="submit-btn">Import</button>
+        <button id="import-cancel-btn" class="submit-btn" style="background:#6b7280">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <script src="csv-parser.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
