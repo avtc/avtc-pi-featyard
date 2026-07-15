@@ -9,11 +9,11 @@ describe("resolveReviewSkill", () => {
     expect(resolveReviewSkill({ maxFeatureReviewRounds: 0 })).toBeNull();
   });
 
-  test("returns ff-review when loops enabled with numeric value", () => {
-    expect(resolveReviewSkill({ maxFeatureReviewRounds: 3 })).toBe("ff-review");
+  test("returns fy-review when loops enabled with numeric value", () => {
+    expect(resolveReviewSkill({ maxFeatureReviewRounds: 3 })).toBe("fy-review");
   });
 
-  test("returns ff-review when loops enabled with value 1", () => {
-    expect(resolveReviewSkill({ maxFeatureReviewRounds: 1 })).toBe("ff-review");
+  test("returns fy-review when loops enabled with value 1", () => {
+    expect(resolveReviewSkill({ maxFeatureReviewRounds: 1 })).toBe("fy-review");
   });
 });

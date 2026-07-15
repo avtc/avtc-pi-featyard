@@ -66,7 +66,7 @@ describe("mark feature done on finish via phase_ready", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: `docs/ff/designs/${designDocSlug}-design.md` },
+        input: { path: `docs/featyard/designs/${designDocSlug}-design.md` },
       } as unknown as ExtensionEvent,
       noUICtx,
     );
@@ -92,7 +92,7 @@ describe("mark feature done on finish via phase_ready", () => {
     // B1: the done feature stays the active one (slot kept, not cleared) so the widget
     // can render the terminal DONE line until the next feature displaces it.
     expect(getActiveFeatureSlug()).toBe("2026-04-01-done-feature");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-04-01-done-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-04-01-done-feature");
   });
 
   // NOTE: In the redesigned pointer model, reaching the `finish` pointer means every
@@ -140,7 +140,7 @@ describe("mark feature done on finish via phase_ready", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-04-01-agent-end-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-04-01-agent-end-feature-design.md" },
       } as unknown as ExtensionEvent,
       noUICtx,
     );
@@ -158,7 +158,7 @@ describe("mark feature done on finish via phase_ready", () => {
       {
         toolCallId: "call-skill",
         toolName: "read",
-        input: { path: "skills/ff-finish/SKILL.md" },
+        input: { path: "skills/fy-finish/SKILL.md" },
       } as unknown as ExtensionEvent,
       mockCtx,
     );
@@ -166,7 +166,7 @@ describe("mark feature done on finish via phase_ready", () => {
       {
         toolCallId: "call-skill",
         toolName: "read",
-        input: { path: "skills/ff-finish/SKILL.md" },
+        input: { path: "skills/fy-finish/SKILL.md" },
         content: [{ type: "text", text: "skill content" }],
       } as unknown as ExtensionEvent,
       mockCtx,
@@ -192,7 +192,7 @@ describe("mark feature done on finish via phase_ready", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-04-01-retryable-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-04-01-retryable-feature-design.md" },
       } as unknown as ExtensionEvent,
       noUICtx,
     );
@@ -234,7 +234,7 @@ describe("mark feature done on finish via phase_ready", () => {
     const { phaseReady } = await setupAtFinish(slug, slug);
     disableSubagentMode();
     // Write a non-empty worth-notes file at the slug path so worthNotesPointer is non-null.
-    const notesPath = path.join(process.cwd(), ".ff", "reviews", slug, `${slug}-worth-notes.md`);
+    const notesPath = path.join(process.cwd(), ".featyard", "reviews", slug, `${slug}-worth-notes.md`);
     fs.mkdirSync(path.dirname(notesPath), { recursive: true });
     fs.writeFileSync(notesPath, "## worth noting\n- oddity\n");
 
@@ -260,7 +260,7 @@ describe("mark feature done on finish via phase_ready", () => {
     const { phaseReady } = await setupAtFinish(slug, slug);
     disableSubagentMode();
     // Write a non-empty worth-notes file at the slug path so worthNotesPointer is non-null.
-    const notesPath = path.join(process.cwd(), ".ff", "reviews", slug, `${slug}-worth-notes.md`);
+    const notesPath = path.join(process.cwd(), ".featyard", "reviews", slug, `${slug}-worth-notes.md`);
     fs.mkdirSync(path.dirname(notesPath), { recursive: true });
     fs.writeFileSync(notesPath, "## worth noting\n- oddity\n");
 

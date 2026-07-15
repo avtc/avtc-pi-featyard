@@ -38,7 +38,7 @@ function createFakeApi(): {
 }
 
 describe("kanban extension registration", () => {
-  test("registers /ff:kanban and /ff:kanban-release commands", async () => {
+  test("registers /fy:kanban and /fy:kanban-release commands", async () => {
     // Dynamic import to get fresh module
 
     const { api, registeredCommands } = createFakeApi();
@@ -49,11 +49,11 @@ describe("kanban extension registration", () => {
       await extension(api, null);
     }
 
-    expect(registeredCommands.has("ff:kanban")).toBe(true);
-    expect(registeredCommands.has("ff:kanban-release")).toBe(true);
+    expect(registeredCommands.has("fy:kanban")).toBe(true);
+    expect(registeredCommands.has("fy:kanban-release")).toBe(true);
   });
 
-  test("ff:kanban command has description", async () => {
+  test("fy:kanban command has description", async () => {
     const { api, registeredCommands } = createFakeApi();
 
     const extension = kanbanExtension;
@@ -61,12 +61,12 @@ describe("kanban extension registration", () => {
       await extension(api, null);
     }
 
-    const kanban = registeredCommands.get("ff:kanban");
+    const kanban = registeredCommands.get("fy:kanban");
     expect(kanban).toBeDefined();
     expect((kanban as NonNullable<typeof kanban>).description.length).toBeGreaterThan(0);
   });
 
-  test("ff:kanban-release command has description", async () => {
+  test("fy:kanban-release command has description", async () => {
     const { api, registeredCommands } = createFakeApi();
 
     const extension = kanbanExtension;
@@ -74,7 +74,7 @@ describe("kanban extension registration", () => {
       await extension(api, null);
     }
 
-    const release = registeredCommands.get("ff:kanban-release");
+    const release = registeredCommands.get("fy:kanban-release");
     expect(release).toBeDefined();
     expect((release as NonNullable<typeof release>).description.length).toBeGreaterThan(0);
   });

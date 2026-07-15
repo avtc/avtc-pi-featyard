@@ -25,8 +25,8 @@ describe("session file tracking", () => {
     const slug = writeFeatureStateFile("session-track-test", {});
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
-    const prevEnv = process.env.PI_FF_FEATURE;
-    process.env.PI_FF_FEATURE = slug;
+    const prevEnv = process.env.PI_FY_FEATURE;
+    process.env.PI_FY_FEATURE = slug;
 
     try {
       const mockCtx = {
@@ -41,9 +41,9 @@ describe("session file tracking", () => {
       expect(state?.sessionFiles).toContain("/tmp/session-1.jsonl");
     } finally {
       if (prevEnv) {
-        process.env.PI_FF_FEATURE = prevEnv;
+        process.env.PI_FY_FEATURE = prevEnv;
       } else {
-        delete process.env.PI_FF_FEATURE;
+        delete process.env.PI_FY_FEATURE;
       }
     }
   });
@@ -61,8 +61,8 @@ describe("session file tracking", () => {
     const slug = writeFeatureStateFile("session-subagent-test", {});
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
-    const prevEnv = process.env.PI_FF_FEATURE;
-    process.env.PI_FF_FEATURE = slug;
+    const prevEnv = process.env.PI_FY_FEATURE;
+    process.env.PI_FY_FEATURE = slug;
 
     try {
       const mockCtx = {
@@ -77,9 +77,9 @@ describe("session file tracking", () => {
       expect(state?.sessionFiles).not.toContain("/tmp/subagent-session.jsonl");
     } finally {
       if (prevEnv) {
-        process.env.PI_FF_FEATURE = prevEnv;
+        process.env.PI_FY_FEATURE = prevEnv;
       } else {
-        delete process.env.PI_FF_FEATURE;
+        delete process.env.PI_FY_FEATURE;
       }
     }
   });
@@ -90,8 +90,8 @@ describe("session file tracking", () => {
     const slug = writeFeatureStateFile("session-dup-test", { sessionFiles: ["/tmp/session-1.jsonl"] });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
-    const prevEnv = process.env.PI_FF_FEATURE;
-    process.env.PI_FF_FEATURE = slug;
+    const prevEnv = process.env.PI_FY_FEATURE;
+    process.env.PI_FY_FEATURE = slug;
 
     try {
       const mockCtx = {
@@ -106,9 +106,9 @@ describe("session file tracking", () => {
       expect(state?.sessionFiles.filter((f: string) => f === "/tmp/session-1.jsonl")).toHaveLength(1);
     } finally {
       if (prevEnv) {
-        process.env.PI_FF_FEATURE = prevEnv;
+        process.env.PI_FY_FEATURE = prevEnv;
       } else {
-        delete process.env.PI_FF_FEATURE;
+        delete process.env.PI_FY_FEATURE;
       }
     }
   });
@@ -129,10 +129,10 @@ describe("session file tracking", () => {
     } as unknown as ExtensionContext;
 
     // Trigger designing skill to set phase
-    await handlers.onInput({ text: "/skill:ff-design" } as unknown as ExtensionEvent, mockCtx);
+    await handlers.onInput({ text: "/skill:fy-design" } as unknown as ExtensionEvent, mockCtx);
 
     // Write a design doc — this creates the feature state
-    const designPath = "docs/ff/designs/2026-05-21-session-create-test-design.md";
+    const designPath = "docs/featyard/designs/2026-05-21-session-create-test-design.md";
     await handlers.onToolCall(
       {
         toolName: "write",
@@ -167,13 +167,13 @@ describe("session file tracking", () => {
     const slugB = writeFeatureStateFile("feature-b", {});
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
-    const prevEnv = process.env.PI_FF_FEATURE;
+    const prevEnv = process.env.PI_FY_FEATURE;
     // Simulate what _activateFeature does: clear env var before newSession
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     try {
       // Mark as workflow-initiated (simulates what _activateFeature does before newSession)
-      setWorkflowInitiatedNewSession("/skill:ff-design Work on feature B");
+      setWorkflowInitiatedNewSession("/skill:fy-design Work on feature B");
 
       const mockCtx = {
         hasUI: true,
@@ -193,9 +193,9 @@ describe("session file tracking", () => {
       expect(stateB?.sessionFiles).toEqual([]);
     } finally {
       if (prevEnv) {
-        process.env.PI_FF_FEATURE = prevEnv;
+        process.env.PI_FY_FEATURE = prevEnv;
       } else {
-        delete process.env.PI_FF_FEATURE;
+        delete process.env.PI_FY_FEATURE;
       }
     }
   });
@@ -216,10 +216,10 @@ describe("session file tracking", () => {
     } as unknown as ExtensionContext;
 
     // Trigger designing skill to set phase
-    await handlers.onInput({ text: "/skill:ff-design" } as unknown as ExtensionEvent, mockCtx);
+    await handlers.onInput({ text: "/skill:fy-design" } as unknown as ExtensionEvent, mockCtx);
 
     // Write a design doc
-    const designPath = "docs/ff/designs/2026-05-21-subagent-track-test-design.md";
+    const designPath = "docs/featyard/designs/2026-05-21-subagent-track-test-design.md";
     await handlers.onToolCall(
       {
         toolName: "write",

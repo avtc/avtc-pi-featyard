@@ -11,8 +11,8 @@ describe("FeatureSession phase-progression integration", () => {
     handler = createFeatureSession(null);
   });
 
-  test("input /skill:ff-plan activates plan phase", () => {
-    handler.processSkillInput("/skill:ff-plan");
+  test("input /skill:fy-plan activates plan phase", () => {
+    handler.processSkillInput("/skill:fy-plan");
     expect(handler.getWorkflowState()?.currentPhase).toBe("plan");
   });
 });

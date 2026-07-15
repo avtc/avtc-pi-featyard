@@ -8,8 +8,8 @@
  *   [skill block] + [framing line] + [caller note] + [✅ completedId] + [In progress item]
  *
  * This module provides the skill block and the framing line. The skill reference is passed
- * through expandSkillCommand, which resolves all `{{PI_FF_*}}` placeholders (including
- * review-iteration context for ff-design-review/ff-plan-review skills) — no post-hoc substitution needed.
+ * through expandSkillCommand, which resolves all `{{PI_FY_*}}` placeholders (including
+ * review-iteration context for fy-design-review/fy-plan-review skills) — no post-hoc substitution needed.
  *
  * Framing is owned here (single source of truth) so callers never restate it, which is what
  * caused the old duplicate-skill / double-framing in the stored-message path.
@@ -20,7 +20,7 @@ import type { ExpandSkillCommandFn } from "../state/feature-state.js";
 
 /** Whether a skill is a review-iteration skill (gets a review-specific framing). */
 function isReviewSkill(skill: string | null | undefined): boolean {
-  return skill === "ff-design-review" || skill === "ff-plan-review";
+  return skill === "fy-design-review" || skill === "fy-plan-review";
 }
 
 /**

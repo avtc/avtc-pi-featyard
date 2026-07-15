@@ -18,7 +18,7 @@ import {
   withTempCwd,
 } from "../helpers/workflow-monitor-test-helpers.js";
 
-describe("ff:reset with per-feature state", () => {
+describe("fy:reset with per-feature state", () => {
   afterEach(() => {
     _resetFeatureState();
   });
@@ -39,7 +39,7 @@ describe("ff:reset with per-feature state", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: `docs/ff/designs/${slug}-design.md` },
+        input: { path: `docs/featyard/designs/${slug}-design.md` },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -51,7 +51,7 @@ describe("ff:reset with per-feature state", () => {
     expect(getActiveFeatureSlug()).toBe(slug);
     expect(loadFeatureState(slug, null)).not.toBeNull();
 
-    // Register ff:reset command from same module-level state
+    // Register fy:reset command from same module-level state
     const commands2 = new Map<string, (args: string, ctx: ExtensionCommandContext) => void>();
     const api = {
       on(event: string, handler: unknown) {
@@ -73,10 +73,10 @@ describe("ff:reset with per-feature state", () => {
         commands2.set(name, opts.handler);
       },
     };
-    delete (globalThis as Record<string, unknown>).__avtcPiFeatureFlowWired;
+    delete (globalThis as Record<string, unknown>).__avtcPiFeatyardWired;
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    const handler = commands2.get("ff:reset");
+    const handler = commands2.get("fy:reset");
     expect(handler).toBeDefined();
 
     if (handler)
@@ -90,11 +90,11 @@ describe("ff:reset with per-feature state", () => {
     // The active slug should be cleared
     expect(getActiveFeatureSlug()).toBeNull();
     // The env var should be cleared
-    expect(process.env.PI_FF_FEATURE).toBeUndefined();
+    expect(process.env.PI_FY_FEATURE).toBeUndefined();
   });
 });
 
-describe("ff:next with per-feature state", () => {
+describe("fy:next with per-feature state", () => {
   afterEach(() => {
     _resetFeatureState();
   });
@@ -107,12 +107,12 @@ describe("ff:next with per-feature state", () => {
 
     // Create a feature in verify phase
     const slug = "2026-05-08-next-test";
-    const state = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const state = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     state.workflow.currentPhase = "verify";
     saveFeatureState(state, null);
 
     // Set the feature active
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     let newSessionCalls = 0;
     const mockCtx = {
@@ -135,7 +135,7 @@ describe("ff:next with per-feature state", () => {
     // Reconstruct state from the file (using the same extension instance)
     await fireAllHandlers(fake.handlers, "session_start", { reason: "reload" }, mockCtx);
 
-    const handler = fake.registeredCommands.get("ff:next");
+    const handler = fake.registeredCommands.get("fy:next");
     expect(handler).toBeDefined();
     if (handler) await (handler as (args: string, ctx: ExtensionCommandContext) => void)("", mockCtx);
 
@@ -143,7 +143,7 @@ describe("ff:next with per-feature state", () => {
     expect(newSessionCalls).toBe(0);
 
     // Should have sent a review skill message (verify → review)
-    const reviewMsg = fake.sentMessages.find((m) => m.message.includes("ff-review"));
+    const reviewMsg = fake.sentMessages.find((m) => m.message.includes("fy-review"));
     expect(reviewMsg).toBeDefined();
   });
 });

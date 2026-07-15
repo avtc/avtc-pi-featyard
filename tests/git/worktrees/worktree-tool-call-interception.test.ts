@@ -334,8 +334,8 @@ describe("tool_call interception for worktree path rewriting", () => {
 
 describe("before_agent_start system prompt update for worktree", () => {
   const WORKTREE_PATH_BAS = "/project/.worktrees/test-bas";
-  const FF_INSTRUCTION =
-    "⚠️ `.ff/` files are auto-managed external storage — gitignored, never committed. Never `git add -f` them.";
+  const FY_INSTRUCTION =
+    "⚠️ `.featyard/` files are auto-managed external storage — gitignored, never committed. Never `git add -f` them.";
 
   test("updates CWD in system prompt when worktree active", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({
@@ -356,7 +356,7 @@ describe("before_agent_start system prompt update for worktree", () => {
     expect((result as { systemPrompt: string }).systemPrompt).not.toContain("Current working directory: /main/repo");
   });
 
-  test("no CWD update when branchPolicy=current-branch (but FF_INSTRUCTION still appended)", async () => {
+  test("no CWD update when branchPolicy=current-branch (but FY_INSTRUCTION still appended)", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({ branchPolicy: "current-branch" });
     const result = await onBeforeAgentStart(
       {
@@ -366,11 +366,11 @@ describe("before_agent_start system prompt update for worktree", () => {
       ctx as unknown as ExtensionContext,
     );
     expect(result).toBeDefined();
-    expect((result as { systemPrompt: string }).systemPrompt).toContain(FF_INSTRUCTION);
+    expect((result as { systemPrompt: string }).systemPrompt).toContain(FY_INSTRUCTION);
     expect((result as { systemPrompt: string }).systemPrompt).toContain("Current working directory: /main/repo"); // unchanged
   });
 
-  test("no CWD update when no active feature (but FF_INSTRUCTION still appended)", async () => {
+  test("no CWD update when no active feature (but FY_INSTRUCTION still appended)", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({ slug: null });
     const result = await onBeforeAgentStart(
       {
@@ -380,11 +380,11 @@ describe("before_agent_start system prompt update for worktree", () => {
       ctx as unknown as ExtensionContext,
     );
     expect(result).toBeDefined();
-    expect((result as { systemPrompt: string }).systemPrompt).toContain(FF_INSTRUCTION);
+    expect((result as { systemPrompt: string }).systemPrompt).toContain(FY_INSTRUCTION);
     expect((result as { systemPrompt: string }).systemPrompt).toContain("Current working directory: /main/repo"); // unchanged
   });
 
-  test("no CWD update when worktreePath is null (but FF_INSTRUCTION still appended)", async () => {
+  test("no CWD update when worktreePath is null (but FY_INSTRUCTION still appended)", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({ worktreePath: null });
     const result = await onBeforeAgentStart(
       {
@@ -394,11 +394,11 @@ describe("before_agent_start system prompt update for worktree", () => {
       ctx as unknown as ExtensionContext,
     );
     expect(result).toBeDefined();
-    expect((result as { systemPrompt: string }).systemPrompt).toContain(FF_INSTRUCTION);
+    expect((result as { systemPrompt: string }).systemPrompt).toContain(FY_INSTRUCTION);
     expect((result as { systemPrompt: string }).systemPrompt).toContain("Current working directory: /main/repo"); // unchanged
   });
 
-  test("no CWD update during finish phase (but FF_INSTRUCTION still appended)", async () => {
+  test("no CWD update during finish phase (but FY_INSTRUCTION still appended)", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({
       phase: "finish",
       worktreePath: WORKTREE_PATH_BAS,
@@ -411,11 +411,11 @@ describe("before_agent_start system prompt update for worktree", () => {
       ctx as unknown as ExtensionContext,
     );
     expect(result).toBeDefined();
-    expect((result as { systemPrompt: string }).systemPrompt).toContain(FF_INSTRUCTION);
+    expect((result as { systemPrompt: string }).systemPrompt).toContain(FY_INSTRUCTION);
     expect((result as { systemPrompt: string }).systemPrompt).toContain("Current working directory: /main/repo"); // unchanged
   });
 
-  test("no CWD update during plan phase (but FF_INSTRUCTION still appended)", async () => {
+  test("no CWD update during plan phase (but FY_INSTRUCTION still appended)", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({
       phase: "plan",
       worktreePath: WORKTREE_PATH_BAS,
@@ -428,11 +428,11 @@ describe("before_agent_start system prompt update for worktree", () => {
       ctx as unknown as ExtensionContext,
     );
     expect(result).toBeDefined();
-    expect((result as { systemPrompt: string }).systemPrompt).toContain(FF_INSTRUCTION);
+    expect((result as { systemPrompt: string }).systemPrompt).toContain(FY_INSTRUCTION);
     expect((result as { systemPrompt: string }).systemPrompt).toContain("Current working directory: /main/repo"); // unchanged
   });
 
-  test("no CWD update during uat phase (but FF_INSTRUCTION still appended)", async () => {
+  test("no CWD update during uat phase (but FY_INSTRUCTION still appended)", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({
       phase: "uat",
       worktreePath: WORKTREE_PATH_BAS,
@@ -445,7 +445,7 @@ describe("before_agent_start system prompt update for worktree", () => {
       ctx as unknown as ExtensionContext,
     );
     expect(result).toBeDefined();
-    expect((result as { systemPrompt: string }).systemPrompt).toContain(FF_INSTRUCTION);
+    expect((result as { systemPrompt: string }).systemPrompt).toContain(FY_INSTRUCTION);
     expect((result as { systemPrompt: string }).systemPrompt).toContain("Current working directory: /main/repo"); // unchanged
   });
 
@@ -487,7 +487,7 @@ describe("before_agent_start system prompt update for worktree", () => {
     expect((result as { systemPrompt: string }).systemPrompt).not.toContain("Current working directory: /main/repo");
   });
 
-  test("appends FF_INSTRUCTION when system prompt lacks CWD line", async () => {
+  test("appends FY_INSTRUCTION when system prompt lacks CWD line", async () => {
     const { onBeforeAgentStart, ctx } = setupWorktreeTest({
       worktreePath: WORKTREE_PATH_BAS,
     });
@@ -498,7 +498,7 @@ describe("before_agent_start system prompt update for worktree", () => {
     );
     const r = result as { systemPrompt: string };
     expect(r).toBeDefined();
-    expect(r.systemPrompt).toContain(FF_INSTRUCTION);
+    expect(r.systemPrompt).toContain(FY_INSTRUCTION);
   });
 });
 
@@ -509,7 +509,7 @@ describe("worktree footer indicator", () => {
     withTempCwd();
     setSetting("branchPolicy", "worktree");
 
-    // _ensureWorktreeForExecution now also wires a real .ff junction in the worktree, so the
+    // _ensureWorktreeForExecution now also wires a real .featyard junction in the worktree, so the
     // worktree dir must exist on disk (with a .git so resolveProjectRootFs treats it as a repo).
     fs.mkdirSync(path.join(".worktrees", "test-footer", ".git"), { recursive: true });
 
@@ -586,13 +586,13 @@ describe("worktree footer indicator", () => {
 // --- reload/resume restore: footer indicator must survive a reload ---
 
 describe("worktree footer indicator restore on session restore", () => {
-  /** Build a session branch with a feature_flow_state entry carrying a worktreePath. */
+  /** Build a session branch with a featyard_state entry carrying a worktreePath. */
   function branchWithWorktree(worktreePath: string, completedAt: string | null) {
     return [
       {
         id: "entry-0",
         type: "custom",
-        customType: "feature_flow_state",
+        customType: "featyard_state",
         data: {
           featureState: {
             featureSlug: "reload-feature",

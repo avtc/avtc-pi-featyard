@@ -4,7 +4,7 @@
 /**
  * Unit tests for the two-source design-doc archive sweep: `enumerateDesigns` +
  * `archiveDesignsOlderThan`. Design docs are flat `*-design.md` files that may live in EITHER
- * `.ff/designs` (local) or `docs/ff/designs` (committed); the sweep scans both roots, filters by
+ * `.featyard/designs` (local) or `docs/featyard/designs` (committed); the sweep scans both roots, filters by
  * mtime, excludes the active feature's doc, and archives each independently.
  *
  * Uses the real filesystem under temp dirs (mirrors archive-feature.test.ts) — `archiveDesignsOlderThan`
@@ -59,7 +59,7 @@ describe("enumerateDesigns", () => {
   test("finds stale docs across BOTH roots and routes each under archiveBase/designs/ (tree-mirror)", () => {
     const root = makeTempDir("enum");
     const localDir = path.join(root, "local", "designs");
-    const committedDir = path.join(root, "committed", "docs", "ff", "designs");
+    const committedDir = path.join(root, "committed", "docs", "featyard", "designs");
     const archiveBase = path.join(root, "archive");
 
     // Old (>10d) in BOTH roots; fresh doc must be excluded.
@@ -135,7 +135,7 @@ describe("archiveDesignsOlderThan", () => {
   test("moves stale docs from both roots into the archive and reports counts", async () => {
     const root = makeTempDir("archive");
     const localDir = path.join(root, "local", "designs");
-    const committedDir = path.join(root, "committed", "docs", "ff", "designs");
+    const committedDir = path.join(root, "committed", "docs", "featyard", "designs");
     const archiveBase = path.join(root, "archive");
     const localSrc = writeDesign(localDir, "2026-06-01-a", NOW_SEC - 20 * DAY);
     const committedSrc = writeDesign(committedDir, "2026-06-01-b", NOW_SEC - 20 * DAY);

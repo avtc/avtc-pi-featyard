@@ -23,13 +23,13 @@ describe("state creation from execution skill invocation", () => {
   beforeEach(() => {
     withTempCwd();
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     disableSubagentMode();
   });
 
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   const subagentCtx = {
@@ -43,7 +43,7 @@ describe("state creation from execution skill invocation", () => {
     },
   } as unknown as ExtensionContext;
 
-  test("creates state file when /skill:ff-implement invoked with plan doc path and no active feature", async () => {
+  test("creates state file when /skill:fy-implement invoked with plan doc path and no active feature", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
@@ -58,16 +58,18 @@ describe("state creation from execution skill invocation", () => {
     // No active feature yet
     expect(getActiveFeatureSlug()).toBeNull();
 
-    // Invoke ff-implement with a plan doc path
+    // Invoke fy-implement with a plan doc path
     const onInput = getSingleHandler(fake.handlers, "input");
     onInput(
-      { text: "/skill:ff-implement .ff/task-plans/2026-05-10-my-feature-task-plan.md" } as unknown as ExtensionEvent,
+      {
+        text: "/skill:fy-implement .featyard/task-plans/2026-05-10-my-feature-task-plan.md",
+      } as unknown as ExtensionEvent,
       subagentCtx,
     );
 
     // Should have created state
     expect(getActiveFeatureSlug()).toBe("2026-05-10-my-feature");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-10-my-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-10-my-feature");
 
     // State file should exist on disk
     const state = loadFeatureState("2026-05-10-my-feature", null);
@@ -91,7 +93,7 @@ describe("state creation from execution skill invocation", () => {
     );
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-implement" } as unknown as ExtensionEvent, subagentCtx);
+    onInput({ text: "/skill:fy-implement" } as unknown as ExtensionEvent, subagentCtx);
 
     // No plan path in message — no state created
     expect(getActiveFeatureSlug()).toBeNull();
@@ -103,7 +105,7 @@ describe("state creation from execution skill invocation", () => {
 
     // Write state file in the temp cwd that createFakePi set up
     const slug = "2026-05-10-existing";
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
     const existingState = {
       featureSlug: slug,
       activeFeatureSlug: slug,
@@ -113,14 +115,14 @@ describe("state creation from execution skill invocation", () => {
       completedAt: null,
       workflow: {
         currentPhase: "implement",
-        designDoc: "docs/ff/designs/2026-05-10-existing-design.md",
-        planDoc: ".ff/task-plans/2026-05-10-existing-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-10-existing-design.md",
+        planDoc: ".featyard/task-plans/2026-05-10-existing-task-plan.md",
       },
       tdd: { stage: "idle", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
       verification: { passed: false, waived: false },
-      design: { doc: "docs/ff/designs/2026-05-10-existing-design.md", reviewActive: false, reviewLoopCount: 0 },
+      design: { doc: "docs/featyard/designs/2026-05-10-existing-design.md", reviewActive: false, reviewLoopCount: 0 },
       plan: {
-        doc: ".ff/task-plans/2026-05-10-existing-task-plan.md",
+        doc: ".featyard/task-plans/2026-05-10-existing-task-plan.md",
         verifyLoopCount: 0,
         reviewActive: false,
         reviewLoopCount: 0,
@@ -131,8 +133,8 @@ describe("state creation from execution skill invocation", () => {
       sessionFiles: [],
       featureId: null,
     };
-    fs.writeFileSync(path.join(".ff", "feature-state", `${slug}.json`), JSON.stringify(existingState, null, 2));
-    process.env.PI_FF_FEATURE = slug;
+    fs.writeFileSync(path.join(".featyard", "feature-state", `${slug}.json`), JSON.stringify(existingState, null, 2));
+    process.env.PI_FY_FEATURE = slug;
 
     // session_start uses env var to load state (subagent path)
     await fireAllHandlers(
@@ -147,7 +149,7 @@ describe("state creation from execution skill invocation", () => {
 
     const onInput = getSingleHandler(fake.handlers, "input");
     onInput(
-      { text: `/skill:ff-implement .ff/task-plans/${slug}-task-plan.md` } as unknown as ExtensionEvent,
+      { text: `/skill:fy-implement .featyard/task-plans/${slug}-task-plan.md` } as unknown as ExtensionEvent,
       subagentCtx,
     );
 
@@ -159,17 +161,17 @@ describe("state creation from execution skill invocation", () => {
   });
 });
 
-describe("ff-plan / ff-design skill invocation with design doc path", () => {
+describe("fy-plan / fy-design skill invocation with design doc path", () => {
   beforeEach(() => {
     withTempCwd();
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     disableSubagentMode();
   });
 
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     resetInstances();
   });
 
@@ -184,7 +186,7 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     },
   } as unknown as ExtensionContext;
 
-  test("ff-plan with design doc path creates state and advances to plan (design derived done)", async () => {
+  test("fy-plan with design doc path creates state and advances to plan (design derived done)", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
@@ -195,13 +197,13 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     await onInput(
       {
         source: "user" as const,
-        text: "/skill:ff-plan docs/ff/designs/2026-06-24-rpc-subagent-mode-design.md",
+        text: "/skill:fy-plan docs/featyard/designs/2026-06-24-rpc-subagent-mode-design.md",
       } as unknown as ExtensionEvent,
       planCtx,
     );
 
     expect(getActiveFeatureSlug()).toBe("2026-06-24-rpc-subagent-mode");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-06-24-rpc-subagent-mode");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-06-24-rpc-subagent-mode");
 
     const state = loadFeatureState("2026-06-24-rpc-subagent-mode", null);
     expect(state).toBeDefined();
@@ -212,13 +214,13 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     expect(state?.design.doc).toContain("2026-06-24-rpc-subagent-mode-design.md");
   });
 
-  test("ff-plan with design doc path activates an existing feature state", async () => {
+  test("fy-plan with design doc path activates an existing feature state", async () => {
     const fake = createFakePi();
     const slug = "2026-06-24-rpc-subagent-mode";
     // Pre-create state (e.g. left on disk after a reload that lost handler state)
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
     fs.writeFileSync(
-      path.join(".ff", "feature-state", `${slug}.json`),
+      path.join(".featyard", "feature-state", `${slug}.json`),
       JSON.stringify(
         {
           featureSlug: slug,
@@ -226,8 +228,8 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
           createdAt: "2026-06-24T20:10:20.000Z",
           updatedAt: "2026-06-24T20:10:20.000Z",
           completedAt: null,
-          workflow: { currentPhase: "design", designDoc: `docs/ff/designs/${slug}-design.md`, planDoc: null },
-          design: { doc: `docs/ff/designs/${slug}-design.md`, reviewActive: false, reviewLoopCount: 0 },
+          workflow: { currentPhase: "design", designDoc: `docs/featyard/designs/${slug}-design.md`, planDoc: null },
+          design: { doc: `docs/featyard/designs/${slug}-design.md`, reviewActive: false, reviewLoopCount: 0 },
           plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 0 },
           implement: { tasks: [] },
           verify: { verifyLoopCount: 0 },
@@ -248,7 +250,7 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     await onInput(
       {
         source: "user" as const,
-        text: `/skill:ff-plan docs/ff/designs/${slug}-design.md`,
+        text: `/skill:fy-plan docs/featyard/designs/${slug}-design.md`,
       } as unknown as ExtensionEvent,
       planCtx,
     );
@@ -258,7 +260,7 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     expect(loadFeatureState(slug, null)?.featureId).toBe(115);
   });
 
-  test("ff-design with design doc path creates state at design phase", async () => {
+  test("fy-design with design doc path creates state at design phase", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
@@ -268,7 +270,7 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     await onInput(
       {
         source: "user" as const,
-        text: "/skill:ff-design docs/ff/designs/2026-05-10-my-feature-design.md",
+        text: "/skill:fy-design docs/featyard/designs/2026-05-10-my-feature-design.md",
       } as unknown as ExtensionEvent,
       planCtx,
     );
@@ -279,19 +281,19 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     expect(isPhaseActive(v, "design")).toBe(true);
   });
 
-  test("ff-plan without a design doc path does not activate", async () => {
+  test("fy-plan without a design doc path does not activate", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     await fireAllHandlers(fake.handlers, "session_start", { source: "user" as const, hasUI: false }, planCtx);
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    await onInput({ source: "user" as const, text: "/skill:ff-plan" } as unknown as ExtensionEvent, planCtx);
+    await onInput({ source: "user" as const, text: "/skill:fy-plan" } as unknown as ExtensionEvent, planCtx);
 
     expect(getActiveFeatureSlug()).toBeNull();
   });
 
-  test("ff-plan create path links the feature to kanban", async () => {
+  test("fy-plan create path links the feature to kanban", async () => {
     const db = await KanbanDatabase.createInMemory();
     setDatabaseInstance(db);
     const fake = createFakePi();
@@ -304,7 +306,7 @@ describe("ff-plan / ff-design skill invocation with design doc path", () => {
     await onInput(
       {
         source: "user" as const,
-        text: "/skill:ff-plan docs/ff/designs/2026-06-24-rpc-subagent-mode-design.md",
+        text: "/skill:fy-plan docs/featyard/designs/2026-06-24-rpc-subagent-mode-design.md",
       } as unknown as ExtensionEvent,
       planCtx,
     );

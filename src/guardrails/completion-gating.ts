@@ -55,7 +55,7 @@ export async function promptPublishGate(deps: PublishGateDeps): Promise<"allowed
     "Confirm publish (git push / gh pr create)?",
     options,
     options[1], // Block — the safe no-response outcome
-    "feature-flow",
+    "featyard",
     undefined, // wait indefinitely for the human (no timeout)
   );
 

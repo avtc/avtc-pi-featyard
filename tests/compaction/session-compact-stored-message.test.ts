@@ -22,7 +22,7 @@ describe("session_compact stored-message pattern", () => {
     withTempCwd();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     // Clean up any leftover globalThis state
     delete globalThis.__piCompactFollowUp;
     enableSubagentMode();
@@ -32,7 +32,7 @@ describe("session_compact stored-message pattern", () => {
     vi.useRealTimers();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     delete globalThis.__piCompactFollowUp;
   });
 
@@ -51,7 +51,7 @@ describe("session_compact stored-message pattern", () => {
     // Advance to execute phase so there's an active skill
     const onInput = getSingleHandler(fake.handlers, "input");
     onInput(
-      { type: "input", text: "/skill:ff-implement" } as unknown as ExtensionEvent,
+      { type: "input", text: "/skill:fy-implement" } as unknown as ExtensionEvent,
       { hasUI: false } as unknown as ExtensionContext,
     );
 
@@ -73,7 +73,7 @@ describe("session_compact stored-message pattern", () => {
     // Handler should have sent exactly one followUp that includes the stored message
     expect(sendUserMessageCalls.length).toBe(1);
     expect(sendUserMessageCalls[0]).toContain("Review iteration complete. Continue with next task.");
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
 
     // Stored message should be deleted after handler runs
     expect(globalThis.__piCompactFollowUp).toBeUndefined();
@@ -153,7 +153,7 @@ describe("session_compact stored-message pattern", () => {
 
   test("combines stored message with skill injection", async () => {
     const slug = "test-stored-msg";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
     const sendUserMessageCalls: string[] = [];
@@ -164,8 +164,8 @@ describe("session_compact stored-message pattern", () => {
       },
     };
 
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -175,14 +175,14 @@ describe("session_compact stored-message pattern", () => {
         git: { branch: null, baseCommitSha: null, worktreePath: null, baseBranch: null },
         workflow: {
           currentPhase: "implement",
-          designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-          planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+          planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
         },
         tdd: { stage: "idle", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         verification: { passed: false, waived: false },
-        design: { doc: "docs/ff/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+        design: { doc: "docs/featyard/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
         plan: {
-          doc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          doc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
           verifyLoopCount: 0,
           reviewActive: false,
           reviewLoopCount: 0,
@@ -225,7 +225,7 @@ describe("session_compact stored-message pattern", () => {
     // Single combined followUp with both stored message and skill
     expect(sendUserMessageCalls.length).toBe(1);
     expect(sendUserMessageCalls[0]).toContain("Review loop done. Continue.");
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
   });
 
   test("suppress flag no longer exists — handler runs full injection", async () => {
@@ -414,7 +414,7 @@ describe("session_compact stored-message pattern", () => {
     // Advance to execute phase
     const onInput = getSingleHandler(fake.handlers, "input");
     onInput(
-      { type: "input", text: "/skill:ff-implement" } as unknown as ExtensionEvent,
+      { type: "input", text: "/skill:fy-implement" } as unknown as ExtensionEvent,
       { hasUI: false } as unknown as ExtensionContext,
     );
 
@@ -444,7 +444,7 @@ describe("session_compact stored-message pattern", () => {
     // Single combined followUp: skill + stored message + todo
     expect(sendUserMessageCalls.length).toBe(1);
     const msg = sendUserMessageCalls[0];
-    expect(msg).toMatch(/^<skill name="ff-implement"/);
+    expect(msg).toMatch(/^<skill name="fy-implement"/);
     expect(msg).toContain("Review complete");
     expect(msg).toContain("▶ 3: Implement feature");
   });

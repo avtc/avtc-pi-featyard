@@ -66,9 +66,9 @@ describe("PhaseProgression", () => {
   test("setCurrentPhase backward derives target-onward phases as pending", () => {
     // Set up: design done, plan done, implement active — then go back to design.
     tracker.setCurrentPhase("design");
-    tracker.recordDoc("design", "docs/ff/designs/foo-design.md");
+    tracker.recordDoc("design", "docs/featyard/designs/foo-design.md");
     tracker.setCurrentPhase("plan");
-    tracker.recordDoc("plan", ".ff/task-plans/foo-task-plan.md");
+    tracker.recordDoc("plan", ".featyard/task-plans/foo-task-plan.md");
     tracker.setCurrentPhase("implement");
 
     // Go back to design (backward navigation)
@@ -87,9 +87,9 @@ describe("PhaseProgression", () => {
   test("setCurrentPhase backward preserves completed phases before target", () => {
     // design done, plan done, implement active — then go back to plan
     tracker.setCurrentPhase("design");
-    tracker.recordDoc("design", "docs/ff/designs/foo-design.md");
+    tracker.recordDoc("design", "docs/featyard/designs/foo-design.md");
     tracker.setCurrentPhase("plan");
-    tracker.recordDoc("plan", ".ff/task-plans/foo-task-plan.md");
+    tracker.recordDoc("plan", ".featyard/task-plans/foo-task-plan.md");
     tracker.setCurrentPhase("implement");
 
     // Go back to plan — design (before plan) is still derived as done
@@ -104,8 +104,8 @@ describe("PhaseProgression", () => {
     // implement is AFTER plan — derived pending again
     expect(isPhasePending(view(s), "implement")).toBe(true);
     // recorded docs are retained (the machine keeps them across pointer moves)
-    expect(s.designDoc).toBe("docs/ff/designs/foo-design.md");
-    expect(s.planDoc).toBe(".ff/task-plans/foo-task-plan.md");
+    expect(s.designDoc).toBe("docs/featyard/designs/foo-design.md");
+    expect(s.planDoc).toBe(".featyard/task-plans/foo-task-plan.md");
   });
 
   test("setCurrentPhase backward to design derives all later phases pending", () => {
@@ -123,14 +123,14 @@ describe("PhaseProgression", () => {
   });
 
   test("records docs per phase", () => {
-    tracker.recordDoc("design", "docs/ff/designs/2026-02-10-x-design.md");
-    expect(tracker.getState().designDoc).toBe("docs/ff/designs/2026-02-10-x-design.md");
+    tracker.recordDoc("design", "docs/featyard/designs/2026-02-10-x-design.md");
+    expect(tracker.getState().designDoc).toBe("docs/featyard/designs/2026-02-10-x-design.md");
     expect(tracker.getState().planDoc).toBeNull();
   });
 
   test("reset restores tracker to empty state regardless of prior state", () => {
     tracker.setCurrentPhase("implement");
-    tracker.recordDoc("plan", ".ff/task-plans/2026-02-20-foo-task-plan.md");
+    tracker.recordDoc("plan", ".featyard/task-plans/2026-02-20-foo-task-plan.md");
 
     tracker.reset();
 
@@ -156,34 +156,34 @@ function custom(data: unknown): SessionEntry {
 describe("PhaseProgression detection helpers", () => {
   test("SKILL_TO_PHASE exposes expected skill mappings", () => {
     expect(SKILL_TO_PHASE).toEqual({
-      "ff-design": "design",
-      "ff-plan": "plan",
-      "ff-implement": "implement",
-      // subagent-driven-development removed — unified into ff-implement
-      "ff-verify": "verify",
-      "ff-review": "review",
-      "ff-design-review": "design",
-      "ff-plan-review": "plan",
-      "ff-finish": "finish",
+      "fy-design": "design",
+      "fy-plan": "plan",
+      "fy-implement": "implement",
+      // subagent-driven-development removed — unified into fy-implement
+      "fy-verify": "verify",
+      "fy-review": "review",
+      "fy-design-review": "design",
+      "fy-plan-review": "plan",
+      "fy-finish": "finish",
     });
   });
 
   test('parseSkillName extracts /skill and <skill name="...">', () => {
-    expect(parseSkillName("/skill:ff-plan blah")).toBe("ff-plan");
-    expect(parseSkillName('  <skill name="ff-design" location="/x">')).toBe("ff-design");
-    expect(parseSkillName("nope /skill:ff-plan")).toBeNull();
+    expect(parseSkillName("/skill:fy-plan blah")).toBe("fy-plan");
+    expect(parseSkillName('  <skill name="fy-design" location="/x">')).toBe("fy-design");
+    expect(parseSkillName("nope /skill:fy-plan")).toBeNull();
   });
 
-  test("detects /skill:ff-design and advances to design", () => {
+  test("detects /skill:fy-design and advances to design", () => {
     const tracker = new PhaseProgression();
-    const changed = tracker.onInputText("/skill:ff-design");
+    const changed = tracker.onInputText("/skill:fy-design");
     expect(changed).toBe(true);
     expect(tracker.getState().currentPhase).toBe("design");
   });
 
   test("detects /skill token with trailing text at start of a later line", () => {
     const tracker = new PhaseProgression();
-    const changed = tracker.onInputText("status update\n/skill:ff-plan draft initial breakdown");
+    const changed = tracker.onInputText("status update\n/skill:fy-plan draft initial breakdown");
     expect(changed).toBe(true);
     expect(tracker.getState().currentPhase).toBe("plan");
   });
@@ -191,15 +191,15 @@ describe("PhaseProgression detection helpers", () => {
   test("does not activate workflow from verify/review/finish skills when no workflow is active", () => {
     const tracker = new PhaseProgression();
 
-    const verifyChanged = tracker.onInputText("/skill:ff-verify run checks");
+    const verifyChanged = tracker.onInputText("/skill:fy-verify run checks");
     expect(verifyChanged).toBe(false);
     expect(tracker.getState().currentPhase).toBeNull();
 
-    const reviewChanged = tracker.onInputText("/skill:ff-review");
+    const reviewChanged = tracker.onInputText("/skill:fy-review");
     expect(reviewChanged).toBe(false);
     expect(tracker.getState().currentPhase).toBeNull();
 
-    const finishChanged = tracker.onInputText("/skill:ff-finish");
+    const finishChanged = tracker.onInputText("/skill:fy-finish");
     expect(finishChanged).toBe(false);
     expect(tracker.getState().currentPhase).toBeNull();
   });
@@ -208,14 +208,14 @@ describe("PhaseProgression detection helpers", () => {
     const tracker = new PhaseProgression();
     tracker.setCurrentPhase("implement");
 
-    const changed = tracker.onInputText("/skill:ff-verify run checks");
+    const changed = tracker.onInputText("/skill:fy-verify run checks");
     expect(changed).toBe(true);
     expect(tracker.getState().currentPhase).toBe("verify");
   });
 
   test("execute skill still activates a fresh workflow (plan-doc entry point)", () => {
     const tracker = new PhaseProgression();
-    const changed = tracker.onInputText("/skill:ff-implement");
+    const changed = tracker.onInputText("/skill:fy-implement");
     expect(changed).toBe(true);
     expect(tracker.getState().currentPhase).toBe("implement");
   });
@@ -224,7 +224,7 @@ describe("PhaseProgression detection helpers", () => {
     const tracker = new PhaseProgression();
     tracker.setCurrentPhase("plan");
 
-    const changed = tracker.onInputText("/skill:ff-design\n/skill:ff-verify run checks");
+    const changed = tracker.onInputText("/skill:fy-design\n/skill:fy-verify run checks");
 
     expect(changed).toBe(true);
     expect(tracker.getState().currentPhase).toBe("verify");
@@ -233,7 +233,7 @@ describe("PhaseProgression detection helpers", () => {
   test("ignores unknown /skill line and advances on later valid /skill line", () => {
     const tracker = new PhaseProgression();
 
-    const changed = tracker.onInputText("/skill:not-a-real-skill\n/skill:ff-plan");
+    const changed = tracker.onInputText("/skill:not-a-real-skill\n/skill:fy-plan");
 
     expect(changed).toBe(true);
     expect(tracker.getState().currentPhase).toBe("plan");
@@ -241,59 +241,59 @@ describe("PhaseProgression detection helpers", () => {
 
   test("does not detect /skill token when not at line start", () => {
     const tracker = new PhaseProgression();
-    const changed = tracker.onInputText("please run /skill:ff-plan draft initial breakdown");
+    const changed = tracker.onInputText("please run /skill:fy-plan draft initial breakdown");
     expect(changed).toBe(false);
     expect(tracker.getState().currentPhase).toBeNull();
   });
 
   test("records design artifact when design doc written", () => {
     const tracker = new PhaseProgression();
-    tracker.onFileWritten("docs/ff/designs/2026-02-10-foo-design.md");
+    tracker.onFileWritten("docs/featyard/designs/2026-02-10-foo-design.md");
     const s = tracker.getState();
     // onFileWritten records docs only — does NOT advance phase
-    expect(s.designDoc).toBe("docs/ff/designs/2026-02-10-foo-design.md");
+    expect(s.designDoc).toBe("docs/featyard/designs/2026-02-10-foo-design.md");
     expect(s.currentPhase).toBeNull(); // no phase transition
   });
 
   test("records design artifact with Windows backslash paths", () => {
     const tracker = new PhaseProgression();
-    tracker.onFileWritten("docs\\ff\\designs\\2026-02-10-foo-design.md");
+    tracker.onFileWritten("docs\\featyard\\designs\\2026-02-10-foo-design.md");
     const s = tracker.getState();
-    expect(s.designDoc).toBe("docs\\ff\\designs\\2026-02-10-foo-design.md");
+    expect(s.designDoc).toBe("docs\\featyard\\designs\\2026-02-10-foo-design.md");
     expect(s.currentPhase).toBeNull();
   });
 
   test("records plan artifact with Windows backslash paths", () => {
     const tracker = new PhaseProgression();
-    tracker.onFileWritten(".ff\\task-plans\\2026-02-11-foo-task-plan.md");
+    tracker.onFileWritten(".featyard\\task-plans\\2026-02-11-foo-task-plan.md");
     const s = tracker.getState();
-    expect(s.planDoc).toBe(".ff\\task-plans\\2026-02-11-foo-task-plan.md");
+    expect(s.planDoc).toBe(".featyard\\task-plans\\2026-02-11-foo-task-plan.md");
     expect(s.currentPhase).toBeNull();
   });
 
   test("records plan artifact when task-plan doc written", () => {
     const tracker = new PhaseProgression();
-    tracker.onFileWritten(".ff/task-plans/2026-02-11-foo-task-plan.md");
+    tracker.onFileWritten(".featyard/task-plans/2026-02-11-foo-task-plan.md");
     const s = tracker.getState();
-    expect(s.planDoc).toBe(".ff/task-plans/2026-02-11-foo-task-plan.md");
+    expect(s.planDoc).toBe(".featyard/task-plans/2026-02-11-foo-task-plan.md");
     expect(s.currentPhase).toBeNull(); // no phase transition
   });
 
   test("does NOT record a design doc written to the task-plans dir (strict dir/suffix pairing)", () => {
-    // Design docs belong in docs/ff/designs/; a -design.md under .ff/task-plans/ is misplaced
+    // Design docs belong in docs/featyard/designs/; a -design.md under .featyard/task-plans/ is misplaced
     // and must not be recorded as a design artifact.
     const tracker = new PhaseProgression();
-    tracker.onFileWritten(".ff/task-plans/2026-02-10-foo-design.md");
+    tracker.onFileWritten(".featyard/task-plans/2026-02-10-foo-design.md");
     const s = tracker.getState();
     expect(s.designDoc).toBeNull();
     expect(s.planDoc).toBeNull();
   });
 
   test("does NOT record a task-plan written to the designs dir (strict dir/suffix pairing)", () => {
-    // Task-plans belong in .ff/task-plans/; a -task-plan.md under docs/ff/designs/ is misplaced
+    // Task-plans belong in .featyard/task-plans/; a -task-plan.md under docs/featyard/designs/ is misplaced
     // and must not be recorded as a plan artifact.
     const tracker = new PhaseProgression();
-    tracker.onFileWritten("docs/ff/designs/2026-02-11-foo-task-plan.md");
+    tracker.onFileWritten("docs/featyard/designs/2026-02-11-foo-task-plan.md");
     const s = tracker.getState();
     expect(s.designDoc).toBeNull();
     expect(s.planDoc).toBeNull();

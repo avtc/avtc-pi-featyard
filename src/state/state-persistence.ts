@@ -10,7 +10,7 @@
  *
  * The handler holds the active FeatureState in memory as the single source of
  * truth. persistState write-throughs the in-memory record to its file (no
- * merge — the handler record IS the record) and appends the full FeatureFlowState
+ * merge — the handler record IS the record) and appends the full FeatyardState
  * wrapper to the session log. reconstructState bootstraps a fresh session by
  * loading the active feature's file into the handler (guardrails reset).
  */
@@ -28,7 +28,7 @@ import {
   saveFeatureState,
 } from "./feature-state.js";
 
-export const FEATURE_FLOW_STATE_ENTRY_TYPE = "feature_flow_state";
+export const FEATYARD_STATE_ENTRY_TYPE = "featyard_state";
 
 /** True when this session is a spawned subagent. Uses dual-signal detection:
  *  checks PiCtx.mode (from globalThis.__piCtx, refreshed on session_start) first,
@@ -101,7 +101,7 @@ export function persistState(pi: ExtensionAPI, handler: FeatureSession): void {
   const fullState = handler.getFullState();
   // AppendEntry stores the FULL wrapper (featureState + guardrailsState) so a
   // session-tree resume restores BOTH tiers as of this point.
-  pi.appendEntry(FEATURE_FLOW_STATE_ENTRY_TYPE, fullState);
+  pi.appendEntry(FEATYARD_STATE_ENTRY_TYPE, fullState);
 
   // Subagent sessions read feature context but never own the durable record —
   // skip the file write so they cannot race the host's write-through.

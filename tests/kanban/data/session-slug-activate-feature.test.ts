@@ -23,7 +23,7 @@ afterEach(() => {
     } catch {}
     tempDir = null;
   }
-  delete process.env.PI_FF_FEATURE;
+  delete process.env.PI_FY_FEATURE;
 });
 
 async function setupTestDb() {
@@ -73,7 +73,7 @@ describe("session-slug matching sets globalThis.__piKanban.activateFeature", () 
     });
 
     // Set env var so session-slug matching picks it up (early return path)
-    process.env.PI_FF_FEATURE = "matched-feature";
+    process.env.PI_FY_FEATURE = "matched-feature";
 
     const ctx = {
       ui: {
@@ -85,7 +85,7 @@ describe("session-slug matching sets globalThis.__piKanban.activateFeature", () 
     };
 
     // Start designer — this will take the session-slug matching early return
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Verify the feature was locked via session-slug matching
@@ -116,7 +116,7 @@ describe("session-slug matching sets globalThis.__piKanban.activateFeature", () 
       lane: "design",
     });
 
-    // No PI_FF_FEATURE set — normal path (no session-slug matching)
+    // No PI_FY_FEATURE set — normal path (no session-slug matching)
 
     const ctx = {
       ui: {
@@ -128,7 +128,7 @@ describe("session-slug matching sets globalThis.__piKanban.activateFeature", () 
     };
 
     // Start designer — this takes the normal path
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // globalThis.__piKanban.activateFeature should also be set on the normal path

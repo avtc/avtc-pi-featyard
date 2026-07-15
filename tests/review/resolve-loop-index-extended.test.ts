@@ -15,7 +15,7 @@ import {
 
 /**
  * Loop-index resolution is phase-aware and reads feature-state directly
- * (the durable source of truth). The removed PI_FF_REVIEW_LOOP env var was a
+ * (the durable source of truth). The removed PI_FY_REVIEW_LOOP env var was a
  * pure mirror of getLoopCountForPhase; these tests now exercise that function
  * directly across every phase, which is what subagent-integration + the model
  * resolver read.
@@ -24,16 +24,16 @@ describe("getLoopCountForPhase is phase-aware (the durable loop-count source)", 
   beforeEach(() => {
     withTempCwd();
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_EXECUTION_MODE;
-    delete process.env.PI_FF_STAGE;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_EXECUTION_MODE;
+    delete process.env.PI_FY_STAGE;
   });
 
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_EXECUTION_MODE;
-    delete process.env.PI_FF_STAGE;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_EXECUTION_MODE;
+    delete process.env.PI_FY_STAGE;
   });
 
   function buildCtx() {
@@ -130,7 +130,7 @@ describe("getLoopCountForPhase is phase-aware (the durable loop-count source)", 
       expect(getLoopCountForPhase(loadFeatureState(slug, null), currentPhase)).toBe(7);
 
       _resetFeatureState();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 

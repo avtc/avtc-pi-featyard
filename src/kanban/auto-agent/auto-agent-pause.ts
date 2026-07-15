@@ -16,7 +16,7 @@ import type { AutoAgentRole } from "./auto-agent-state-machine.js";
 
 /** Map an auto-agent role to its resume command + display name. */
 function roleResumeInfo(role: AutoAgentRole): { command: string; display: string } {
-  const command = role === "worker" ? "ff:auto-worker" : role === "designer" ? "ff:auto-designer" : "ff:auto-agent";
+  const command = role === "worker" ? "fy:auto-worker" : role === "designer" ? "fy:auto-designer" : "fy:auto-agent";
   return { command, display: `Auto-${role}` };
 }
 

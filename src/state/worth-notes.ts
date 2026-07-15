@@ -4,14 +4,14 @@
 /**
  * Worth-notes pointer — the first RUNTIME reader of the worth-notes file.
  *
- * Worth-notes (`.ff/reviews/<slug>/<slug>-worth-notes.md`, or a date-fallback when no slug is
+ * Worth-notes (`.featyard/reviews/<slug>/<slug>-worth-notes.md`, or a date-fallback when no slug is
  * active) are unstructured LLM markdown written by the orchestrator/implementer for out-of-scope
  * smells/bugs/oddities. They are surfaced by MERGING a pointer (existence + path)
  * into existing boundary notifications — never standalone, because pi notifications are exclusive
  * (a new one hides the previous). This module owns two concerns:
  *
  * - `worthNotesPath(slug, date)`: the path computation (single source of truth — the
- *  `{{PI_FF_WORTH_NOTES_PATH}}` marker handler and every runtime caller delegate here, so the
+ *  `{{PI_FY_WORTH_NOTES_PATH}}` marker handler and every runtime caller delegate here, so the
  *  slug-vs-date-fallback branch lives in exactly one place).
  * - `worthNotesPointer(notesPath)`: given the resolved path, returns `📝 worth-notes: <path>` when
  *  the file exists and is non-empty, else null (a stat + size check). Callers append the pointer
@@ -20,19 +20,19 @@
 
 import { readFileSync, statSync } from "node:fs";
 
-import { FF_REVIEWS_DIR } from "./artifact-paths.js";
+import { FY_REVIEWS_DIR } from "./artifact-paths.js";
 
 /**
  * Resolve the worth-notes file path for a feature.
  *
- * - Slug present: `.ff/reviews/<slug>/<slug>-worth-notes.md` (the per-feature worth-notes file).
- * - No slug (manual skill run without an active feature): `.ff/reviews/<date>/<date>-worth-notes.md`
+ * - Slug present: `.featyard/reviews/<slug>/<slug>-worth-notes.md` (the per-feature worth-notes file).
+ * - No slug (manual skill run without an active feature): `.featyard/reviews/<date>/<date>-worth-notes.md`
  *  (a single stable per-date file — worth-notes accumulate). `date` is a yyyy-mm-dd string.
  *
- * Mirrors the `{{PI_FF_WORTH_NOTES_PATH}}` marker resolution — both delegate here.
+ * Mirrors the `{{PI_FY_WORTH_NOTES_PATH}}` marker resolution — both delegate here.
  */
 export function worthNotesPath(slug: string | null, date: string): string {
-  return slug ? `${FF_REVIEWS_DIR}/${slug}/${slug}-worth-notes.md` : `${FF_REVIEWS_DIR}/${date}/${date}-worth-notes.md`;
+  return slug ? `${FY_REVIEWS_DIR}/${slug}/${slug}-worth-notes.md` : `${FY_REVIEWS_DIR}/${date}/${date}-worth-notes.md`;
 }
 
 /**

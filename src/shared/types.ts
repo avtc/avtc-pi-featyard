@@ -70,7 +70,7 @@ export interface CompactFollowUp {
    *  "Run plan review iteration #1"). Must NOT contain a `/skill:` prefix or generic compaction framing
    *  the compact-handler owns the skill + framing line. Empty string = no caller note. */
   message: string;
-  /** Skill name the handler should expand (e.g. "ff-implement", "ff-plan-review"). When omitted,
+  /** Skill name the handler should expand (e.g. "fy-implement", "fy-plan-review"). When omitted,
    *  the handler falls back to getExpectedSkill. Lets callers that carry a skill avoid the
    *  duplicate-skill the old prepend logic produced. */
   skillName?: string;

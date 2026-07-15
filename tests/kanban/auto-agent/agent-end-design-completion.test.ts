@@ -24,7 +24,7 @@ const UI_CTX = {
 describe("agent_end design-completion detection (removed)", () => {
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
   });
 
@@ -50,8 +50,8 @@ describe("agent_end design-completion detection (removed)", () => {
       designReviewLoopCount: 0,
     });
 
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/2026-05-30-no-agent-end-detect-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-30-no-agent-end-detect-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -81,8 +81,8 @@ describe("agent_end design-completion detection (removed)", () => {
       designReviewLoopCount: 1,
     });
 
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/2026-05-30-review-in-progress-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-30-review-in-progress-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 

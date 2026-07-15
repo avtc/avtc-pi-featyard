@@ -17,8 +17,8 @@ import {
 } from "../helpers/workflow-monitor-test-helpers.js";
 
 /**
- * Integration tests for manual review-skill invocation (/skill:ff-design-review,
- * /skill:ff-plan-review) incrementing the review loop counter via input-gating.
+ * Integration tests for manual review-skill invocation (/skill:fy-design-review,
+ * /skill:fy-plan-review) incrementing the review loop counter via input-gating.
  *
  * The phase_ready path and this manual path share the startReviewIteration
  * helper; injected followUp messages (event.source === "extension") are skipped
@@ -31,13 +31,13 @@ describe("input-gating: manual review skill invocation increments counter", () =
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
-    delete process.env.PI_FF_STAGE;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
+    delete process.env.PI_FY_STAGE;
     clearFeatureStateCache();
   });
 
-  test("skill:ff-design-review increments designReviewLoopCount", async () => {
+  test("skill:fy-design-review increments designReviewLoopCount", async () => {
     const { fake, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-06-23-manual-design-review", {
       ...BRAINSTORM_ACTIVE_STATE,
@@ -49,7 +49,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     expect(getActiveFeatureSlug()).toBe(slug);
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-design-review" } as unknown as ExtensionEvent, NO_UI_CTX);
+    onInput({ text: "/skill:fy-design-review" } as unknown as ExtensionEvent, NO_UI_CTX);
 
     clearFeatureStateCache();
     const state = loadFeatureState(slug, null);
@@ -59,7 +59,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     // subagent model overrides (no longer mirrored to an env var).
   });
 
-  test("skill:ff-plan-review increments planReviewLoopCount", async () => {
+  test("skill:fy-plan-review increments planReviewLoopCount", async () => {
     const { fake, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-06-23-manual-plan-review", {
       ...PLAN_ACTIVE_STATE,
@@ -71,7 +71,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     expect(getActiveFeatureSlug()).toBe(slug);
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-plan-review" } as unknown as ExtensionEvent, NO_UI_CTX);
+    onInput({ text: "/skill:fy-plan-review" } as unknown as ExtensionEvent, NO_UI_CTX);
 
     clearFeatureStateCache();
     const state = loadFeatureState(slug, null);
@@ -93,7 +93,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     expect(getActiveFeatureSlug()).toBe(slug);
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-design-review" } as unknown as ExtensionEvent, NO_UI_CTX);
+    onInput({ text: "/skill:fy-design-review" } as unknown as ExtensionEvent, NO_UI_CTX);
 
     clearFeatureStateCache();
     const state = loadFeatureState(slug, null);
@@ -109,7 +109,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     expect(getActiveFeatureSlug()).toBeNull();
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-design-review" } as unknown as ExtensionEvent, NO_UI_CTX);
+    onInput({ text: "/skill:fy-design-review" } as unknown as ExtensionEvent, NO_UI_CTX);
   });
 
   test("injected followUp (source=extension) does NOT increment counter (double-count guard)", async () => {
@@ -127,7 +127,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     expect(getActiveFeatureSlug()).toBe(slug);
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-design-review", source: "extension" } as unknown as ExtensionEvent, NO_UI_CTX);
+    onInput({ text: "/skill:fy-design-review", source: "extension" } as unknown as ExtensionEvent, NO_UI_CTX);
 
     clearFeatureStateCache();
     const state = loadFeatureState(slug, null);
@@ -135,11 +135,11 @@ describe("input-gating: manual review skill invocation increments counter", () =
   });
 
   test("cross-phase invocation: plan-review in design phase advances to plan and reflects plan loop count", async () => {
-    // : pin cross-phase behavior. Invoking /skill:ff-plan-review while
+    // : pin cross-phase behavior. Invoking /skill:fy-plan-review while
     // currentPhase=design increments planReviewLoopCount (the invoked skill's
     // counter) and advances currentPhase to "plan" (via processSkillInput →
     // onInputText). After the input handler runs synchronously through
-    // persistState, PI_FF_STAGE/LOOP reflect the plan phase and its
+    // persistState, PI_FY_STAGE/LOOP reflect the plan phase and its
     // incremented loop count; designReviewLoopCount is untouched.
     const { fake, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-06-23-cross-phase-plan-review", {
@@ -153,7 +153,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     expect(getActiveFeatureSlug()).toBe(slug);
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-plan-review" } as unknown as ExtensionEvent, NO_UI_CTX);
+    onInput({ text: "/skill:fy-plan-review" } as unknown as ExtensionEvent, NO_UI_CTX);
 
     clearFeatureStateCache();
     const state = loadFeatureState(slug, null);
@@ -161,10 +161,10 @@ describe("input-gating: manual review skill invocation increments counter", () =
     expect(state?.plan.reviewLoopCount).toBe(1);
     // Current-phase counter untouched.
     expect(state?.design.reviewLoopCount).toBe(2);
-    // /skill:ff-plan-review advances currentPhase to "plan" (via processSkillInput →
+    // /skill:fy-plan-review advances currentPhase to "plan" (via processSkillInput →
     // onInputText), so after the input handler runs synchronously through
-    // persistState, PI_FF_STAGE reflects the plan phase and feature-state carries
+    // persistState, PI_FY_STAGE reflects the plan phase and feature-state carries
     // its now-incremented loop count (read directly by consumers, not an env var).
-    expect(process.env.PI_FF_STAGE).toBe("plan");
+    expect(process.env.PI_FY_STAGE).toBe("plan");
   });
 });

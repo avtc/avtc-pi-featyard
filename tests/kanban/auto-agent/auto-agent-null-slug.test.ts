@@ -54,7 +54,7 @@ describe("Auto-agent pickNextFeature with null-slug features", () => {
     expect((result as NonNullable<typeof result>).feature.id).toBe(featureId);
     // Slug should be the temp slug (kanban-{id})
     expect((result as NonNullable<typeof result>).feature.slug).toBe(`kanban-${featureId}`);
-    expect((result as NonNullable<typeof result>).skill).toBe("ff-plan"); // worker picks from ready lane
+    expect((result as NonNullable<typeof result>).skill).toBe("fy-plan"); // worker picks from ready lane
   });
 
   it("pickNextFeature returns real slug for feature with slug", async () => {

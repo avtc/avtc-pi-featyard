@@ -42,7 +42,7 @@ function whitelistCheck(categoryId: string): boolean {
 /**
  * Integration test: finish lifecycle
  *
- * Exercises feature-flow's own code:
+ * Exercises featyard's own code:
  * 1. Finish skill injection produces worktree finish content (worktree policy)
  * 2. The agent_start handler arms the whitelist flag during the finish phase
  * 3. Whitelist check function allows branch-switch + merge when flag is true
@@ -63,7 +63,7 @@ describe("finish lifecycle integration", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
   });
@@ -79,7 +79,7 @@ describe("finish lifecycle integration", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-04-01-lifecycle-design.md" },
+        input: { path: "docs/featyard/designs/2026-04-01-lifecycle-design.md" },
       } as unknown as ExtensionEvent,
       NO_UI_MOCK_CTX,
     );
@@ -101,7 +101,7 @@ describe("finish lifecycle integration", () => {
 
     // 5. Expand the finishing skill — produces content but does NOT arm the flag
     disableSubagentMode();
-    const result = _expandSkillCommand("/skill:ff-finish", null, null);
+    const result = _expandSkillCommand("/skill:fy-finish", null, null);
 
     // Verify injection produced worktree auto-agent content
     expect(result).toContain("branchPolicy: worktree");
@@ -150,7 +150,7 @@ describe("finish lifecycle integration", () => {
 
     // Expand finishing skill — produces Option 1 content but does NOT arm the flag
     // (variant C: the agent_start handler is the sole arming site)
-    const result = _expandSkillCommand("/skill:ff-finish", null, null);
+    const result = _expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("branchPolicy: worktree");
     expect(result).toContain("Option 1");
@@ -183,7 +183,7 @@ describe("finish lifecycle integration", () => {
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
     // Expand finishing skill
-    const result = _expandSkillCommand("/skill:ff-finish", null, null);
+    const result = _expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("branchPolicy: current-branch");
 

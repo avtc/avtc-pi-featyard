@@ -15,7 +15,7 @@ import type {
 import { expect, vi } from "vitest";
 import type { KanbanDatabase } from "../../src/kanban/data/kanban-database.js";
 import { PiCtx } from "../../src/shared/types.js";
-import { ensureFfJunction } from "../../src/state/artifact-junction.js";
+import { ensureFeatyardJunction } from "../../src/state/artifact-junction.js";
 import type { FeatureState } from "../../src/state/feature-state.js";
 import { createFeatureState } from "../../src/state/feature-state.js";
 import { registerTaskReadyAdvance } from "../../src/tools/task-ready-advance.js";
@@ -34,11 +34,11 @@ export function withTempCwd(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wfm-test-"));
   TEMP_DIRS.push(dir);
   process.chdir(dir);
-  // State + artifacts are co-located under the `.ff` junction. Ensure it immediately so any
+  // State + artifacts are co-located under the `.featyard` junction. Ensure it immediately so any
   // later state/artifact write (saveFeatureState, writeFileSync, …) lands in the external store
   // and survives a subsequent `workflowMonitorExtension` activation (which would otherwise
-  // `ensureFfJunction(onRealDir:"rename")` a stray real `.ff` aside and lose it). Idempotent.
-  ensureTestFfJunction();
+  // `ensureFeatyardJunction(onRealDir:"rename")` a stray real `.featyard` aside and lose it). Idempotent.
+  ensureTestFeatyardJunction();
   return dir;
 }
 
@@ -52,19 +52,19 @@ export function initTempGitRepo(): void {
   execSync("git init -q", { cwd: process.cwd() });
   execSync('git config user.email "test@test"', { cwd: process.cwd() });
   execSync('git config user.name "test"', { cwd: process.cwd() });
-  fs.writeFileSync(".gitignore", ".ff/\n");
+  fs.writeFileSync(".gitignore", ".featyard/\n");
   execSync("git add .gitignore", { cwd: process.cwd() });
   execSync('git commit -q -m "baseline"', { cwd: process.cwd() });
 }
 
 /**
- * Ensure the `.ff` junction exists for the current (temp) cwd BEFORE writing state/artifacts.
- * State is co-located under `.ff` (the junction → test PI_FF_HOME external store); without this,
- * a later `workflowMonitorExtension` activation would `ensureFfJunction(onRealDir:"rename")` a
- * stray REAL `.ff` aside and lose anything written to it. Idempotent — safe to re-call on activation.
+ * Ensure the `.featyard` junction exists for the current (temp) cwd BEFORE writing state/artifacts.
+ * State is co-located under `.featyard` (the junction → test PI_FY_HOME external store); without this,
+ * a later `workflowMonitorExtension` activation would `ensureFeatyardJunction(onRealDir:"rename")` a
+ * stray REAL `.featyard` aside and lose anything written to it. Idempotent — safe to re-call on activation.
  */
-export function ensureTestFfJunction(): void {
-  ensureFfJunction(process.cwd(), "current-branch", process.env.PI_FF_HOME ?? os.homedir(), "rename");
+export function ensureTestFeatyardJunction(): void {
+  ensureFeatyardJunction(process.cwd(), "current-branch", process.env.PI_FY_HOME ?? os.homedir(), "rename");
 }
 
 /**
@@ -84,11 +84,11 @@ export function cleanupAfterTest(): void {
   if (process.cwd() !== ORIGINAL_CWD) {
     process.chdir(ORIGINAL_CWD);
   }
-  delete process.env.PI_FF_FEATURE;
+  delete process.env.PI_FY_FEATURE;
   resetSettingsToDefaults();
-  delete process.env.PI_FF_STAGE;
-  delete process.env.PI_FF_REVIEW_LOOP;
-  delete process.env.PI_FF_EXECUTION_MODE;
+  delete process.env.PI_FY_STAGE;
+  delete process.env.PI_FY_REVIEW_LOOP;
+  delete process.env.PI_FY_EXECUTION_MODE;
   // Clean up globals that persist between tests (isolate: false)
   delete globalThis.__piCtx;
   // Clear the background-archive sweep timer so an activation in one test never leaks a live
@@ -199,7 +199,7 @@ export function createFakePi() {
 
 /** Build a complete FeatureState for testing, merging overrides on top of a real base. */
 export function makeFeatureState(slug: string, overrides: Partial<FeatureState>): FeatureState {
-  return { ...createFeatureState(slug, "docs/ff/designs/design-doc-placeholder.md"), ...overrides };
+  return { ...createFeatureState(slug, "docs/featyard/designs/design-doc-placeholder.md"), ...overrides };
 }
 
 export function getSingleHandler(handlers: Map<string, Handler[]>, event: string): Handler {
@@ -283,7 +283,7 @@ export async function writeDesignDoc(
 ) {
   const slug = opts.slug ?? "2026-05-10-test-feature";
   const tcId = opts.toolCallId ?? "tc-design";
-  const designPath = `docs/ff/designs/${slug}-design.md`;
+  const designPath = `docs/featyard/designs/${slug}-design.md`;
   await onToolCall(
     {
       type: "tool_call",
@@ -305,9 +305,9 @@ export async function writeDesignDoc(
   );
 }
 
-/** User invokes /skill:ff-plan → advances to plan phase. */
+/** User invokes /skill:fy-plan → advances to plan phase. */
 export async function readWritingPlansSkill(handlers: ExtendedToolHandlers, ctx: ExtensionContext) {
-  await handlers.onInput({ type: "input", text: "/skill:ff-plan" } as unknown as ExtensionEvent, ctx);
+  await handlers.onInput({ type: "input", text: "/skill:fy-plan" } as unknown as ExtensionEvent, ctx);
 }
 
 /** Write implementation plan → records artifact on plan phase. */
@@ -318,7 +318,7 @@ export async function writeImplementationPlan(
 ) {
   const slug = opts.slug ?? "2026-05-10-test-feature";
   const tcId = opts.toolCallId ?? "tc-plan";
-  const planPath = `.ff/task-plans/${slug}-task-plan.md`;
+  const planPath = `.featyard/task-plans/${slug}-task-plan.md`;
   await onToolCall(
     {
       type: "tool_call",
@@ -343,9 +343,9 @@ export async function writeImplementationPlan(
 export function writeFeatureStateFile(slug: string, overrides: Record<string, unknown> = {}): string {
   // Ensure we're in a temp directory so state files never leak to the real store.
   if (process.cwd() === ORIGINAL_CWD) withTempCwd();
-  // `withTempCwd` already ensured the `.ff` junction (idempotent), so state written here lands in
+  // `withTempCwd` already ensured the `.featyard` junction (idempotent), so state written here lands in
   // the external store and survives a later `workflowMonitorExtension` activation.
-  const stateDir = path.join(".ff", "feature-state");
+  const stateDir = path.join(".featyard", "feature-state");
   fs.mkdirSync(stateDir, { recursive: true });
   const statePath = path.join(stateDir, `${slug}.json`);
   const state = {
@@ -370,7 +370,7 @@ export function writeFeatureStateFile(slug: string, overrides: Record<string, un
     ...overrides,
   };
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
-  process.env.PI_FF_FEATURE = slug;
+  process.env.PI_FY_FEATURE = slug;
   return slug;
 }
 
@@ -445,8 +445,8 @@ export const BRAINSTORM_ACTIVE_STATE = {
 export const EXECUTE_ACTIVE = {
   workflow: {
     currentPhase: "implement",
-    designDoc: "docs/ff/designs/design.md",
-    planDoc: ".ff/task-plans/impl-task-plan.md",
+    designDoc: "docs/featyard/designs/design.md",
+    planDoc: ".featyard/task-plans/impl-task-plan.md",
   },
   completedAt: null,
 };
@@ -454,7 +454,7 @@ export const EXECUTE_ACTIVE = {
 export const PLAN_ACTIVE_STATE = {
   workflow: {
     currentPhase: "plan",
-    designDoc: "docs/ff/designs/test-design.md",
+    designDoc: "docs/featyard/designs/test-design.md",
     planDoc: null,
   },
   completedAt: null,

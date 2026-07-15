@@ -24,8 +24,8 @@ describe("execution mode update on skill invocation", () => {
 
   afterEach(() => {
     restoreExecSync();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_EXECUTION_MODE;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_EXECUTION_MODE;
     delete globalThis.__piCtx;
     vi.restoreAllMocks();
   });
@@ -34,10 +34,10 @@ describe("execution mode update on skill invocation", () => {
     const fake = createFakePi();
 
     // Save feature state to the temp dir that createFakePi set up
-    const state = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const state = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     (state as { executionMode?: string }).executionMode = executionMode ?? "subagent";
     saveFeatureState(state, null);
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
@@ -66,13 +66,13 @@ describe("execution mode update on skill invocation", () => {
     return ctx;
   }
 
-  test("input with /skill:ff-implement preserves existing subagent mode", async () => {
+  test("input with /skill:fy-implement preserves existing subagent mode", async () => {
     const slug = "2026-05-09-mode-test-1";
     const fake = await setupExtension(slug, null);
     const onInput = getSingleHandler(fake.handlers, "input");
 
     await onInput(
-      { type: "input", text: '/skill:ff-implement "docs/plans/test.md"' } as unknown as ExtensionEvent,
+      { type: "input", text: '/skill:fy-implement "docs/plans/test.md"' } as unknown as ExtensionEvent,
       makeCtx() as unknown as ExtensionContext,
     );
 
@@ -81,7 +81,7 @@ describe("execution mode update on skill invocation", () => {
     expect((updated as unknown as { executionMode: string }).executionMode).toBe("subagent");
   });
 
-  test("input with /skill:ff-implement preserves existing subagent mode", async () => {
+  test("input with /skill:fy-implement preserves existing subagent mode", async () => {
     const slug = "2026-05-09-mode-test-2";
     const fake = await setupExtension(slug, null);
     const state = loadFeatureState(slug, null);
@@ -92,7 +92,7 @@ describe("execution mode update on skill invocation", () => {
     const onInput = getSingleHandler(fake.handlers, "input");
 
     await onInput(
-      { type: "input", text: "/skill:ff-implement" } as unknown as ExtensionEvent,
+      { type: "input", text: "/skill:fy-implement" } as unknown as ExtensionEvent,
       makeCtx() as unknown as ExtensionContext,
     );
 
@@ -100,13 +100,13 @@ describe("execution mode update on skill invocation", () => {
     expect((updated as unknown as { executionMode: string }).executionMode).toBe("subagent");
   });
 
-  test('input with <skill name="ff-implement"> preserves existing subagent mode', async () => {
+  test('input with <skill name="fy-implement"> preserves existing subagent mode', async () => {
     const slug = "2026-05-09-mode-test-3";
     const fake = await setupExtension(slug, null);
     const onInput = getSingleHandler(fake.handlers, "input");
 
     await onInput(
-      { text: '<skill name="ff-implement" location="/path/to/SKILL.md">' } as unknown as ExtensionEvent,
+      { text: '<skill name="fy-implement" location="/path/to/SKILL.md">' } as unknown as ExtensionEvent,
       makeCtx() as unknown as ExtensionContext,
     );
 
@@ -126,7 +126,7 @@ describe("execution mode update on skill invocation", () => {
     const onInput = getSingleHandler(fake.handlers, "input");
 
     await onInput(
-      { type: "input", text: "/skill:ff-design" } as unknown as ExtensionEvent,
+      { type: "input", text: "/skill:fy-design" } as unknown as ExtensionEvent,
       makeCtx() as unknown as ExtensionContext,
     );
 
@@ -134,14 +134,14 @@ describe("execution mode update on skill invocation", () => {
     expect((updated as unknown as { executionMode: string }).executionMode).toBe("checkpoint");
   });
 
-  test("input with /skill:ff-implement preserves subagent-fork mode", async () => {
+  test("input with /skill:fy-implement preserves subagent-fork mode", async () => {
     const slug = "2026-05-09-mode-test-5";
     const fake = await setupExtension(slug, "subagent-fork");
 
     const onInput = getSingleHandler(fake.handlers, "input");
 
     await onInput(
-      { type: "input", text: "/skill:ff-implement" } as unknown as ExtensionEvent,
+      { type: "input", text: "/skill:fy-implement" } as unknown as ExtensionEvent,
       makeCtx() as unknown as ExtensionContext,
     );
 
@@ -149,14 +149,14 @@ describe("execution mode update on skill invocation", () => {
     expect((updated as unknown as { executionMode: string }).executionMode).toBe("subagent-fork");
   });
 
-  test("input with /skill:ff-implement preserves subagent-fork mode (no downgrade)", async () => {
+  test("input with /skill:fy-implement preserves subagent-fork mode (no downgrade)", async () => {
     const slug = "2026-05-09-mode-test-6";
     const fake = await setupExtension(slug, "subagent-fork");
 
     const onInput = getSingleHandler(fake.handlers, "input");
 
     await onInput(
-      { type: "input", text: '/skill:ff-implement "docs/plans/test.md"' } as unknown as ExtensionEvent,
+      { type: "input", text: '/skill:fy-implement "docs/plans/test.md"' } as unknown as ExtensionEvent,
       makeCtx() as unknown as ExtensionContext,
     );
 

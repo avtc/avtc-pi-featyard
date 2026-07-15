@@ -42,7 +42,7 @@ describe("phase_ready tool — stub registration", () => {
   afterEach(() => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("returns unsupported when no active workflow", async () => {
@@ -90,7 +90,7 @@ describe("phase_ready tool — stub registration", () => {
 
     // Write feature state with plan phase active
     writeFeatureStateFile("2026-05-20-test-feature", {
-      workflow: { currentPhase: "plan", designDoc: "docs/ff/designs/test-design.md", planDoc: null },
+      workflow: { currentPhase: "plan", designDoc: "docs/featyard/designs/test-design.md", planDoc: null },
     });
 
     // Trigger session_start to load feature state
@@ -105,13 +105,13 @@ describe("phase_ready tool — stub registration", () => {
       hasUI: false,
       ui: { setWidget: () => {} },
     } as unknown as ExtensionContext);
-    // Plan interceptor dispatches ff-implement when maxPlanReviewRounds=off
+    // Plan interceptor dispatches fy-implement when maxPlanReviewRounds=off
     expect((result.content[0] as unknown as { text: string }).text).toBe("");
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain('<skill name="ff-implement"');
+    expect(lastMessage.message).toContain('<skill name="fy-implement"');
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -122,8 +122,8 @@ describe("phase_ready tool — stub registration", () => {
     writeFeatureStateFile("2026-05-20-exec-feature", {
       workflow: {
         currentPhase: "implement",
-        designDoc: "docs/ff/designs/exec-design.md",
-        planDoc: ".ff/task-plans/exec-task-plan.md",
+        designDoc: "docs/featyard/designs/exec-design.md",
+        planDoc: ".featyard/task-plans/exec-task-plan.md",
       },
     });
 
@@ -151,28 +151,32 @@ describe("phase_ready tool — design non-auto mode", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
   });
 
-  test("non-auto mode: Proceed completes design, advances to plan, sends ff-plan", async () => {
+  test("non-auto mode: Proceed completes design, advances to plan, sends fy-plan", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    // Explicitly set maxPlanReviewRounds=off to test the direct-ff-plan path
+    // Explicitly set maxPlanReviewRounds=off to test the direct-fy-plan path
     setSetting("maxPlanReviewRounds", 0);
     const _slug = writeFeatureStateFile("2026-05-20-proceed-test", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
-        designDoc: "docs/ff/designs/2026-05-20-proceed-test-design.md",
+        designDoc: "docs/featyard/designs/2026-05-20-proceed-test-design.md",
         planDoc: null,
       },
-      design: { doc: "docs/ff/designs/2026-05-20-proceed-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+      design: {
+        doc: "docs/featyard/designs/2026-05-20-proceed-test-design.md",
+        reviewActive: false,
+        reviewLoopCount: 0,
+      },
     });
 
     // Create design doc on disk for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/2026-05-20-proceed-test-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-proceed-test-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -209,12 +213,12 @@ describe("phase_ready tool — design non-auto mode", () => {
     ).toBe(true);
     expect(lastEntry.data.featureState.workflow.currentPhase).toBe("plan");
 
-    // Verify ff-plan skill was sent
+    // Verify fy-plan skill was sent
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain("ff-plan");
+    expect(lastMessage.message).toContain("fy-plan");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -246,17 +250,21 @@ describe("phase_ready tool — design non-auto mode", () => {
     expect((result.content[0] as unknown as { text: string }).text).toBe("");
   });
 
-  test("non-auto mode: phase_ready completes design and sends ff-plan skill", async () => {
+  test("non-auto mode: phase_ready completes design and sends fy-plan skill", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-stage-test", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/2026-05-20-stage-test-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/2026-05-20-stage-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/2026-05-20-stage-test-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/2026-05-20-stage-test-design.md", reviewActive: false, reviewLoopCount: 0 },
     });
 
     // Create design doc on disk for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/2026-05-20-stage-test-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-stage-test-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -293,7 +301,7 @@ describe("phase_ready tool — design non-auto mode", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain("ff-plan");
+    expect(lastMessage.message).toContain("fy-plan");
   });
 
   test("non-auto mode: no UI available is a no-op", async () => {
@@ -323,15 +331,19 @@ describe("phase_ready tool — design non-auto mode", () => {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
-        designDoc: "docs/ff/designs/2026-05-20-real-issues-test-design.md",
+        designDoc: "docs/featyard/designs/2026-05-20-real-issues-test-design.md",
         planDoc: null,
       },
-      design: { doc: "docs/ff/designs/2026-05-20-real-issues-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+      design: {
+        doc: "docs/featyard/designs/2026-05-20-real-issues-test-design.md",
+        reviewActive: false,
+        reviewLoopCount: 0,
+      },
     });
 
     // Create design doc on disk for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/2026-05-20-real-issues-test-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-real-issues-test-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -369,7 +381,7 @@ describe("phase_ready tool — design non-auto mode", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain("ff-plan");
+    expect(lastMessage.message).toContain("fy-plan");
   });
 });
 
@@ -382,7 +394,7 @@ describe("phase_ready tool — design auto mode", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     // Clean up auto-agent callback
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
   });
@@ -391,13 +403,17 @@ describe("phase_ready tool — design auto mode", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-05-20-auto-test", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/2026-05-20-auto-test-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/2026-05-20-auto-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/2026-05-20-auto-test-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/2026-05-20-auto-test-design.md", reviewActive: false, reviewLoopCount: 0 },
     });
 
     // Create design doc on disk for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/2026-05-20-auto-test-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-auto-test-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -465,9 +481,9 @@ describe("phase_ready tool — design auto mode", () => {
       isPhaseDone({ currentPhase: lastEntry.data.featureState.workflow.currentPhase, completedAt: null }, "design"),
     ).toBe(true);
 
-    // Verify no ff-plan skill sent (auto-agent handles next feature)
+    // Verify no fy-plan skill sent (auto-agent handles next feature)
     const skillMessages = fake.sentMessages.filter((m: unknown) =>
-      (m as { message: string }).message.includes("ff-plan"),
+      (m as { message: string }).message.includes("fy-plan"),
     );
     expect(skillMessages.length).toBe(0);
   });
@@ -476,13 +492,17 @@ describe("phase_ready tool — design auto mode", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const _slug = writeFeatureStateFile("2026-05-20-auto-throw", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/2026-05-20-auto-throw-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/2026-05-20-auto-throw-design.md", reviewActive: false, reviewLoopCount: 0 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/2026-05-20-auto-throw-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/2026-05-20-auto-throw-design.md", reviewActive: false, reviewLoopCount: 0 },
     });
 
     // Create design doc on disk for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/2026-05-20-auto-throw-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-auto-throw-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -524,7 +544,7 @@ describe("phase_ready tool — edge cases", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
   });
 
@@ -595,12 +615,12 @@ describe("phase_ready tool — edge cases", () => {
     disableSubagentMode();
     const _result = await phaseReady.execute("tc-no-artifact", {}, undefined, undefined, ctx);
 
-    // Should still proceed — advanceWorkflowTo("plan") and send ff-plan
+    // Should still proceed — advanceWorkflowTo("plan") and send fy-plan
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain("ff-plan");
+    expect(lastMessage.message).toContain("fy-plan");
 
     // Verify persisted state: design is derived-done (pointer advanced to plan) — the new
     // pointer model has no artifact gate, so phase_ready completes design best-effort.
@@ -712,7 +732,7 @@ describe("phase_ready tool — remaining phase stubs", () => {
   afterEach(() => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test.each(unsupportedPhases)("returns unsupported for $phase phase", async ({ phase }) => {
@@ -720,8 +740,8 @@ describe("phase_ready tool — remaining phase stubs", () => {
     writeFeatureStateFile(`2026-05-20-${phase}-stub`, {
       workflow: {
         currentPhase: phase,
-        designDoc: "docs/ff/designs/test-design.md",
-        planDoc: ".ff/task-plans/test-task-plan.md",
+        designDoc: "docs/featyard/designs/test-design.md",
+        planDoc: ".featyard/task-plans/test-task-plan.md",
       },
     });
 
@@ -745,8 +765,8 @@ describe("phase_ready tool — remaining phase stubs", () => {
     writeFeatureStateFile("2026-05-20-review-stub", {
       workflow: {
         currentPhase: "review",
-        designDoc: "docs/ff/designs/test-design.md",
-        planDoc: ".ff/task-plans/test-task-plan.md",
+        designDoc: "docs/featyard/designs/test-design.md",
+        planDoc: ".featyard/task-plans/test-task-plan.md",
       },
     });
 
@@ -933,7 +953,7 @@ describe("phase_ready tool — verify phase", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     // Reset areAllTodosDone override
     const { _setAreAllTodosDoneOverride } = await import("../../src/integrations/todo-integration.js");
     _setAreAllTodosDoneOverride(NO_TODO_OVERRIDE);
@@ -975,8 +995,8 @@ describe("phase_ready tool — verify phase", () => {
     writeFeatureStateFile("2026-05-31-verify-ready", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-ready-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-ready-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-ready-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-ready-task-plan.md",
       },
     });
 
@@ -1013,7 +1033,7 @@ describe("phase_ready tool — verify phase", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-review"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
     expect(fake.sentMessages[0].options).toEqual({ deliverAs: "followUp" });
   });
 
@@ -1022,8 +1042,8 @@ describe("phase_ready tool — verify phase", () => {
     writeFeatureStateFile("2026-05-31-verify-no-tests", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-no-tests-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-no-tests-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-no-tests-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-no-tests-task-plan.md",
       },
     });
 
@@ -1040,15 +1060,15 @@ describe("phase_ready tool — verify phase", () => {
     expect(fake.sentMessages.length).toBe(0);
   });
 
-  test("with maxFeatureReviewRounds dispatches ff-review skill", async () => {
+  test("with maxFeatureReviewRounds dispatches fy-review skill", async () => {
     setSetting("maxFeatureReviewRounds", 3);
     setSetting("featureReviewMode", "general");
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-31-verify-review-loops", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-review-loops-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-review-loops-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-review-loops-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-review-loops-task-plan.md",
       },
     });
 
@@ -1068,7 +1088,7 @@ describe("phase_ready tool — verify phase", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toContain('<skill name="ff-review"');
+    expect(fake.sentMessages[0].message).toContain('<skill name="fy-review"');
     expect(fake.sentMessages[0].options).toEqual({ deliverAs: "followUp" });
   });
 
@@ -1077,8 +1097,8 @@ describe("phase_ready tool — verify phase", () => {
     writeFeatureStateFile("2026-05-31-verify-no-slug", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-no-slug-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-no-slug-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-no-slug-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-no-slug-task-plan.md",
       },
     });
 
@@ -1104,8 +1124,8 @@ describe("phase_ready tool — verify phase", () => {
     writeFeatureStateFile("2026-05-31-verify-already-complete", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-already-complete-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-already-complete-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-already-complete-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-already-complete-task-plan.md",
       },
     });
 
@@ -1131,8 +1151,8 @@ describe("phase_ready tool — verify phase", () => {
     writeFeatureStateFile("2026-05-31-verify-todo-block", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-todo-block-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-todo-block-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-todo-block-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-todo-block-task-plan.md",
       },
     });
 
@@ -1166,8 +1186,8 @@ describe("phase_ready tool — verify phase", () => {
     writeFeatureStateFile("2026-05-31-verify-todo-done", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-todo-done-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-todo-done-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-todo-done-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-todo-done-task-plan.md",
       },
     });
 
@@ -1195,7 +1215,7 @@ describe("phase_ready tool — verify phase", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-review"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
   });
 
   test("todo gate: no todos (fail-open) allows transition when tests pass", async () => {
@@ -1204,8 +1224,8 @@ describe("phase_ready tool — verify phase", () => {
     writeFeatureStateFile("2026-05-31-verify-no-todos", {
       workflow: {
         currentPhase: "verify",
-        designDoc: "docs/ff/designs/2026-05-31-verify-no-todos-design.md",
-        planDoc: ".ff/task-plans/2026-05-31-verify-no-todos-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-31-verify-no-todos-design.md",
+        planDoc: ".featyard/task-plans/2026-05-31-verify-no-todos-task-plan.md",
       },
     });
 
@@ -1233,6 +1253,6 @@ describe("phase_ready tool — verify phase", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-review"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
   });
 });

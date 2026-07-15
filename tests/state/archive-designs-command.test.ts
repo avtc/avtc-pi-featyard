@@ -7,7 +7,7 @@ import path from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension from "../../src/index.js";
-import { ensureFfJunction, resolveArchiveBase } from "../../src/state/artifact-junction.js";
+import { ensureFeatyardJunction, resolveArchiveBase } from "../../src/state/artifact-junction.js";
 import { cleanupAfterTest, createFakePi, setupPiCtx, TUI_MODE } from "../helpers/workflow-monitor-test-helpers.js";
 
 const DAY = 24 * 60 * 60;
@@ -46,12 +46,12 @@ function makeCtx(opts: { hasUI?: boolean; confirmResult?: boolean } = {}) {
 
 /** Resolve the live externalDir + archiveBase + the two design-doc roots for the current sandbox. */
 function resolveDesignsPaths() {
-  const jr = ensureFfJunction(process.cwd(), "current-branch", process.env.PI_FF_HOME ?? os.homedir(), "rename");
+  const jr = ensureFeatyardJunction(process.cwd(), "current-branch", process.env.PI_FY_HOME ?? os.homedir(), "rename");
   const externalDir = jr.externalDir;
   const archiveBase = resolveArchiveBase(jr);
-  // .ff/designs (out-of-repo via junction) + docs/ff/designs (in-repo).
+  // .featyard/designs (out-of-repo via junction) + docs/featyard/designs (in-repo).
   const localDesignsDir = path.join(externalDir, "designs");
-  const committedDesignsDir = path.join(process.cwd(), "docs", "ff", "designs");
+  const committedDesignsDir = path.join(process.cwd(), "docs", "featyard", "designs");
   return { externalDir, archiveBase, localDesignsDir, committedDesignsDir };
 }
 
@@ -62,7 +62,7 @@ function seedStaleDesign(dir: string, slug: string, ageDays: number): string {
   return p;
 }
 
-describe("ff:archive-designs <days> command", () => {
+describe("fy:archive-designs <days> command", () => {
   let originalCwd: string;
 
   beforeEach(() => {
@@ -74,7 +74,7 @@ describe("ff:archive-designs <days> command", () => {
     process.chdir(originalCwd);
   });
 
-  /** Activate the extension and return the /ff:archive-designs handler. */
+  /** Activate the extension and return the /fy:archive-designs handler. */
   async function setup() {
     const fake = createFakePi();
     await workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -88,8 +88,8 @@ describe("ff:archive-designs <days> command", () => {
       },
       TUI_MODE,
     );
-    const def = fake.registeredCommands.get("ff:archive-designs");
-    if (typeof def !== "function") throw new Error("ff:archive-designs command not registered");
+    const def = fake.registeredCommands.get("fy:archive-designs");
+    if (typeof def !== "function") throw new Error("fy:archive-designs command not registered");
     const handler = def as (args: string, ctx: ExtensionContext) => Promise<void>;
     return { fake, handler };
   }
@@ -100,7 +100,7 @@ describe("ff:archive-designs <days> command", () => {
     await handler("", ctx);
     expect(ctx.notifications).toHaveLength(1);
     expect(ctx.notifications[0][1]).toBe("error");
-    expect(ctx.notifications[0][0]).toMatch(/Usage: \/ff:archive-designs <days>/i);
+    expect(ctx.notifications[0][0]).toMatch(/Usage: \/fy:archive-designs <days>/i);
     expect(ctx.confirmCalls).toHaveLength(0);
   });
 
@@ -142,7 +142,9 @@ describe("ff:archive-designs <days> command", () => {
 
     // Confirm fired with the two-source message (singular for one doc each invocation — here 2 docs).
     expect(ctx.confirmCalls).toHaveLength(1);
-    expect(ctx.confirmCalls[0].message).toMatch(/relocates 2 design docs from \.ff\/designs and docs\/ff\/designs/i);
+    expect(ctx.confirmCalls[0].message).toMatch(
+      /relocates 2 design docs from \.featyard\/designs and docs\/featyard\/designs/i,
+    );
     expect(ctx.confirmCalls[0].message).toMatch(/reversible by moving them back/i);
     // Sources moved into the archive; no longer at the live paths.
     expect(existsSync(localSrc)).toBe(false);

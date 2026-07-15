@@ -5,8 +5,8 @@ import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
-import type { FeatureFlowConfig } from "../../src/settings/model-overrides.js";
-import { resetFeatureFlowConfig, setFeatureFlowConfig } from "../../src/settings/settings-ui.js";
+import type { FeatyardConfig } from "../../src/settings/model-overrides.js";
+import { resetFeatyardConfig, setFeatyardConfig } from "../../src/settings/settings-ui.js";
 import { loadFeatureState } from "../../src/state/feature-state.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
@@ -91,7 +91,7 @@ describe("skill-read model override removed", () => {
     setTestSettings(null);
 
     const ctx = createCtx(NO_BRANCH);
-    await readSkill(fake, ctx, "/skills/ff-review/SKILL.md", NO_SKILL_CONTENT);
+    await readSkill(fake, ctx, "/skills/fy-review/SKILL.md", NO_SKILL_CONTENT);
 
     expect(setModelCalls).toHaveLength(0);
   });
@@ -100,7 +100,7 @@ describe("skill-read model override removed", () => {
 describe("auto-advance model overrides", () => {
   beforeEach(async () => {
     _resetFeatureState();
-    resetFeatureFlowConfig();
+    resetFeatyardConfig();
   });
 
   test("setModel is called with review model override on verify→review via phase_ready", async () => {
@@ -135,8 +135,8 @@ describe("auto-advance model overrides", () => {
         },
         currentPhase: "verify",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -151,11 +151,11 @@ describe("auto-advance model overrides", () => {
     setTestSettings(null);
     setTestSettings(null);
 
-    setFeatureFlowConfig({
+    setFeatyardConfig({
       "stage-models": { review: "anthropic/claude-sonnet-4-5" },
       "default-model": null,
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     setSetting("maxFeatureReviewRounds", 3);
 
@@ -233,8 +233,8 @@ describe("auto-advance model overrides", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -250,11 +250,11 @@ describe("auto-advance model overrides", () => {
     setTestSettings(null);
     setTestSettings(null);
 
-    setFeatureFlowConfig({
+    setFeatyardConfig({
       "stage-models": { verify: "deepseek/deepseek-chat" },
       "default-model": null,
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     setSetting("maxFeatureReviewRounds", 0);
 
@@ -277,19 +277,19 @@ describe("auto-advance model overrides", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, ctx);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
-    expect(fake.sentMessages[0].message).toContain("ff-verify");
+    expect(fake.sentMessages[0].message).toContain("fy-verify");
   });
 });
 
 describe("env var sync after state transitions", () => {
   beforeEach(async () => {
     _resetFeatureState();
-    resetFeatureFlowConfig();
-    delete process.env.PI_FF_STAGE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    resetFeatyardConfig();
+    delete process.env.PI_FY_STAGE;
+    delete process.env.PI_FY_REVIEW_LOOP;
   });
 
-  test("verify→review via phase_ready syncs PI_FF_STAGE to review", async () => {
+  test("verify→review via phase_ready syncs PI_FY_STAGE to review", async () => {
     const slug = "2026-05-12-env-verify-review";
     const { fake, registeredTools, api } = createPiWithToolCapture();
     api.setModel = () => Promise.resolve(SET_MODEL_SUCCEEDED);
@@ -298,8 +298,8 @@ describe("env var sync after state transitions", () => {
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "verify",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
       review: { reviewLoopCount: 3, reviewHistory: [] },
     });
@@ -342,13 +342,13 @@ describe("env var sync after state transitions", () => {
     await phaseReady.execute("tc-pr1", {}, undefined, undefined, ctx);
 
     // After verify→review transition, env vars should be synced
-    expect(process.env.PI_FF_STAGE).toBe("review");
+    expect(process.env.PI_FY_STAGE).toBe("review");
     // Loop count is the durable source of truth in feature-state (consumers read it
     // directly, not mirrored to an env var).
     expect(loadFeatureState(slug, null)?.review.reviewLoopCount).toBe(3);
   });
 
-  test("implement→verify via task_ready_advance syncs PI_FF_STAGE to verify", async () => {
+  test("implement→verify via task_ready_advance syncs PI_FY_STAGE to verify", async () => {
     const slug = "2026-05-12-env-execute-verify";
     const { fake, registeredTools, api } = createPiWithToolCapture();
     api.setModel = () => Promise.resolve(SET_MODEL_SUCCEEDED);
@@ -366,8 +366,8 @@ describe("env var sync after state transitions", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -397,7 +397,7 @@ describe("env var sync after state transitions", () => {
     await taskReadyAdvance.execute("tc-tra1", {}, undefined, undefined, ctx);
 
     // After implement→verify transition, env vars should be synced
-    expect(process.env.PI_FF_STAGE).toBe("verify");
+    expect(process.env.PI_FY_STAGE).toBe("verify");
   });
 
   test("session_start reload syncs env vars from restored state", async () => {
@@ -410,8 +410,8 @@ describe("env var sync after state transitions", () => {
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "review",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
       review: { reviewLoopCount: 5, reviewHistory: [] },
     });
@@ -424,14 +424,14 @@ describe("env var sync after state transitions", () => {
     const ctx = createCtx(NO_BRANCH);
 
     // Ensure env vars are not set before reload
-    delete process.env.PI_FF_STAGE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_STAGE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
     // After reload, the stage env var is restored from feature state; the review
     // loop count lives in feature-state (durable source of truth) directly.
-    expect(process.env.PI_FF_STAGE).toBe("review");
+    expect(process.env.PI_FY_STAGE).toBe("review");
     expect(loadFeatureState(slug, null)?.review.reviewLoopCount).toBe(5);
   });
 });
@@ -458,8 +458,8 @@ describe("parseModelRef with multi-slash strings", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -473,11 +473,11 @@ describe("parseModelRef with multi-slash strings", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setFeatureFlowConfig({
+    setFeatyardConfig({
       "stage-models": { verify: "openrouter/anthropic/claude-sonnet-4-5" },
       "default-model": null,
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     setSetting("maxFeatureReviewRounds", 0);
 
@@ -499,14 +499,14 @@ describe("parseModelRef with multi-slash strings", () => {
 
     const onSkillRead = getSingleHandler(fake.handlers, "input");
     try {
-      await onSkillRead({ type: "input", text: "/skill:ff-verify" } as unknown as ExtensionEvent, ctx);
+      await onSkillRead({ type: "input", text: "/skill:fy-verify" } as unknown as ExtensionEvent, ctx);
 
       // parseModelRef should split on first slash: provider=openrouter, id=anthropic/claude-sonnet-4-5
       expect(registryCalls.length).toBeGreaterThanOrEqual(1);
       expect(registryCalls[0].provider).toBe("openrouter");
       expect(registryCalls[0].id).toBe("anthropic/claude-sonnet-4-5");
     } finally {
-      resetFeatureFlowConfig();
+      resetFeatyardConfig();
     }
   });
 });
@@ -616,8 +616,8 @@ describe("subagent tool guards", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -659,8 +659,8 @@ describe("phase_ready implement-phase redirect", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -710,8 +710,8 @@ describe("phase_ready implement-phase redirect", () => {
           },
           currentPhase: phase,
           artifacts: {
-            design: `docs/ff/designs/${slug}-design.md`,
-            plan: `.ff/task-plans/${slug}-task-plan.md`,
+            design: `docs/featyard/designs/${slug}-design.md`,
+            plan: `.featyard/task-plans/${slug}-task-plan.md`,
             implement: null,
             verify: null,
             review: null,
@@ -769,7 +769,7 @@ describe("session start model override", () => {
         },
         currentPhase: "plan",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
           plan: null,
           implement: null,
           verify: null,
@@ -782,16 +782,16 @@ describe("session start model override", () => {
     });
 
     // CRITICAL: set env var so session_start enters the feature-state loading path
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setFeatureFlowConfig({
+    setFeatyardConfig({
       "stage-models": {},
       "default-model": "anthropic/claude-sonnet-4-5",
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const ctx = {
       hasUI: true,
@@ -814,7 +814,7 @@ describe("session start model override", () => {
       expect(setModelCalls.length).toBeGreaterThanOrEqual(1);
       expect(setModelCalls[0]).toEqual({ provider: "anthropic", id: "claude-sonnet-4-5" });
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -847,7 +847,7 @@ describe("session start model override", () => {
         },
         currentPhase: "plan",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
           plan: null,
           implement: null,
           verify: null,
@@ -860,7 +860,7 @@ describe("session start model override", () => {
     });
 
     // CRITICAL: set env var so session_start enters the feature-state loading path
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
@@ -886,7 +886,7 @@ describe("session start model override", () => {
       // setModel should NOT have been called for subagent session
       expect(setModelCalls.length).toBe(0);
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
       disableSubagentMode();
     }
   });
@@ -922,7 +922,7 @@ describe("session start model override", () => {
         },
         currentPhase: "plan",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
           plan: null,
           implement: null,
           verify: null,
@@ -934,17 +934,17 @@ describe("session start model override", () => {
       reviewHistory: [],
     });
 
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
     enableSubagentMode(); // RPC child: IS a subagent, but has UI capability
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setFeatureFlowConfig({
+    setFeatyardConfig({
       "stage-models": {},
       "default-model": "anthropic/claude-sonnet-4-5",
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const ctx = {
       hasUI: true, // RPC child has UI capability
@@ -963,7 +963,7 @@ describe("session start model override", () => {
       // setModel should NOT be called for an RPC subagent (migrated gate skips it):
       expect(setModelCalls.length).toBe(0);
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
       disableSubagentMode();
     }
   });
@@ -996,7 +996,7 @@ describe("session start model override", () => {
         },
         currentPhase: "plan",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
           plan: null,
           implement: null,
           verify: null,
@@ -1009,17 +1009,17 @@ describe("session start model override", () => {
     });
 
     // CRITICAL: set env var so session_start enters the feature-state loading path
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
     // Both stage-models and default-model configured — stage-models should win
-    setFeatureFlowConfig({
+    setFeatyardConfig({
       "stage-models": { plan: "openai/gpt-4o" },
       "default-model": "anthropic/claude-sonnet-4-5",
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const ctx = {
       hasUI: true,
@@ -1043,7 +1043,7 @@ describe("session start model override", () => {
       expect(setModelCalls.length).toBeGreaterThanOrEqual(1);
       expect(setModelCalls[0]).toEqual({ provider: "openai", id: "gpt-4o" });
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -1075,7 +1075,7 @@ describe("session start model override", () => {
         },
         currentPhase: "plan",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
           plan: null,
           implement: null,
           verify: null,
@@ -1087,7 +1087,7 @@ describe("session start model override", () => {
       reviewHistory: [],
     });
 
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
@@ -1113,7 +1113,7 @@ describe("session start model override", () => {
       // setModel should NOT be called when model is not found in registry
       expect(setModelCalls.length).toBe(0);
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -1145,7 +1145,7 @@ describe("session start model override", () => {
         },
         currentPhase: "plan",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
           plan: null,
           implement: null,
           verify: null,
@@ -1157,17 +1157,17 @@ describe("session start model override", () => {
       reviewHistory: [],
     });
 
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
     // No model overrides configured at all
-    setFeatureFlowConfig({
+    setFeatyardConfig({
       "stage-models": {},
       "default-model": null,
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const ctx = {
       hasUI: true,
@@ -1190,7 +1190,7 @@ describe("session start model override", () => {
       // setModel should NOT be called when no override is configured
       expect(setModelCalls.length).toBe(0);
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 });

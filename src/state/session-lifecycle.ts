@@ -30,7 +30,7 @@ import type { ICompaction, IGuardrails, IPhaseReady, ISessionLifecycle } from ".
 import { withCoordinator } from "../snippets/vendored/subscribe-to-dialog-coordinator.js";
 import { type FeatureSession, NO_ACTIVE_FEATURE_STATE } from "../state/feature-session.js";
 import { clearPostTurnFollowUp } from "../state/post-turn-dispatch.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 import { recoverArtifactsFromDisk, trackSessionFileInState } from "./feature-management.js";
 import {
   DEFAULT_DIR,
@@ -39,12 +39,7 @@ import {
   stateFilePath as featureStateFilePath,
   loadFeatureState,
 } from "./feature-state.js";
-import {
-  FEATURE_FLOW_STATE_ENTRY_TYPE,
-  isSubagentSession,
-  persistState,
-  reconstructState,
-} from "./state-persistence.js";
+import { FEATYARD_STATE_ENTRY_TYPE, isSubagentSession, persistState, reconstructState } from "./state-persistence.js";
 
 export interface SessionLifecycleDeps {
   pi: ExtensionAPI;
@@ -109,7 +104,7 @@ export function createSessionLifecycle(deps: SessionLifecycleDeps): ISessionLife
    * Restore workflow state from session branch entries.
    */
   const restoreFromSessionEntries = (ctx: ExtensionContext): boolean => {
-    const data = findLatestCustomEntry(ctx, FEATURE_FLOW_STATE_ENTRY_TYPE);
+    const data = findLatestCustomEntry(ctx, FEATYARD_STATE_ENTRY_TYPE);
     if (data) {
       handler.setFullState(data);
       const slug = handler.getActiveFeatureSlug();
@@ -153,7 +148,7 @@ export function createSessionLifecycle(deps: SessionLifecycleDeps): ISessionLife
   };
 
   /**
-   * Shared reset logic used by /ff:reset, /resume session_start, and user-initiated /new.
+   * Shared reset logic used by /fy:reset, /resume session_start, and user-initiated /new.
    */
   function performWorkflowReset(): void {
     setFinishPhaseWhitelisted(false);
@@ -202,8 +197,8 @@ export function createSessionLifecycle(deps: SessionLifecycleDeps): ISessionLife
       }
       return false; // do not continue to feature binding
     }
-    if (process.env.PI_FF_FEATURE && !isSubagentSession()) {
-      const slug = process.env.PI_FF_FEATURE;
+    if (process.env.PI_FY_FEATURE && !isSubagentSession()) {
+      const slug = process.env.PI_FY_FEATURE;
       // Headless / non-interactive: no UI to prompt — proceed without the continue/reset dialog
       // (mirrors the hasUI guard c6fee0b9 added to resolveBaseBranch). The feature stays active;
       // a later interactive session can still offer the reset choice.
@@ -227,15 +222,15 @@ export function createSessionLifecycle(deps: SessionLifecycleDeps): ISessionLife
   }
 
   /**
-   * Bind feature from PI_FF_FEATURE env var: reconstruct state,
+   * Bind feature from PI_FY_FEATURE env var: reconstruct state,
    * sync env vars, optionally resume last session, apply execution mode.
    */
   async function bindFeatureFromEnv(ctx: ExtensionContext): Promise<boolean> {
-    const slug = process.env.PI_FF_FEATURE;
+    const slug = process.env.PI_FY_FEATURE;
     if (!slug) return false;
     const stateFile = loadFeatureState(slug, DEFAULT_DIR);
     if (!stateFile) {
-      log.warn(`PI_FF_FEATURE=${slug} but no state file found — clearing env var`);
+      log.warn(`PI_FY_FEATURE=${slug} but no state file found — clearing env var`);
       clearActiveFeatureEnv();
       return false;
     }
@@ -295,7 +290,7 @@ export function createSessionLifecycle(deps: SessionLifecycleDeps): ISessionLife
     setFinishPhaseWhitelisted(false);
     const reason = ((event as unknown as Record<string, unknown>).reason as string | undefined) ?? "startup";
     log.info(
-      `session_start fired — reason=${reason}, hasUI=${ctx.hasUI}, PI_FF_FEATURE=${process.env.PI_FF_FEATURE ?? "unset"}`,
+      `session_start fired — reason=${reason}, hasUI=${ctx.hasUI}, PI_FY_FEATURE=${process.env.PI_FY_FEATURE ?? "unset"}`,
     );
 
     handler.setActiveFeatureState(NO_ACTIVE_FEATURE_STATE);
@@ -314,13 +309,13 @@ export function createSessionLifecycle(deps: SessionLifecycleDeps): ISessionLife
       if (resetHandled) return;
     }
 
-    if (process.env.PI_FF_FEATURE) {
+    if (process.env.PI_FY_FEATURE) {
       const bound = await bindFeatureFromEnv(ctx);
       if (bound) return;
     }
 
     if (isSubagentSession()) {
-      log.warn("Subagent session started without PI_FF_FEATURE — no feature loaded");
+      log.warn("Subagent session started without PI_FY_FEATURE — no feature loaded");
       clearAndReset();
       return;
     }

@@ -12,7 +12,7 @@ import type { Text } from "@earendil-works/pi-tui";
 import { afterEach, describe, expect, test } from "vitest";
 import type { FeatureSession } from "../../src/state/feature-session.js";
 import type { FeatureState } from "../../src/state/feature-state.js";
-import { updateWidget } from "../../src/ui/feature-flow-widget.js";
+import { updateWidget } from "../../src/ui/featyard-widget.js";
 import { setupPiCtx, TUI_MODE } from "../helpers/workflow-monitor-test-helpers.js";
 
 type WidgetRenderer = (tui: null, theme: Theme) => Text;

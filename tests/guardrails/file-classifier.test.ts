@@ -17,7 +17,7 @@ import {
   resetExtensionOverride,
 } from "../../src/guardrails/file-classifier.js";
 import workflowMonitorExtension from "../../src/index.js";
-import { resetFeatureFlowConfig } from "../../src/settings/settings-ui.js";
+import { resetFeatyardConfig } from "../../src/settings/settings-ui.js";
 import { createFakePi } from "../helpers/workflow-monitor-test-helpers.js";
 
 type OverrideResult = ReturnType<typeof buildExtensionOverride>;
@@ -339,11 +339,11 @@ describe("isSourceFile", () => {
   test("does not match.sh files (shell excluded by design)", () => {
     expect(isSourceFile("scripts/deploy.sh")).toBe(false);
   });
-  test("does not match files inside dotfolders (.ff/,.git/,.vscode/,.github/)", () => {
-    expect(isSourceFile(".ff/research/scratch/foo.ts")).toBe(false);
-    expect(isSourceFile(".ff/task-plans/x.ts")).toBe(false);
+  test("does not match files inside dotfolders (.featyard/,.git/,.vscode/,.github/)", () => {
+    expect(isSourceFile(".featyard/research/scratch/foo.ts")).toBe(false);
+    expect(isSourceFile(".featyard/task-plans/x.ts")).toBe(false);
     expect(isSourceFile(".git/hooks/foo.ts")).toBe(false);
-    expect(isSourceFile(".pi/feature-flow/foo.ts")).toBe(false);
+    expect(isSourceFile(".pi/featyard/foo.ts")).toBe(false);
     expect(isSourceFile(".vscode/foo.ts")).toBe(false);
     expect(isSourceFile(".github/workflows/ci.ts")).toBe(false);
   });
@@ -608,23 +608,23 @@ describe("syncSourceExtensions real wiring (integration)", () => {
     resetExtensionOverride();
   });
 
-  test("workflowMonitorExtension init applies sourceExtensions from feature-flow config", async () => {
+  test("workflowMonitorExtension init applies sourceExtensions from featyard config", async () => {
     delete (globalThis as unknown as Record<string, unknown>).__piWorkflowMonitor;
 
     const fake = createFakePi();
-    // Write a feature-flow section to the project settings.json (temp cwd) so
-    // loadFeatureFlowConfig reads source-extensions from disk during init.
+    // Write a featyard section to the project settings.json (temp cwd) so
+    // loadFeatyardConfig reads source-extensions from disk during init.
     // (settings onLoad hook resets the config cache, so a pre-seeded in-memory
     //  config would be wiped — disk is the durable source.)
     const piDir = path.join(process.cwd(), ".pi");
     fs.mkdirSync(piDir, { recursive: true });
     fs.writeFileSync(
       path.join(piDir, "settings.json"),
-      JSON.stringify({ "avtc-pi-feature-flow": { "source-extensions": [".ts", ".py"] } }),
+      JSON.stringify({ "avtc-pi-featyard": { "source-extensions": [".ts", ".py"] } }),
     );
 
     await workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
-    resetFeatureFlowConfig();
+    resetFeatyardConfig();
 
     // syncSourceExtensions should have applied the [.ts, .py] override
     // so isSourceFile only matches .ts and .py (not .rs, .go, etc.)
@@ -643,13 +643,13 @@ describe("syncSourceExtensions real wiring (integration)", () => {
     delete (globalThis as unknown as Record<string, unknown>).__piWorkflowMonitor;
 
     const fake = createFakePi();
-    // Project settings.json with a feature-flow section but NO source-extensions.
+    // Project settings.json with a featyard section but NO source-extensions.
     const piDir = path.join(process.cwd(), ".pi");
     fs.mkdirSync(piDir, { recursive: true });
-    fs.writeFileSync(path.join(piDir, "settings.json"), JSON.stringify({ "avtc-pi-feature-flow": {} }));
+    fs.writeFileSync(path.join(piDir, "settings.json"), JSON.stringify({ "avtc-pi-featyard": {} }));
 
     await workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
-    resetFeatureFlowConfig();
+    resetFeatyardConfig();
 
     // Defaults should be restored — .rs and .go are in the default set
     expect(isSourceFile("file.rs")).toBe(true);

@@ -26,11 +26,13 @@ afterEach(() => {
 
 describe("worthNotesPath", () => {
   test("slug-based path when slug provided", () => {
-    expect(worthNotesPath("2026-06-29-x", "2026-06-29")).toBe(".ff/reviews/2026-06-29-x/2026-06-29-x-worth-notes.md");
+    expect(worthNotesPath("2026-06-29-x", "2026-06-29")).toBe(
+      ".featyard/reviews/2026-06-29-x/2026-06-29-x-worth-notes.md",
+    );
   });
 
   test("date-fallback path when slug is null", () => {
-    expect(worthNotesPath(null, "2026-06-29")).toBe(".ff/reviews/2026-06-29/2026-06-29-worth-notes.md");
+    expect(worthNotesPath(null, "2026-06-29")).toBe(".featyard/reviews/2026-06-29/2026-06-29-worth-notes.md");
   });
 });
 
@@ -81,17 +83,17 @@ describe("worthNotesPointer", () => {
 
 describe("worthNotesPointerFor", () => {
   test("returns the pointer when the slug's worth-notes file exists and is non-empty", () => {
-    // worthNotesPointerFor builds `.ff/reviews/<slug>/<slug>-worth-notes.md` under cwd; run in a
+    // worthNotesPointerFor builds `.featyard/reviews/<slug>/<slug>-worth-notes.md` under cwd; run in a
     // temp cwd so the relative path resolves into the temp dir.
     const root = makeTempDir("for-present");
     const originalCwd = process.cwd();
     process.chdir(root);
     try {
       const slug = "2026-06-29-for";
-      mkdirSync(path.join(".ff", "reviews", slug), { recursive: true });
-      writeFileSync(path.join(".ff", "reviews", slug, `${slug}-worth-notes.md`), "## notes\n- x\n");
+      mkdirSync(path.join(".featyard", "reviews", slug), { recursive: true });
+      writeFileSync(path.join(".featyard", "reviews", slug, `${slug}-worth-notes.md`), "## notes\n- x\n");
 
-      expect(worthNotesPointerFor(slug)).toBe(`📝 worth-notes: .ff/reviews/${slug}/${slug}-worth-notes.md`);
+      expect(worthNotesPointerFor(slug)).toBe(`📝 worth-notes: .featyard/reviews/${slug}/${slug}-worth-notes.md`);
     } finally {
       process.chdir(originalCwd);
     }
@@ -109,16 +111,16 @@ describe("worthNotesPointerFor", () => {
   });
 
   test("null slug uses the date-fallback path and resolves when that file exists", () => {
-    // A null slug (manual run without an active feature) falls back to.ff/reviews/<today>/.
+    // A null slug (manual run without an active feature) falls back to.featyard/reviews/<today>/.
     const root = makeTempDir("for-null-present");
     const originalCwd = process.cwd();
     process.chdir(root);
     try {
       const today = new Date().toISOString().slice(0, 10);
-      mkdirSync(path.join(".ff", "reviews", today), { recursive: true });
-      writeFileSync(path.join(".ff", "reviews", today, `${today}-worth-notes.md`), "## notes\n- x\n");
+      mkdirSync(path.join(".featyard", "reviews", today), { recursive: true });
+      writeFileSync(path.join(".featyard", "reviews", today, `${today}-worth-notes.md`), "## notes\n- x\n");
 
-      expect(worthNotesPointerFor(null)).toBe(`📝 worth-notes: .ff/reviews/${today}/${today}-worth-notes.md`);
+      expect(worthNotesPointerFor(null)).toBe(`📝 worth-notes: .featyard/reviews/${today}/${today}-worth-notes.md`);
     } finally {
       process.chdir(originalCwd);
     }

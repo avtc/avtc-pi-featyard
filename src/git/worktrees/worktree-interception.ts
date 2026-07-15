@@ -15,9 +15,9 @@ import { bashSingleQuote, getActiveWorktreeContext } from "./worktree-helpers.js
 /** File tools that require a path parameter */
 const FILE_TOOLS_REQUIRED_PATH = new Set(["read", "write", "edit"]);
 
-/** Injected into the system prompt via before_agent_start so the agent never commits .ff/ files. */
-const FF_INSTRUCTION =
-  "\n\n⚠️ `.ff/` files are auto-managed external storage — gitignored, never committed. Never `git add -f` them.";
+/** Injected into the system prompt via before_agent_start so the agent never commits .featyard/ files. */
+const FY_INSTRUCTION =
+  "\n\n⚠️ `.featyard/` files are auto-managed external storage — gitignored, never committed. Never `git add -f` them.";
 
 /** File tools with an optional path parameter */
 const FILE_TOOLS_OPTIONAL_PATH = new Set(["ls", "find", "grep"]);
@@ -51,15 +51,15 @@ export function registerWorktreeInterception(pi: ExtensionAPI, deps: { handler: 
     return undefined;
   });
 
-  // --- System prompt update for worktree CWD and .ff/ storage warning ---
+  // --- System prompt update for worktree CWD and .featyard/ storage warning ---
   pi.on("before_agent_start", async (event, _ctx) => {
     let modified = event.systemPrompt;
     const wtx = getActiveWorktreeContext(handler);
     if (wtx) {
       modified = modified.replace(/Current working directory: .+/, `Current working directory: ${wtx.worktreePath}`);
     }
-    // Append .ff/ external storage instruction (idempotent — safe if multiple handlers run)
-    modified += FF_INSTRUCTION;
+    // Append .featyard/ external storage instruction (idempotent — safe if multiple handlers run)
+    modified += FY_INSTRUCTION;
     if (modified === event.systemPrompt) return undefined;
     return { systemPrompt: modified };
   });

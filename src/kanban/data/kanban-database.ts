@@ -71,7 +71,7 @@ export const NO_DONE_HIDE_AFTER_MS: number | undefined = undefined;
 
 /**
  * Prefix marking a feature-lock `session_id` as "interactive". Such locks are
- * created by design-doc save, manual kanban lock, or /ff:auto-stop, carry no
+ * created by design-doc save, manual kanban lock, or /fy:auto-stop, carry no
  * heartbeat, and are NEVER swept by cleanupExpiredLocks (they persist until
  * explicitly released or reassigned to an auto-agent). Auto-agent locks use a
  * UUID `session_id` instead. The `cleanupExpiredLocks` SQL `NOT LIKE` predicate
@@ -783,7 +783,7 @@ export class KanbanDatabase {
 
   /**
    * Reassign a feature lock from one session to another (transfer ownership).
-   * Currently used by /ff:auto-stop to hand an auto-agent lock back to the
+   * Currently used by /fy:auto-stop to hand an auto-agent lock back to the
    * interactive session (agent UUID → session:<slug>). The inverse takeover
    * (session:<slug> → agent UUID) is performed in tryMatchSessionSlug via
    * unlockFeature()+lockFeature(), not this method.
@@ -801,7 +801,7 @@ export class KanbanDatabase {
    *
    * IMPORTANT: only auto-agent locks (session_id NOT LIKE 'session:%') are swept.
    * Interactive locks (session_id = 'session:<slug>', created on design-doc save,
-   * /ff:auto-stop, or manual kanban lock) have no heartbeat and must persist until
+   * /fy:auto-stop, or manual kanban lock) have no heartbeat and must persist until
    * explicitly released or reassigned — never swept for staleness. Otherwise a
    * user who steps away (or whose pi crashes) could have their feature stolen by
    * an auto-agent.

@@ -16,7 +16,7 @@ export type ToolCallInspection = Violation | null;
 
 // Verification gate + GuardrailsState shapes + createGuardrailsState factory live in
 // the SessionGuardrails holder (guardrails/session-guardrails.ts) — ownership aligns
-// with responsibility. Re-exported here for the FeatureFlowState composition below.
+// with responsibility. Re-exported here for the FeatyardState composition below.
 export type { GuardrailsState, VerificationGate } from "../guardrails/session-guardrails.js";
 export { createGuardrailsState } from "../guardrails/session-guardrails.js";
 
@@ -27,13 +27,13 @@ import type { GuardrailsState, VerificationGate } from "../guardrails/session-gu
  * single source of truth, composed with the session-only guardrails tier.
  * featureState === null means no feature is active.
  */
-export interface FeatureFlowState {
+export interface FeatyardState {
   featureState: import("../state/feature-state.js").FeatureState | null;
   guardrailsState: import("../guardrails/session-guardrails.js").GuardrailsState;
 }
 
-/** Sparse update applied to a feature-flow session (only set sections change). */
-export type FeatureFlowStatePatch = {
+/** Sparse update applied to a featyard session (only set sections change). */
+export type FeatyardStatePatch = {
   featureState?: import("../state/feature-state.js").FeatureState | null;
   guardrailsState?: Partial<import("../guardrails/session-guardrails.js").GuardrailsState>;
 };
@@ -68,13 +68,13 @@ export interface FeatureSession {
   handleReadOrInvestigation(toolName: string, path: string): void;
   getVerificationState(): VerificationGate;
   recordVerificationWaiver(): void;
-  /** Process a skill invocation input (e.g. /skill:ff-plan); returns whether the phase changed. */
+  /** Process a skill invocation input (e.g. /skill:fy-plan); returns whether the phase changed. */
   processSkillInput(text: string): boolean;
   /** Record a doc write into the phase progression; returns whether state changed. */
   recordDoc(path: string): boolean;
   getWorkflowState(): PhaseProgressionState | null;
-  getFullState(): FeatureFlowState;
-  setFullState(snapshot: FeatureFlowStatePatch): void;
+  getFullState(): FeatyardState;
+  setFullState(snapshot: FeatyardStatePatch): void;
   restoreWorkflowStateFromBranch(branch: SessionEntry[]): void;
   /** Extension-initiated: current phase verified done → route one step (review/uat-aware). Returns the routing decision; callers persist + handle `{completed}` (markFeatureDone). */
   completeCurrentWorkflowPhase(config: RouteConfig): RouteResult;
@@ -173,14 +173,14 @@ export function createFeatureSession(options: FeatureSessionOptions | null): Fea
       return tracker.getState();
     },
 
-    getFullState(): FeatureFlowState {
+    getFullState(): FeatyardState {
       return {
         featureState: recordStore.get(),
         guardrailsState: guardrails.getSnapshot(),
       };
     },
 
-    setFullState(snapshot: FeatureFlowStatePatch) {
+    setFullState(snapshot: FeatyardStatePatch) {
       if (snapshot.featureState !== undefined) {
         // Load/swap the active feature record and seed the workflow engine from it.
         recordStore.set(snapshot.featureState);

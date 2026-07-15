@@ -3,7 +3,7 @@
 
 /**
  * `task_ready_advance` — native pi tool invoked by the implementer at each
- * plan-task boundary during the implement phase of an active feature-flow workflow.
+ * plan-task boundary during the implement phase of an active featyard workflow.
  *
  * One tool owns all implement-phase task transitions:
  *   - START a task           (currentTask == null, nextTask set)
@@ -12,7 +12,7 @@
  *
  * Between START and advance, the tool drives a per-task gate cycle: after a task
  * is implemented, the model calls this tool, and the extension either dispatches
- * a fresh `ff-task-gate` round (verify/review subagents run, model triages,
+ * a fresh `fy-task-gate` round (verify/review subagents run, model triages,
  * recalls the tool with fixable counts) or advances. The gate cycle is bound by
  * `maxTaskReviewRounds` (stops when clean; no escalation at cap). The cycle is
  * dispatch-driven (mirrors `phase_ready`): the model calls the tool and waits for
@@ -22,7 +22,7 @@
  * counter (sole incrementer = this tool; `resolveReviewLoopIndex` is a pure read
  * that numbers both per-task agents' report files).
  *
- * Gated: blocked outside an active feature-flow workflow and outside the implement
+ * Gated: blocked outside an active featyard workflow and outside the implement
  * phase (returns a reason instead of executing).
  */
 
@@ -52,13 +52,13 @@ const Schema = Type.Object({
   verifierIssuesFixed: Type.Optional(
     Type.Number({
       description:
-        "Fixable issues you fixed this pass from the ff-task-verifier report (exclude false-positives and cannot-fix). Omit on START/entry.",
+        "Fixable issues you fixed this pass from the fy-task-verifier report (exclude false-positives and cannot-fix). Omit on START/entry.",
     }),
   ),
   reviewerIssuesFixed: Type.Optional(
     Type.Number({
       description:
-        "Fixable issues you fixed this pass from the ff-general-reviewer report, plus issues you self-found and fixed (exclude false-positives and cannot-fix). Omit on START/entry.",
+        "Fixable issues you fixed this pass from the fy-general-reviewer report, plus issues you self-found and fixed (exclude false-positives and cannot-fix). Omit on START/entry.",
     }),
   ),
   nextTask: Type.Optional(
@@ -76,22 +76,22 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
     name: "task_ready_advance",
     label: "",
     description:
-      "Use this tool ONLY when instructed by ff-implement skill. Start a task, advance to the next, or — on the last task, with nextTask omitted — finish implementation. After implementing a task, call it to enter the per-task gate cycle (the extension dispatches the gates or advances). Pass the fixable issues you fixed this pass per gate (verifierIssuesFixed, reviewerIssuesFixed; omit if no gates ran). Track active task from existing task-plan document. Not related to todo tools or items.",
+      "Use this tool ONLY when instructed by fy-implement skill. Start a task, advance to the next, or — on the last task, with nextTask omitted — finish implementation. After implementing a task, call it to enter the per-task gate cycle (the extension dispatches the gates or advances). Pass the fixable issues you fixed this pass per gate (verifierIssuesFixed, reviewerIssuesFixed; omit if no gates ran). Track active task from existing task-plan document. Not related to todo tools or items.",
     parameters: Schema,
 
     async execute(_id, params, _signal, _onUpdate, ctx: ExtensionContext) {
-      // Entry guard: only meaningful inside an active feature-flow workflow, implement phase.
+      // Entry guard: only meaningful inside an active featyard workflow, implement phase.
       const handler = globalThis.__piWorkflowMonitor?.handler ?? null;
       if (!handler) {
-        return textResult("Not available outside feature-flow implement phase.");
+        return textResult("Not available outside featyard implement phase.");
       }
       const ws = handler.getWorkflowState();
       if (ws?.currentPhase !== "implement") {
-        return textResult("Not available outside feature-flow implement phase.");
+        return textResult("Not available outside featyard implement phase.");
       }
       const featureState = handler.getActiveFeatureState() ?? null;
       if (!featureState) {
-        return textResult("Not available outside feature-flow implement phase.");
+        return textResult("Not available outside featyard implement phase.");
       }
 
       const settings = getSettings();
@@ -217,7 +217,7 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
         ctx,
         {
           settingValue: settings.interTaskCompact,
-          // skillName omitted → the compact handler auto-derives ff-verify (the phase has advanced to verify).
+          // skillName omitted → the compact handler auto-derives fy-verify (the phase has advanced to verify).
           message: "Implementation complete — advancing to the verify phase.",
           logLabel: "implement→verify compact",
         },
@@ -227,7 +227,7 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
       if (!fired) {
         // Fallback: fire on ANY !fired (busy / mode≠compact / below-threshold) so the verify skill still dispatches.
         // Staged for agent_end delivery (see post-turn-dispatch) so it starts a fresh agent cycle.
-        schedulePostTurnFollowUp(expandSkillCommand("/skill:ff-verify", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
+        schedulePostTurnFollowUp(expandSkillCommand("/skill:fy-verify", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
       }
       return textResult("End your turn, wait for instructions for advancing to the next phase.");
     },

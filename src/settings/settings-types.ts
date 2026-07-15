@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Feature Flow settings types.
+ * Featyard settings types.
  *
- * Re-exports the FeatureFlowSettings interface and all enum types for consumers.
+ * Re-exports the FeatyardSettings interface and all enum types for consumers.
  */
 
 // ---------------------------------------------------------------------------
@@ -43,7 +43,7 @@ export type DesignDocStorage = "local" | "committed";
 // Settings interface
 // ---------------------------------------------------------------------------
 
-export interface FeatureFlowSettings {
+export interface FeatyardSettings {
   interTaskCompact: string;
   testingDiscipline: TestingDiscipline;
   preCommitDiscipline: PreCommitDiscipline;

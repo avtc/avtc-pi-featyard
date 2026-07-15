@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Feature-flow integration layer for pi-todo.
+ * Featyard integration layer for pi-todo.
  *
- * Wires the generic pi-todo extension to feature-flow-specific infrastructure:
- * - disableBuiltInFollowUp: feature-flow handles followUp via session_compact + the todo getters
+ * Wires the generic pi-todo extension to featyard-specific infrastructure:
+ * - disableBuiltInFollowUp: featyard handles followUp via session_compact + the todo getters
  *
  * Exports initTodoIntegration(pi) which calls subscribeToTodo from vendored drop-in
  * and returns the sync lazy proxy with getCompletedItemId/getInProgressItem/disableBuiltInFollowUp.
@@ -20,7 +20,7 @@ let _todoApi: ReturnType<typeof subscribeToTodo> | null = null;
 /** @internal Test override for areAllTodosDone — when set, takes precedence over _todoApi. */
 let _areAllTodosDoneOverride: boolean | null = null;
 
-/** Disable built-in followUp — feature-flow handles it via session_compact + the todo getters */
+/** Disable built-in followUp — featyard handles it via session_compact + the todo getters */
 const DISABLE_BUILTIN_FOLLOW_UP = true;
 
 export function initTodoIntegration(pi: ExtensionAPI): ReturnType<typeof subscribeToTodo> {

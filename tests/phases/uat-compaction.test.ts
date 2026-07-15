@@ -25,7 +25,7 @@ describe("compaction during UAT pause", () => {
     _resetFeatureState();
   });
 
-  test("injects ff-review skill + framing on compaction during UAT pause (unified)", async () => {
+  test("injects fy-review skill + framing on compaction during UAT pause (unified)", async () => {
     const fake = createFakePi();
     writeFeatureStateFile("2026-05-16-uat-compact-test", UAT_ACTIVE_STATE);
 
@@ -50,9 +50,9 @@ describe("compaction during UAT pause", () => {
     await onSessionCompact({} as unknown as ExtensionEvent, mockCtx);
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
 
-    // Unified assembly: UAT resolves to the ff-review skill + framing (no todo active)
+    // Unified assembly: UAT resolves to the fy-review skill + framing (no todo active)
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-review"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
     expect(fake.sentMessages[0].message).toContain(
       "Context was compacted. Reminder of planned work: you are in uat phase; continue from where you left off.",
     );
@@ -91,9 +91,9 @@ describe("compaction during UAT pause", () => {
     await onSessionCompact({} as unknown as ExtensionEvent, mockCtx);
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
 
-    // UAT resolves to the ff-review skill; message = skill + framing + todo item (unified assembly)
+    // UAT resolves to the fy-review skill; message = skill + framing + todo item (unified assembly)
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-review"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
     expect(fake.sentMessages[0].message).toContain(
       "Context was compacted. Reminder of planned work: you are in uat phase; continue from where you left off.",
     );
@@ -140,7 +140,7 @@ describe("compaction during UAT pause", () => {
 
     // Unified assembly: skill + framing + stored note + todo item (single message)
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-review"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
     expect(fake.sentMessages[0].message).toContain(
       "Context was compacted. Reminder of planned work: you are in uat phase; continue from where you left off.",
     );

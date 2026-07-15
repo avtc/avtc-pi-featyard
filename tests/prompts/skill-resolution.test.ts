@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Verify feature-flow bundled skill files are valid and resolvable.
+ * Verify featyard bundled skill files are valid and resolvable.
  *
  * Uses parseFrontmatter directly — no dependency on pi-subagent internals.
  */
@@ -15,15 +15,15 @@ import { describe, expect, test } from "vitest";
 const repoRoot = path.resolve(import.meta.dirname ?? __dirname, "../..");
 const skillsDir = path.join(repoRoot, "skills");
 
-describe("feature-flow bundled skill files", () => {
+describe("featyard bundled skill files", () => {
   test("design-review skill file exists, has frontmatter, and contains expected content", () => {
-    const skillFile = path.join(skillsDir, "ff-design-review", "SKILL.md");
+    const skillFile = path.join(skillsDir, "fy-design-review", "SKILL.md");
     expect(fs.existsSync(skillFile)).toBe(true);
 
     const content = fs.readFileSync(skillFile, "utf-8");
     const { frontmatter, body } = parseFrontmatter<Record<string, string>>(content);
 
-    expect(frontmatter.name).toBe("ff-design-review");
+    expect(frontmatter.name).toBe("fy-design-review");
     expect(body.length).toBeGreaterThan(0);
     // Frontmatter stripped — body starts with markdown heading
     expect(body.startsWith("#")).toBe(true);

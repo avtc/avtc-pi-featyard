@@ -71,8 +71,8 @@ function clearHandler(): void {
 
 /** Assert a gate round was dispatched via steer with the given gates. */
 function expectGateDispatch(sent: Sent[], { verifier, reviewer }: { verifier: boolean; reviewer: boolean }) {
-  const gate = sent.find((s) => s.text.includes("ff-task-gate"));
-  if (!gate) throw new Error("expected a ff-task-gate steer dispatch");
+  const gate = sent.find((s) => s.text.includes("fy-task-gate"));
+  if (!gate) throw new Error("expected a fy-task-gate steer dispatch");
   expect(gate.options.deliverAs).toBe("steer");
   if (verifier) expect(gate.text).toContain("#### Verify");
   else expect(gate.text).not.toContain("#### Verify");
@@ -178,7 +178,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     );
     expect(featureState.implement.currentTask).toBe("2. Next");
     expect(featureState.implement.taskReviewRounds["2-next"]).toBe(0);
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
   // negative counts are treated as 0 (no reloop, advance) — clamps like phase_ready
@@ -196,7 +196,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       /do not end your turn, work on it/i,
     );
     expect(featureState.implement.currentTask).toBe("2. Next");
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
   // reviewer-inactive + reviewer-only-fixes quadrant: reviewer count can't drive a round
@@ -216,7 +216,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       /do not end your turn, work on it/i,
     );
     expect(featureState.implement.currentTask).toBe("2. Next");
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
   // inactive gate's count ignored
@@ -232,7 +232,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       undefined,
       makeCtx(NOOP),
     );
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined(); // advances
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined(); // advances
     expect(featureState.implement.currentTask).toBe("2. Next");
   });
 
@@ -252,7 +252,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
       /do not end your turn, work on it/i,
     );
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
   // gate reads maxTaskReviewRounds (not maxVerifyRounds)
@@ -269,7 +269,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       makeCtx(NOOP),
     );
     // round(2) < max(2) is false → advances despite maxVerifyRounds=99
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
   // dispatch → NO compact (the gate skill must reach the agent); advance → compact.
@@ -315,7 +315,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
       /do not end your turn, work on it/i,
     );
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
   // cannot-fix / false-positive excluded from counts (they are simply not reported)
@@ -331,7 +331,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       undefined,
       makeCtx(NOOP),
     );
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
   // last-task reloop dispatch: recall on the last task with nextTask OMITTED + findings + round<max
@@ -352,13 +352,13 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expectGateDispatch(sent, { verifier: true, reviewer: true });
     expect(featureState.implement.currentTask).toBe("1. Only task"); // unchanged
     // The dispatched skill omits nextTask in its example call (last-task reloop).
-    const gate = sent.find((s) => s.text.includes("ff-task-gate"));
-    if (!gate) throw new Error("expected a ff-task-gate dispatch");
+    const gate = sent.find((s) => s.text.includes("fy-task-gate"));
+    if (!gate) throw new Error("expected a fy-task-gate dispatch");
     expect(gate.text).not.toContain("nextTask:");
   });
 
-  // last→verify fires ff-verify on ANY !fired (interTaskCompact=none → !fired → fallback)
-  test("last→verify dispatches ff-verify (guardrails wired)", async () => {
+  // last→verify fires fy-verify on ANY !fired (interTaskCompact=none → !fired → fallback)
+  test("last→verify dispatches fy-verify (guardrails wired)", async () => {
     // Gates off so the entry dispatch does not pre-empt the last→verify path.
     setSetting("verifyPhases", "off");
     setSetting("perTaskReviewMode", "off");
@@ -366,12 +366,12 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     setGuardrailsRef({ setVerifyTestsPassed: () => {} } as unknown as IGuardrails);
     const { getTool, sent, pi } = captureTaskReadyAdvanceTool();
     await getTool()?.execute("id", {}, undefined, undefined, makeCtx(NOOP)); // nextTask omitted, todos done
-    // ff-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
+    // fy-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
     vi.useFakeTimers();
     schedulePostTurnDrain(pi);
     vi.advanceTimersByTime(500);
     vi.useRealTimers();
-    expect(sent.some((s) => s.text.includes("ff-verify"))).toBe(true);
+    expect(sent.some((s) => s.text.includes("fy-verify"))).toBe(true);
   });
 
   // R4-5: single-task plan with gates active — START (no dispatch), then ENTRY dispatch round 1,
@@ -386,7 +386,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(/Current task:/i);
     expect(featureState.implement.currentTask).toBe("1. Only task");
     expect(featureState.implement.taskReviewRounds["1-only-task"]).toBe(0); // round 0 until the ENTRY dispatch
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
 
     // --- call 2: recall (cur set, round 0, gates active) → ENTRY dispatch round 1 ---
     result = await getTool()?.execute("id", {}, undefined, undefined, makeCtx(NOOP));
@@ -405,18 +405,18 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       undefined,
       makeCtx(NOOP),
     );
-    // No NEW gate dispatch (clean), and ff-verify dispatched via the last→verify fallback.
+    // No NEW gate dispatch (clean), and fy-verify dispatched via the last→verify fallback.
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
       /wait for instructions for advancing to the next phase/i,
     );
-    // ff-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
+    // fy-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
     vi.useFakeTimers();
     schedulePostTurnDrain(pi);
     vi.advanceTimersByTime(500);
     vi.useRealTimers();
     const newSent = sent.slice(beforeVerify);
-    expect(newSent.some((s) => s.text.includes("ff-verify"))).toBe(true);
-    expect(newSent.some((s) => s.text.includes("ff-task-gate"))).toBe(false);
+    expect(newSent.some((s) => s.text.includes("fy-verify"))).toBe(true);
+    expect(newSent.some((s) => s.text.includes("fy-task-gate"))).toBe(false);
     // currentTask reset to null on the implement→verify transition.
     expect(featureState.implement.currentTask).toBeNull();
   });
@@ -438,7 +438,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       /do not end your turn, work on it/i,
     );
     expect(featureState.implement.currentTask).toBe("2. Next");
-    expect(sent.find((s) => s.text.includes("ff-task-gate"))).toBeUndefined();
+    expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 });
 

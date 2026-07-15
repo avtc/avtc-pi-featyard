@@ -29,13 +29,13 @@ describe("FeatureState loop count fields", () => {
   });
 
   it("createFeatureState initializes design.reviewLoopCount and plan.reviewLoopCount to 0", () => {
-    const state = createFeatureState("test-feature", "docs/ff/designs/test-feature-design.md");
+    const state = createFeatureState("test-feature", "docs/featyard/designs/test-feature-design.md");
     expect(state.design.reviewLoopCount).toBe(0);
     expect(state.plan.reviewLoopCount).toBe(0);
   });
 
   it("createFeatureStateFromPlan initializes design.reviewLoopCount and plan.reviewLoopCount to 0", () => {
-    const state = createFeatureStateFromPlan("test-feature", ".ff/task-plans/test-feature-task-plan.md");
+    const state = createFeatureStateFromPlan("test-feature", ".featyard/task-plans/test-feature-task-plan.md");
     expect(state.design.reviewLoopCount).toBe(0);
     expect(state.plan.reviewLoopCount).toBe(0);
   });
@@ -51,7 +51,7 @@ describe("FeatureState loop count fields", () => {
   });
 
   it("loadFeatureState preserves existing design.reviewLoopCount and plan.reviewLoopCount", () => {
-    const state = createFeatureState("test-feature", "docs/ff/designs/test-feature-design.md");
+    const state = createFeatureState("test-feature", "docs/featyard/designs/test-feature-design.md");
     state.design.reviewLoopCount = 3;
     state.plan.reviewLoopCount = 2;
     saveFeatureState(state, tmpDir);
@@ -78,14 +78,14 @@ describe("FeatureState verify loop count fields", () => {
   });
 
   it("createFeatureState initializes verify.verifyLoopCount, plan.verifyLoopCount to defaults", () => {
-    const state = createFeatureState("test-feature", "docs/ff/designs/test-feature-design.md");
+    const state = createFeatureState("test-feature", "docs/featyard/designs/test-feature-design.md");
     expect(state.verify.verifyLoopCount).toBe(0);
     expect(state.plan.verifyLoopCount).toBe(0);
     expect(state.implement.taskReviewRounds).toEqual({});
   });
 
   it("createFeatureStateFromPlan initializes verify loop fields to defaults", () => {
-    const state = createFeatureStateFromPlan("test-feature", ".ff/task-plans/test-feature-task-plan.md");
+    const state = createFeatureStateFromPlan("test-feature", ".featyard/task-plans/test-feature-task-plan.md");
     expect(state.verify.verifyLoopCount).toBe(0);
     expect(state.plan.verifyLoopCount).toBe(0);
     expect(state.implement.taskReviewRounds).toEqual({});
@@ -103,7 +103,7 @@ describe("FeatureState verify loop count fields", () => {
   });
 
   it("verify.verifyLoopCount persists and loads correctly", () => {
-    const state = createFeatureState("test-feature", "docs/ff/designs/test-feature-design.md");
+    const state = createFeatureState("test-feature", "docs/featyard/designs/test-feature-design.md");
     state.verify.verifyLoopCount = 3;
     saveFeatureState(state, tmpDir);
 
@@ -113,7 +113,7 @@ describe("FeatureState verify loop count fields", () => {
   });
 
   it("plan.verifyLoopCount persists and loads correctly", () => {
-    const state = createFeatureState("test-feature", "docs/ff/designs/test-feature-design.md");
+    const state = createFeatureState("test-feature", "docs/featyard/designs/test-feature-design.md");
     state.plan.verifyLoopCount = 2;
     saveFeatureState(state, tmpDir);
 
@@ -123,7 +123,7 @@ describe("FeatureState verify loop count fields", () => {
   });
 
   it("taskReviewRounds keys default to absent (count derived on first review)", () => {
-    const state = createFeatureState("test-feature", "docs/ff/designs/test-feature-design.md");
+    const state = createFeatureState("test-feature", "docs/featyard/designs/test-feature-design.md");
     state.implement.taskReviewRounds = {};
     saveFeatureState(state, tmpDir);
 

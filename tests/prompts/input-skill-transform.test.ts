@@ -18,7 +18,7 @@ import {
  *
  * Rationale: pi's _expandSkillCommand would otherwise wrap our skills with a generic
  * "References are relative to <skillDir>" line — misleading for our skills, which
- * reference project-root paths (docs/, .ff/), never skill-relative ones. By
+ * reference project-root paths (docs/, .featyard/), never skill-relative ones. By
  * transforming to the already-expanded block, pi's _expandSkillCommand and
  * expandPromptTemplate become no-ops (text no longer starts with "/").
  *
@@ -30,20 +30,20 @@ describe("input handler: transforms our skills to avoid pi's misleading relative
     cleanupAfterTest();
   });
 
-  test("transforms /skill:ff-design-review into <skill> block without 'References are relative to'", async () => {
+  test("transforms /skill:fy-design-review into <skill> block without 'References are relative to'", async () => {
     const { fake, api } = createPiWithToolCapture();
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX);
 
     const onInput = getSingleHandler(fake.handlers, "input");
     const result = await onInput(
-      { text: "/skill:ff-design-review", source: "interactive" } as unknown as ExtensionEvent,
+      { text: "/skill:fy-design-review", source: "interactive" } as unknown as ExtensionEvent,
       NO_UI_CTX,
     );
 
     expect(result).toEqual({
       action: "transform",
-      text: expect.stringMatching(/^<skill name="ff-design-review" location="[^"]+">/),
+      text: expect.stringMatching(/^<skill name="fy-design-review" location="[^"]+">/),
     });
     const text = (result as { text: string }).text;
     expect(text).toContain("</skill>");
@@ -53,15 +53,15 @@ describe("input handler: transforms our skills to avoid pi's misleading relative
     // actually RESOLVED to a concrete value (not merely disappeared). With no
     // feature state in the interactive input path, DESIGN_DOC_PATH falls back to
     // its template form, proving real substitution happened here.
-    expect(text).not.toContain("{{PI_FF_DESIGN_DOC_PATH}}");
+    expect(text).not.toContain("{{PI_FY_DESIGN_DOC_PATH}}");
     expect(text).toContain("YYYY-MM-DD-<topic>");
   });
 
   test("transform applies to all our skills, not just phase-mapped ones", async () => {
-    // ff-verify / ff-review / ff-finish all resolve from our skills/ dir.
-    for (const skill of ["ff-verify", "ff-review", "ff-finish"]) {
+    // fy-verify / fy-review / fy-finish all resolve from our skills/ dir.
+    for (const skill of ["fy-verify", "fy-review", "fy-finish"]) {
       const { fake, api } = createPiWithToolCapture();
-      delete (globalThis as Record<string, unknown>).__avtcPiFeatureFlowWired;
+      delete (globalThis as Record<string, unknown>).__avtcPiFeatyardWired;
       await workflowMonitorExtension(api as unknown as ExtensionAPI);
       await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX);
 
@@ -86,7 +86,7 @@ describe("input handler: transforms our skills to avoid pi's misleading relative
 
     const onInput = getSingleHandler(fake.handlers, "input");
     const result = await onInput(
-      { text: "/skill:ff-design-review some-context-arg", source: "interactive" } as unknown as ExtensionEvent,
+      { text: "/skill:fy-design-review some-context-arg", source: "interactive" } as unknown as ExtensionEvent,
       NO_UI_CTX,
     );
 
@@ -132,7 +132,7 @@ describe("input handler: transforms our skills to avoid pi's misleading relative
     const onInput = getSingleHandler(fake.handlers, "input");
     // source: "extension" is what sendUserMessage uses — must not re-enter/transform.
     const result = await onInput(
-      { text: "/skill:ff-design-review", source: "extension" } as unknown as ExtensionEvent,
+      { text: "/skill:fy-design-review", source: "extension" } as unknown as ExtensionEvent,
       NO_UI_CTX,
     );
 

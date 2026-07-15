@@ -40,27 +40,27 @@ describe("captureBaseCommitSha", () => {
   });
 
   test("sets baseCommitSha to current HEAD", () => {
-    const state = createFeatureState("2026-06-06-test", "docs/ff/designs/2026-06-06-test-design.md");
+    const state = createFeatureState("2026-06-06-test", "docs/featyard/designs/2026-06-06-test-design.md");
     captureBaseCommitSha(state);
     expect(state.git.baseCommitSha).toBe("abc123def456789012345678901234567890abcd");
   });
 
   test("does not overwrite existing baseCommitSha", () => {
-    const state = createFeatureState("2026-06-06-test", "docs/ff/designs/2026-06-06-test-design.md");
+    const state = createFeatureState("2026-06-06-test", "docs/featyard/designs/2026-06-06-test-design.md");
     state.git.baseCommitSha = "existing-sha";
     captureBaseCommitSha(state);
     expect(state.git.baseCommitSha).toBe("existing-sha");
   });
 
   test("sets branch from getCurrentGitRef for current-branch policy", () => {
-    const state = createFeatureState("2026-06-06-test", "docs/ff/designs/2026-06-06-test-design.md");
+    const state = createFeatureState("2026-06-06-test", "docs/featyard/designs/2026-06-06-test-design.md");
     captureBaseCommitSha(state);
     expect(state.git.branch).toBe("feature/test");
   });
 
   test("sets branch to feature/{slug} for worktree policy", () => {
     setSetting("branchPolicy", "worktree");
-    const state = createFeatureState("2026-06-06-test", "docs/ff/designs/2026-06-06-test-design.md");
+    const state = createFeatureState("2026-06-06-test", "docs/featyard/designs/2026-06-06-test-design.md");
     captureBaseCommitSha(state);
     expect(state.git.branch).toBe("feature/2026-06-06-test");
   });
@@ -69,14 +69,14 @@ describe("captureBaseCommitSha", () => {
     setGitRunner(() => {
       throw new Error("not a git repo");
     });
-    const state = createFeatureState("2026-06-06-test", "docs/ff/designs/2026-06-06-test-design.md");
+    const state = createFeatureState("2026-06-06-test", "docs/featyard/designs/2026-06-06-test-design.md");
     captureBaseCommitSha(state);
     expect(state.git.baseCommitSha).toBeNull();
     expect(state.git.branch).toBeNull(); // getBranchOrShortSha also fails, returns null
   });
 
   test("preserves existing branch when already set", () => {
-    const state = createFeatureState("2026-06-06-test", "docs/ff/designs/2026-06-06-test-design.md");
+    const state = createFeatureState("2026-06-06-test", "docs/featyard/designs/2026-06-06-test-design.md");
     state.git.branch = "existing-branch";
     captureBaseCommitSha(state);
     expect(state.git.baseCommitSha).toBe("abc123def456789012345678901234567890abcd");
@@ -118,7 +118,7 @@ describe("resumeWorkflowForFeature captures baseCommitSha (path 10)", () => {
     const slug = "2026-06-06-resume-test";
 
     // Create and save a feature state in execute phase without baseCommitSha
-    const state = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const state = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     state.workflow.currentPhase = "implement";
     saveFeatureState(state, null);
 
@@ -141,7 +141,7 @@ describe("resumeWorkflowForFeature captures baseCommitSha (path 10)", () => {
   test("does not capture baseCommitSha when resuming feature in design phase", async () => {
     const slug = "2026-06-06-design-resume";
 
-    const state = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const state = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     // createFeatureState sets workflow.currentPhase = "design" by default
     saveFeatureState(state, null);
 
@@ -167,7 +167,7 @@ describe("resumeWorkflowForFeature captures baseCommitSha (path 10)", () => {
       throw new Error("not a git repo");
     });
 
-    const state = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const state = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     state.workflow.currentPhase = "implement";
     saveFeatureState(state, null);
 

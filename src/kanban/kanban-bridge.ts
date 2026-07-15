@@ -75,7 +75,7 @@ async function getDatabase(): Promise<KanbanDatabase> {
         "Call setDatabaseInstance(db) or setDatabase(db) before exercising this code path.",
     );
   }
-  const dataDir = join(homedir(), ".pi", "feature-flow", "kanban");
+  const dataDir = join(homedir(), ".pi", "featyard", "kanban");
   const instance = await KanbanDatabase.create(dataDir);
   ensureBridge();
   (globalThis.__piKanban as PiKanbanBridge).database = instance;
@@ -204,11 +204,11 @@ export default async function kanbanExtension(pi: ExtensionAPI, deps: KanbanExte
   // Register event handlers (session_start, turn_start, turn_end, model_select, tool_result)
   registerKanbanEvents(pi, ctx);
 
-  // Register UI commands (/ff:kanban, /ff:kanban-release) + add_to_backlog tool
+  // Register UI commands (/fy:kanban, /fy:kanban-release) + add_to_backlog tool
   registerKanbanCommands(pi, ctx);
   registerAddToBacklogTool(pi, ctx);
 
-  // Register auto-agent commands (/ff:auto-agent, /ff:auto-worker, /ff:auto-designer, /ff:auto-pause)
+  // Register auto-agent commands (/fy:auto-agent, /fy:auto-worker, /fy:auto-designer, /fy:auto-pause)
   // + startAutoAgent + _activateFeature + polling/grace-period + callbacks
   await registerAutoAgent(pi, ctx);
 

@@ -74,7 +74,7 @@ describe("inter-task compact (task_ready_advance)", () => {
     setSetting("perTaskReviewMode", "off");
     _resetCompactGuard();
     delete globalThis.__piCompactFollowUp;
-    withTempCwd(); // isolate .ff state writes from the real repo
+    withTempCwd(); // isolate .featyard state writes from the real repo
     installActiveImplementHandler();
   });
 
@@ -128,7 +128,7 @@ describe("inter-task compact (task_ready_advance)", () => {
 
     expect(captured).toBeDefined();
     // skillName is intentionally NOT set — compaction.ts derives it from the current phase
-    // via getExpectedSkill() (implement→ff-implement, review→ff-review), so the tool
+    // via getExpectedSkill() (implement→fy-implement, review→fy-review), so the tool
     // does not hardcode the implement skill.
     expect(captured?.skillName).toBeUndefined();
     expect(captured?.message).toContain("3. Add the validator");
@@ -204,7 +204,7 @@ describe("inter-task compact (task_ready_advance)", () => {
     const result = await getTool()?.execute("id1", { nextTask: "5. Should be blocked" }, undefined, undefined, ctx);
 
     const out = (result?.content?.[0] as { text: string } | undefined)?.text ?? "";
-    expect(out).toMatch(/Not available outside feature-flow implement phase/i);
+    expect(out).toMatch(/Not available outside featyard implement phase/i);
     expect(compactCalls.length).toBe(0);
   });
 
@@ -217,6 +217,6 @@ describe("inter-task compact (task_ready_advance)", () => {
     const result = await getTool()?.execute("id1", { nextTask: "6. No workflow" }, undefined, undefined, ctx);
 
     const out = (result?.content?.[0] as { text: string } | undefined)?.text ?? "";
-    expect(out).toMatch(/Not available outside feature-flow implement phase/i);
+    expect(out).toMatch(/Not available outside featyard implement phase/i);
   });
 });

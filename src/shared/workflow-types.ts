@@ -104,7 +104,7 @@ export interface ToolCallDecision {
 }
 
 export interface IGuardrails {
-  /** bash tool_call: ff-force-add block, publish gate, pre-commit discipline. */
+  /** bash tool_call: fy-force-add block, publish gate, pre-commit discipline. */
   onBashCall(event: ToolCallEvent, ctx: ExtensionContext): Promise<ToolCallDecision>;
   /** write/edit tool_call: TDD check, verify flag reset, phase-write-restriction, doc activation. */
   onWriteEditCall(event: ToolCallEvent, ctx: ExtensionContext): Promise<ToolCallDecision>;
@@ -123,7 +123,7 @@ export interface IGuardrails {
   resetTracking(): void;
   /** Complete a code-review loop from a phase_ready({issuesFound, cannotFix}) call:
    *  record review history, track reviewer empty loops, then drive the loop
-   *  decision + (UAT/finish) transition. The counts come from the ff-review
+   *  decision + (UAT/finish) transition. The counts come from the fy-review
    *  skill. */
   completeCodeReviewLoop(
     ctx: ExtensionContext,
@@ -136,7 +136,7 @@ export interface IGuardrails {
 /**
  * PhaseReady module — phase_ready tool handler.
  * Design doc specifies this interface for DI consistency.
- * Called by SessionLifecycle (resetTracking on ff:reset).
+ * Called by SessionLifecycle (resetTracking on fy:reset).
  */
 export interface IPhaseReady {
   resetTracking(): void;
@@ -152,7 +152,7 @@ export interface ISessionLifecycle {
   onSessionStart(event: unknown, ctx: ExtensionContext): Promise<void>;
   /** session_tree handler body. */
   onSessionTree(ctx: ExtensionContext): Promise<void>;
-  /** Shared reset logic used by /ff:reset, /resume session_start, and user-initiated /new. */
+  /** Shared reset logic used by /fy:reset, /resume session_start, and user-initiated /new. */
   performWorkflowReset(): void;
 }
 

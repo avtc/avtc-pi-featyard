@@ -4,13 +4,13 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 /**
  * : the worktree-failure catch handler in _ensureWorktreeForExecution must also cover an
- * ensureFfJunction throw (the.ff-failure entry), not just the git-worktree-add failure. The
+ * ensureFeatyardJunction throw (the.fy-failure entry), not just the git-worktree-add failure. The
  * existing worktree-integration failure test only triggers step-1 (git worktree add exitCode 1).
  *
- * This triggers a REAL ensureFfJunction throw with no mocking: the mocked git exec returns a
- * worktree path that does NOT exist on disk, so ensureFfJunction's symlinkSync(<worktree>/.ff)
+ * This triggers a REAL ensureFeatyardJunction throw with no mocking: the mocked git exec returns a
+ * worktree path that does NOT exist on disk, so ensureFeatyardJunction's symlinkSync(<worktree>/.featyard)
  * throws ENOENT (missing parent dir). That throw is caught → notify + worktreePath unset (no
- * throw out of the function). This is higher-fidelity than mocking ff-junction.
+ * throw out of the function). This is higher-fidelity than mocking fy-junction.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { FeatureState } from "../../../src/state/feature-state.js";
@@ -18,7 +18,7 @@ import { initGitDir } from "../../helpers/git-template.js";
 import { setSetting, setTestSettings } from "../../helpers/settings-test-helpers.js";
 import { cleanupAfterTest, withTempCwd } from "../../helpers/workflow-monitor-test-helpers.js";
 
-describe("_ensureWorktreeForExecution.ff-failure path", () => {
+describe("_ensureWorktreeForExecution.fy-failure path", () => {
   beforeEach(() => {
     setTestSettings(null);
     // Run inside a temp dir that IS a git repo so the relative worktree path
@@ -31,20 +31,20 @@ describe("_ensureWorktreeForExecution.ff-failure path", () => {
     cleanupAfterTest();
   });
 
-  test("an ensureFfJunction throw (symlink ENOENT) is caught → notify + worktreePath unset (no throw)", async () => {
+  test("an ensureFeatyardJunction throw (symlink ENOENT) is caught → notify + worktreePath unset (no throw)", async () => {
     setSetting("branchPolicy", "worktree");
     setSetting("baseBranch", "main");
 
     const { _ensureWorktreeForExecution } = await import("../../../src/index.js");
 
     // createWorktree succeeds (exitCode 0) and returns a path, but the dir is NOT on disk →
-    // ensureFfJunction's symlinkSync(<worktree>/.ff) throws ENOENT (missing parent).
+    // ensureFeatyardJunction's symlinkSync(<worktree>/.featyard) throws ENOENT (missing parent).
     const mockExec = vi.fn().mockResolvedValue({ exitCode: 0, stdout: "" });
     const notify = vi.fn();
     const ctx = { hasUI: true, ui: { notify }, actions: { exec: mockExec } };
 
     const featureState = {
-      featureSlug: "ff-fail-feature",
+      featureSlug: "fy-fail-feature",
       git: { branch: null, baseCommitSha: null, worktreePath: null, baseBranch: null },
     };
 
@@ -58,9 +58,9 @@ describe("_ensureWorktreeForExecution.ff-failure path", () => {
     expect(notify).toHaveBeenCalledTimes(1);
     expect(notify).toHaveBeenCalledWith(expect.any(String), "error");
     const msg = notify.mock.calls[0][0] as string;
-    // The surfaced error is the ensureFfJunction symlink ENOENT; notify carries slug + remediation.
+    // The surfaced error is the ensureFeatyardJunction symlink ENOENT; notify carries slug + remediation.
     expect(msg).toContain("ENOENT");
-    expect(msg).toContain('"ff-fail-feature"');
+    expect(msg).toContain('"fy-fail-feature"');
     expect(msg).toContain('set branchPolicy="current-branch"');
   });
 });

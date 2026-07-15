@@ -71,10 +71,10 @@ function createFakeApi(): {
 }
 
 /**
- * Simulates the /ff:kanban command handler when the shared server is already set
+ * Simulates the /fy:kanban command handler when the shared server is already set
  * (i.e., the post-fallback state or same-session second call).
  */
-describe("ff:kanban command handler with shared server", () => {
+describe("fy:kanban command handler with shared server", () => {
   test("uses existing shared server and registers project when server is already running", async () => {
     // Setup: create a real database and server
     const dataDir = mkdtempSync(join(tmpdir(), "kanban-shared-test-"));
@@ -89,7 +89,7 @@ describe("ff:kanban command handler with shared server", () => {
     const { api, registeredCommands } = createFakeApi();
     await kanbanExtension(api, null);
 
-    // Simulate first session already set the shared server (e.g., after first /ff:kanban call)
+    // Simulate first session already set the shared server (e.g., after first /fy:kanban call)
     setSharedServerInstance({ server: result.server, port: result.port, authToken: result.authToken });
 
     // Verify shared server is set
@@ -97,7 +97,7 @@ describe("ff:kanban command handler with shared server", () => {
     expect(existingServer).not.toBeNull();
     expect((existingServer as NonNullable<typeof existingServer>).port).toBe(result.port);
 
-    // Call /ff:kanban handler — it should skip server creation since shared server exists
+    // Call /fy:kanban handler — it should skip server creation since shared server exists
     const notifications: Array<{ message: string; level: string }> = [];
     const ctx = {
       ui: {
@@ -110,7 +110,7 @@ describe("ff:kanban command handler with shared server", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:kanban");
+    const cmd = registeredCommands.get("fy:kanban");
     expect(cmd).toBeDefined();
 
     // Run the handler — it should proceed to project detection
@@ -130,7 +130,7 @@ describe("ff:kanban command handler with shared server", () => {
     expect(projects.length).toBeGreaterThan(0);
   });
 
-  test("creates project only once when /ff:kanban is called multiple times", async () => {
+  test("creates project only once when /fy:kanban is called multiple times", async () => {
     // Setup
     const dataDir = mkdtempSync(join(tmpdir(), "kanban-idempotent-"));
     TEMP_DIRS.push(dataDir);
@@ -159,7 +159,7 @@ describe("ff:kanban command handler with shared server", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:kanban");
+    const cmd = registeredCommands.get("fy:kanban");
     expect(cmd).toBeDefined();
 
     // Call handler twice

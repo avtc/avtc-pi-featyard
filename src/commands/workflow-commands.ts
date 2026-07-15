@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Workflow commands — /ff:next and /ff:resume.
+ * Workflow commands — /fy:next and /fy:resume.
  *
  * Phase transition commands closely related to phase_ready.
  */
@@ -27,7 +27,7 @@ import {
   enumerateArchiveSet,
   enumerateDesigns,
 } from "../state/archive-artifacts.js";
-import { ensureFfJunction, resolveArchiveBase, resolveDesignsDirs } from "../state/artifact-junction.js";
+import { ensureFeatyardJunction, resolveArchiveBase, resolveDesignsDirs } from "../state/artifact-junction.js";
 import type { FeatureSession } from "../state/feature-session.js";
 import {
   DEFAULT_DIR,
@@ -43,7 +43,7 @@ import {
 } from "../state/feature-state.js";
 import { persistState } from "../state/state-persistence.js";
 import { worthNotesPointerFor } from "../state/worth-notes.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 import { formatFeatureInfo, openManageDialog } from "../ui/manage-features-dialog.js";
 
 export interface WorkflowCommandDeps extends WorkflowTransitionDeps {
@@ -51,7 +51,7 @@ export interface WorkflowCommandDeps extends WorkflowTransitionDeps {
   resetSessionTracking: () => void;
   reconstructState: (ctx: ExtensionContext, handler: FeatureSession, stateFilePath: string | false | null) => void;
   getAutoAgentCallback: () => import("../kanban/auto-agent/auto-agent-state-machine.js").AutoAgentCallback | null;
-  /** Reset the workflow tracker to fresh state (shared reset used by ff:reset). */
+  /** Reset the workflow tracker to fresh state (shared reset used by fy:reset). */
   performWorkflowReset: () => void;
 }
 
@@ -120,11 +120,11 @@ async function executeStageTransition(
   if (nextPhase === "uat") {
     const featureState = handler.getActiveFeatureState();
     // Append the worth-notes pointer (existence + path) to the UAT handoff notify so it never stands
-    // alone (notifications are exclusive — manual /ff:next review→UAT site).
+    // alone (notifications are exclusive — manual /fy:next review→UAT site).
     const pointer = worthNotesPointerFor(slug);
     const notifyMessage = pointer
-      ? `Feature "${slug}" moved to UAT. Use /ff:next to advance.\n${pointer}`
-      : `Feature "${slug}" moved to UAT. Use /ff:next to advance.`;
+      ? `Feature "${slug}" moved to UAT. Use /fy:next to advance.\n${pointer}`
+      : `Feature "${slug}" moved to UAT. Use /fy:next to advance.`;
     await transitionToUatPhase(
       ctx,
       slug,
@@ -170,7 +170,7 @@ async function executeStageTransition(
 }
 
 // ── Archive-command shared helpers ───────────────────────────────────────────
-// ff:archive-artifacts and ff:archive-designs share a parse → resolve → gate skeleton.
+// fy:archive-artifacts and fy:archive-designs share a parse → resolve → gate skeleton.
 // Extracted to keep jscpd clean (the two commands differ only in enumerate/archive fn + messages).
 
 type ArchiveCommandCtx = { ui: { notify(message: string, level: "info" | "warning" | "error"): void } };
@@ -186,11 +186,11 @@ function parseArchiveDays(args: string | undefined, ctx: ArchiveCommandCtx, comm
 }
 
 /** Resolve the junction + archive base shared by both archive commands. */
-function resolveArchiveContext(): { jr: ReturnType<typeof ensureFfJunction>; archiveBase: string } {
-  const jr = ensureFfJunction(
+function resolveArchiveContext(): { jr: ReturnType<typeof ensureFeatyardJunction>; archiveBase: string } {
+  const jr = ensureFeatyardJunction(
     process.cwd(),
     getSettings().branchPolicy ?? "current-branch",
-    process.env.PI_FF_HOME ?? os.homedir(),
+    process.env.PI_FY_HOME ?? os.homedir(),
     "rename",
   );
   return { jr, archiveBase: resolveArchiveBase(jr) };
@@ -207,12 +207,12 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
     performWorkflowReset,
   } = deps;
 
-  pi.registerCommand("ff:next", {
+  pi.registerCommand("fy:next", {
     description: "Complete current workflow stage and advance to next (skips if preconditions not met)",
     async handler(_args, ctx) {
       const ws = handler.getWorkflowState();
       if (!ws?.currentPhase) {
-        if (ctx.hasUI) ctx.ui.notify("No active workflow. Start with /skill:ff-design or /ff:resume.", "warning");
+        if (ctx.hasUI) ctx.ui.notify("No active workflow. Start with /skill:fy-design or /fy:resume.", "warning");
         return;
       }
       const currentPhase = ws.currentPhase;
@@ -242,7 +242,7 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
       }
 
       if ("completed" in route) {
-        // Terminal — feature completes (e.g. ff:next from uat in after-finish mode,
+        // Terminal — feature completes (e.g. fy:next from uat in after-finish mode,
         // or from finish in after-review/off mode). Replicates the former uat-accept
         // completion path exactly so uat-accept could be dropped.
         if (ctx.hasUI) ctx.ui.notify(`✓ ${currentPhase} completed. Feature done.`, "info");
@@ -277,11 +277,11 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
     },
   });
 
-  pi.registerCommand("ff:resume", {
+  pi.registerCommand("fy:resume", {
     description: "List active workflows and load the selected one into the current session",
     async handler(_args, ctx) {
       if (!ctx.hasUI) {
-        ctx.ui.notify("/ff:resume requires interactive mode.", "error");
+        ctx.ui.notify("/fy:resume requires interactive mode.", "error");
         return;
       }
 
@@ -359,11 +359,11 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
     },
   });
 
-  pi.registerCommand("ff:archive-artifacts", {
-    description: "Archive artifacts older than <days> days (manual sweep). Usage: /ff:archive-artifacts <days>",
+  pi.registerCommand("fy:archive-artifacts", {
+    description: "Archive artifacts older than <days> days (manual sweep). Usage: /fy:archive-artifacts <days>",
     async handler(args, ctx) {
       // 1. Parse <days> (required, non-negative integer).
-      const days = parseArchiveDays(args, ctx, "ff:archive-artifacts");
+      const days = parseArchiveDays(args, ctx, "fy:archive-artifacts");
       if (days === null) return;
 
       // 2. Resolve the live store + archive base; enumerate what's stale at this threshold.
@@ -384,7 +384,7 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
 
       // 4. Confirm gate — headless-safe (#11).
       if (!ctx.hasUI) {
-        ctx.ui.notify("/ff:archive-artifacts requires interactive mode to confirm.", "info");
+        ctx.ui.notify("/fy:archive-artifacts requires interactive mode to confirm.", "info");
         return;
       }
       // Detect in-flight (active, non-completed) features among the stale set.
@@ -393,14 +393,14 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
         .filter((slug) => stale.some((g) => g.key === slug));
       const inFlightNote =
         inFlight.length > 0
-          ? `\n\n⚠️ In-flight features that would be affected: ${inFlight.join(", ")}. Archiving hides their artifacts from .ff — resume would be artifact-degraded.`
+          ? `\n\n⚠️ In-flight features that would be affected: ${inFlight.join(", ")}. Archiving hides their artifacts from .featyard — resume would be artifact-degraded.`
           : "";
       // Count members + groups for the confirm message (what the user is about to archive).
       const memberCount = stale.reduce((n, g) => n + g.members.length, 0);
       const ok = await withCoordinator(() =>
         ctx.ui.confirm(
           `Archive artifacts older than ${days} day${days === 1 ? "" : "s"}?`,
-          `This relocates ${memberCount} artifact${memberCount === 1 ? "" : "s"} across ${stale.length} group${stale.length === 1 ? "" : "s"} out of .ff into the archive. Reversible by moving them back.${inFlightNote}`,
+          `This relocates ${memberCount} artifact${memberCount === 1 ? "" : "s"} across ${stale.length} group${stale.length === 1 ? "" : "s"} out of .featyard into the archive. Reversible by moving them back.${inFlightNote}`,
         ),
       );
       if (!ok) {
@@ -432,21 +432,21 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
         "info",
       );
       for (const err of result.errors) {
-        log.warn(`[ff:archive-artifacts] ${err}`);
+        log.warn(`[fy:archive-artifacts] ${err}`);
       }
     },
   });
 
-  // --- ff:archive-designs command ---
-  // Sweeps BOTH design-doc roots: the out-of-repo `.ff/designs` (local mode, via the junction) and
-  // the in-repo `docs/ff/designs` (committed mode). Mirrors /ff:archive-artifacts (parse → enumerate
+  // --- fy:archive-designs command ---
+  // Sweeps BOTH design-doc roots: the out-of-repo `.featyard/designs` (local mode, via the junction) and
+  // the in-repo `docs/featyard/designs` (committed mode). Mirrors /fy:archive-artifacts (parse → enumerate
   // → empty short-circuit → confirm gate → archive → report).
-  pi.registerCommand("ff:archive-designs", {
+  pi.registerCommand("fy:archive-designs", {
     description:
-      "Archive design docs older than <days> days (sweeps .ff/designs and docs/ff/designs). Usage: /ff:archive-designs <days>",
+      "Archive design docs older than <days> days (sweeps .featyard/designs and docs/featyard/designs). Usage: /fy:archive-designs <days>",
     async handler(args, ctx) {
       // 1. Parse <days> (required, non-negative integer).
-      const days = parseArchiveDays(args, ctx, "ff:archive-designs");
+      const days = parseArchiveDays(args, ctx, "fy:archive-designs");
       if (days === null) return;
 
       // 2. Resolve BOTH roots + the archive base; enumerate what's stale at this threshold.
@@ -468,7 +468,7 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
 
       // 4. Confirm gate — headless-safe.
       if (!ctx.hasUI) {
-        ctx.ui.notify("/ff:archive-designs requires interactive mode to confirm.", "info");
+        ctx.ui.notify("/fy:archive-designs requires interactive mode to confirm.", "info");
         return;
       }
       // Detect in-flight (active, non-completed) features among the stale set.
@@ -486,7 +486,7 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
       const ok = await withCoordinator(() =>
         ctx.ui.confirm(
           `Archive design docs older than ${days} day${days === 1 ? "" : "s"}?`,
-          `This relocates ${count} design doc${count === 1 ? "" : "s"} from .ff/designs and docs/ff/designs into the archive. Reversible by moving them back.${inFlightNote}`,
+          `This relocates ${count} design doc${count === 1 ? "" : "s"} from .featyard/designs and docs/featyard/designs into the archive. Reversible by moving them back.${inFlightNote}`,
         ),
       );
       if (!ok) {
@@ -511,13 +511,13 @@ export function registerWorkflowCommands(deps: WorkflowCommandDeps): void {
         "info",
       );
       for (const err of result.errors) {
-        log.warn(`[ff:archive-designs] ${err}`);
+        log.warn(`[fy:archive-designs] ${err}`);
       }
     },
   });
 
-  // --- ff:reset command ---
-  pi.registerCommand("ff:reset", {
+  // --- fy:reset command ---
+  pi.registerCommand("fy:reset", {
     description: "Reset workflow tracker to fresh state for a new task",
     async handler(_args, ctx) {
       globalThis.__piCtx?.refresh(ctx);

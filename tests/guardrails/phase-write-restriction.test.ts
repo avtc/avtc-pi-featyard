@@ -30,7 +30,7 @@ const PLAN_ACTIVE = {
   },
   currentPhase: "plan",
   artifacts: {
-    design: "docs/ff/designs/test-design.md",
+    design: "docs/featyard/designs/test-design.md",
     plan: null,
     implement: null,
     verify: null,
@@ -61,14 +61,14 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
       {
         toolCallId: "w1",
         toolName: "write",
-        input: { path: "docs/ff/designs/test-design.md", content: "# Design" },
+        input: { path: "docs/featyard/designs/test-design.md", content: "# Design" },
       } as unknown as ExtensionEvent,
       ctx,
     );
     expect(res).not.toMatchObject({ block: true });
   });
 
-  test("ff/reviews/ writes are allowed during design", async () => {
+  test("featyard/reviews/ writes are allowed during design", async () => {
     const fake = createFakePi();
     fake.api;
     const { writeFeatureStateFile } = await import("../helpers/workflow-monitor-test-helpers.js");
@@ -89,14 +89,14 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
       {
         toolCallId: "w1",
         toolName: "write",
-        input: { path: ".ff/reviews/test-feature/test-feature-known-issues.md", content: "# Known Issues" },
+        input: { path: ".featyard/reviews/test-feature/test-feature-known-issues.md", content: "# Known Issues" },
       } as unknown as ExtensionEvent,
       ctx,
     );
     expect(res).not.toMatchObject({ block: true });
   });
 
-  test("ff/research/ writes are allowed during design", async () => {
+  test("featyard/research/ writes are allowed during design", async () => {
     const fake = createFakePi();
     fake.api;
     const { writeFeatureStateFile } = await import("../helpers/workflow-monitor-test-helpers.js");
@@ -117,14 +117,14 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
       {
         toolCallId: "w1",
         toolName: "write",
-        input: { path: ".ff/research/test-feature/design-initial-1.md", content: "# Research" },
+        input: { path: ".featyard/research/test-feature/design-initial-1.md", content: "# Research" },
       } as unknown as ExtensionEvent,
       ctx,
     );
     expect(res).not.toMatchObject({ block: true });
   });
 
-  test("ff/reviews/ writes are allowed during plan phase", async () => {
+  test("featyard/reviews/ writes are allowed during plan phase", async () => {
     const fake = createFakePi();
     fake.api;
     const { writeFeatureStateFile } = await import("../helpers/workflow-monitor-test-helpers.js");
@@ -145,7 +145,7 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
       {
         toolCallId: "w1",
         toolName: "write",
-        input: { path: ".ff/reviews/test-feature/test-feature-plan-review-0.md", content: "# Plan Review" },
+        input: { path: ".featyard/reviews/test-feature/test-feature-plan-review-0.md", content: "# Plan Review" },
       } as unknown as ExtensionEvent,
       ctx,
     );

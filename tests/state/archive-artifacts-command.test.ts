@@ -7,7 +7,7 @@ import path from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension from "../../src/index.js";
-import { ensureFfJunction, resolveArchiveBase } from "../../src/state/artifact-junction.js";
+import { ensureFeatyardJunction, resolveArchiveBase } from "../../src/state/artifact-junction.js";
 import {
   cleanupAfterTest,
   createFakePi,
@@ -61,7 +61,7 @@ function makeCtx(opts: { hasUI?: boolean; confirmResult?: boolean } = {}) {
 
 /** Resolve the live externalDir + archiveBase for the current test sandbox. */
 function resolveArchivePaths() {
-  const jr = ensureFfJunction(process.cwd(), "current-branch", process.env.PI_FF_HOME ?? os.homedir(), "rename");
+  const jr = ensureFeatyardJunction(process.cwd(), "current-branch", process.env.PI_FY_HOME ?? os.homedir(), "rename");
   const externalDir = jr.externalDir;
   const archiveBase = resolveArchiveBase(jr);
   return { externalDir, archiveBase };
@@ -81,7 +81,7 @@ function seedStaleDateFallback(externalDir: string, date: string, ageDays: numbe
   return p;
 }
 
-describe("ff:archive-artifacts <days> command", () => {
+describe("fy:archive-artifacts <days> command", () => {
   let originalCwd: string;
 
   beforeEach(() => {
@@ -99,7 +99,7 @@ describe("ff:archive-artifacts <days> command", () => {
     process.chdir(originalCwd);
   });
 
-  /** Activate the extension and return the /ff:archive-artifacts handler. */
+  /** Activate the extension and return the /fy:archive-artifacts handler. */
   async function setup() {
     const fake = createFakePi();
     // Await the activation so a rejection surfaces as a clean test failure (not an unhandled
@@ -115,8 +115,8 @@ describe("ff:archive-artifacts <days> command", () => {
       },
       TUI_MODE,
     );
-    const def = fake.registeredCommands.get("ff:archive-artifacts");
-    if (typeof def !== "function") throw new Error("ff:archive-artifacts command not registered");
+    const def = fake.registeredCommands.get("fy:archive-artifacts");
+    if (typeof def !== "function") throw new Error("fy:archive-artifacts command not registered");
     const handler = def as (args: string, ctx: ExtensionContext) => Promise<void>;
     return { fake, handler };
   }
@@ -127,7 +127,7 @@ describe("ff:archive-artifacts <days> command", () => {
     await handler("", ctx);
     expect(ctx.notifications).toHaveLength(1);
     expect(ctx.notifications[0][1]).toBe("error");
-    expect(ctx.notifications[0][0]).toMatch(/Usage: \/ff:archive-artifacts <days>/i);
+    expect(ctx.notifications[0][0]).toMatch(/Usage: \/fy:archive-artifacts <days>/i);
     expect(ctx.confirmCalls).toHaveLength(0);
   });
 
@@ -146,7 +146,7 @@ describe("ff:archive-artifacts <days> command", () => {
     await handler("-7", ctx);
     expect(ctx.notifications).toHaveLength(1);
     expect(ctx.notifications[0][1]).toBe("error");
-    expect(ctx.notifications[0][0]).toMatch(/Usage: \/ff:archive-artifacts <days>/i);
+    expect(ctx.notifications[0][0]).toMatch(/Usage: \/fy:archive-artifacts <days>/i);
     expect(ctx.confirmCalls).toHaveLength(0);
   });
 

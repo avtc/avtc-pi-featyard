@@ -6,8 +6,8 @@
  * design/plan review loop counter and persisting feature state.
  *
  * Used by both the code-driven path (phase_ready handler) and the manual
- * invocation path (events/input/, when the user types /skill:ff-design-review or
- * /skill:ff-plan-review). Compaction recovery does NOT use this — it resumes the
+ * invocation path (events/input/, when the user types /skill:fy-design-review or
+ * /skill:fy-plan-review). Compaction recovery does NOT use this — it resumes the
  * current iteration rather than starting a new one.
  */
 

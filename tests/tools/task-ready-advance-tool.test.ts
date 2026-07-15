@@ -119,7 +119,7 @@ describe("task_ready_advance tool (transitions)", () => {
     const { getTool } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute("id", { nextTask: "1. T" }, undefined, undefined, makeCtx(NOOP));
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
-      /Not available outside feature-flow implement phase/i,
+      /Not available outside featyard implement phase/i,
     );
   });
 
@@ -135,7 +135,7 @@ describe("task_ready_advance tool (transitions)", () => {
     const { getTool } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute("id", { nextTask: "1. T" }, undefined, undefined, makeCtx(NOOP));
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
-      /Not available outside feature-flow implement phase/i,
+      /Not available outside featyard implement phase/i,
     );
   });
 
@@ -180,7 +180,7 @@ describe("task_ready_advance tool (transitions)", () => {
     // Round stays 0 — the model must implement before the first gate fires on the recall.
     expect(featureState.implement.taskReviewRounds["1-first-task"]).toBe(0);
     // No gate skill dispatched on START.
-    expect(sent.some((s) => /<skill name="ff-task-gate"/.test(s.text))).toBe(false);
+    expect(sent.some((s) => /<skill name="fy-task-gate"/.test(s.text))).toBe(false);
     expect(completed).toHaveLength(0);
   });
 
@@ -200,17 +200,17 @@ describe("task_ready_advance tool (transitions)", () => {
     setGuardrailsRef(g.ref);
     const { getTool, sent, pi } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute("id", {}, undefined, undefined, makeCtx(NOOP));
-    // last→verify runs the machinery + dispatches ff-verify (interTaskCompact=none → fallback fires)
+    // last→verify runs the machinery + dispatches fy-verify (interTaskCompact=none → fallback fires)
     expect(completed).toHaveLength(1);
     expect(g.wasSetTo()).toBe(false);
     expect(featureState.implement.currentTask).toBeNull(); // reset on exit
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(/advancing to the next phase/i);
-    // ff-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
+    // fy-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
     vi.useFakeTimers();
     schedulePostTurnDrain(pi);
     vi.advanceTimersByTime(500);
     vi.useRealTimers();
-    expect(sent.some((s) => s.text.includes("ff-verify"))).toBe(true);
+    expect(sent.some((s) => s.text.includes("fy-verify"))).toBe(true);
   });
 
   test("last→verify with open todos → stays in implement, asks to finish them", async () => {
@@ -221,8 +221,8 @@ describe("task_ready_advance tool (transitions)", () => {
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
       /Not all TODO items are complete/i,
     );
-    // No ff-verify dispatch, no workflow phase advance.
-    expect(sent.some((s) => s.text.includes("ff-verify"))).toBe(false);
+    // No fy-verify dispatch, no workflow phase advance.
+    expect(sent.some((s) => s.text.includes("fy-verify"))).toBe(false);
   });
 
   test("last→verify resets currentTask to null", async () => {
@@ -279,7 +279,7 @@ describe("task_ready_advance edge cases + last→verify coverage", () => {
     expect(featureState.implement.currentTask).toBe("1. First task");
   });
 
-  test("last→verify with interTaskCompact=compact suppresses the ff-verify fallback (fired=true)", async () => {
+  test("last→verify with interTaskCompact=compact suppresses the fy-verify fallback (fired=true)", async () => {
     setSetting("interTaskCompact", "compact");
     const { featureState, completed } = installHandler("1. Only task");
     featureState.implement.taskReviewRounds["1-only-task"] = 0;
@@ -290,8 +290,8 @@ describe("task_ready_advance edge cases + last→verify coverage", () => {
     await getTool()?.execute("id", {}, undefined, undefined, ctx);
     expect(compactSpy).toHaveBeenCalled(); // compact was initiated
     expect(completed).toHaveLength(1); // phase advanced
-    // fired=true → the explicit ff-verify fallback is suppressed (the compact follow-up owns ff-verify).
-    expect(sent.some((s) => s.text.includes("ff-verify"))).toBe(false);
+    // fired=true → the explicit fy-verify fallback is suppressed (the compact follow-up owns fy-verify).
+    expect(sent.some((s) => s.text.includes("fy-verify"))).toBe(false);
   });
 
   test("last→verify with no guardrails ref throws (init invariant violation), no phase transition", async () => {
@@ -303,22 +303,22 @@ describe("task_ready_advance edge cases + last→verify coverage", () => {
       /guardrails ref not wired/i,
     );
     expect(completed).toHaveLength(0); // no workflow phase advance
-    expect(sent.some((s) => s.text.includes("ff-verify"))).toBe(false); // no ff-verify dispatch
+    expect(sent.some((s) => s.text.includes("fy-verify"))).toBe(false); // no fy-verify dispatch
   });
 
-  test("last→verify fallback ff-verify is delivered as followUp", async () => {
+  test("last→verify fallback fy-verify is delivered as followUp", async () => {
     const { featureState } = installHandler("1. Only task");
     featureState.implement.taskReviewRounds["1-only-task"] = 0;
     setGuardrailsRef(mockGuardrails().ref);
     const { getTool, sent, pi } = captureTaskReadyAdvanceTool();
     await getTool()?.execute("id", {}, undefined, undefined, makeCtx(NOOP)); // interTaskCompact=none → fallback
-    // ff-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
+    // fy-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
     vi.useFakeTimers();
     schedulePostTurnDrain(pi);
     vi.advanceTimersByTime(500);
     vi.useRealTimers();
-    const verify = sent.find((s) => s.text.includes("ff-verify"));
-    if (!verify) throw new Error("expected an ff-verify dispatch");
+    const verify = sent.find((s) => s.text.includes("fy-verify"));
+    if (!verify) throw new Error("expected an fy-verify dispatch");
     expect(verify.options.deliverAs).toBe("followUp");
   });
 

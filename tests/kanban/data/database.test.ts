@@ -42,7 +42,7 @@ describe("interactive session id helpers", () => {
   test("interactiveSessionIdFor with an empty slug yields the bare prefix (defensive)", () => {
     // Documents the slugless edge: the result is still "session:"-prefixed (so it
     // would be exempt from the sweeper), but such features cannot exist in practice
-    // (all creation paths auto-generate a slug). /ff:auto-stop guards against this.
+    // (all creation paths auto-generate a slug). /fy:auto-stop guards against this.
     expect(interactiveSessionIdFor("")).toBe("session:");
   });
 });
@@ -829,13 +829,13 @@ describe("findAvailableFeatures with projectId=undefined", () => {
         slug: "feat-with-meta",
         title: "Feature With Metadata",
         planDoc: "docs/plans/2026-05-17-feature.md",
-        stateFile: ".pi/feature-flow-state-feat-with-meta.json",
+        stateFile: ".pi/featyard-state-feat-with-meta.json",
         assignedSession: "session-abc",
       });
       const feature = db.getFeature(featureId);
       expect(feature).not.toBeNull();
       expect(feature?.plan_doc).toBe("docs/plans/2026-05-17-feature.md");
-      expect(feature?.state_file).toBe(".pi/feature-flow-state-feat-with-meta.json");
+      expect(feature?.state_file).toBe(".pi/featyard-state-feat-with-meta.json");
       expect(feature?.assigned_session).toBe("session-abc");
     });
 
@@ -1175,10 +1175,10 @@ test("updateFeature updates design_doc", async () => {
 
   db.updateFeature({
     featureId,
-    designDoc: "docs/ff/designs/test-feature-design.md",
+    designDoc: "docs/featyard/designs/test-feature-design.md",
   });
 
   const feature = db.getFeature(featureId);
   expect(feature).not.toBeNull();
-  expect(feature?.design_doc).toBe("docs/ff/designs/test-feature-design.md");
+  expect(feature?.design_doc).toBe("docs/featyard/designs/test-feature-design.md");
 });

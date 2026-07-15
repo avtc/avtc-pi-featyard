@@ -22,7 +22,7 @@ describe("kanban auto-create project flow", () => {
   });
 
   test("auto-create project after detectProject returns null", async () => {
-    // Simulate what the /ff:kanban command handler does
+    // Simulate what the /fy:kanban command handler does
     const repoPath = "/some/repo/path";
     const projectId = db.createProject({ name: "path", repoPath });
     expect(projectId).toBeGreaterThan(0);
@@ -54,7 +54,7 @@ describe("kanban auto-create project flow", () => {
     const repoPath = "/idempotent/path";
     const firstId = db.createProject({ name: "project", repoPath });
 
-    // Simulate the check-before-create pattern from /ff:kanban handler
+    // Simulate the check-before-create pattern from /fy:kanban handler
     const existing = db.findProjectByRepoPath(repoPath);
     expect(existing).not.toBeNull();
     expect((existing as NonNullable<typeof existing>).id).toBe(firstId);

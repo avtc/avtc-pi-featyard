@@ -182,7 +182,7 @@ function isConfigOrDotfile(basename: string): boolean {
  * True when any DIRECTORY segment of `p` is a dotfolder (starts with `.`).
  * Excludes the literal `.` and `..` segments so relative paths like
  * `./src/foo.ts` or `../lib/foo.ts` still classify as source. Files inside
- * tooling / scratch / config directories (`.ff/`, `.git/`, `.pi/`, `.vscode/`,
+ * tooling / scratch / config directories (`.featyard/`, `.git/`, `.pi/`, `.vscode/`,
  * `.github/`, …) are not project source and must not trip the TDD source-write
  * warning. The basename is not considered here — a dotfile basename is handled
  * by {@link isConfigOrDotfile}.
@@ -257,7 +257,7 @@ export function isTestFile(p: string): boolean {
  */
 export function isSourceFile(p: string): boolean {
   if (!p) return false;
-  if (isUnderDotdir(p)) return false; // tooling / scratch / config dir (e.g. .ff/, .git/, .vscode/)
+  if (isUnderDotdir(p)) return false; // tooling / scratch / config dir (e.g. .featyard/, .git/, .vscode/)
   const base = pathPosix.basename(p);
   if (!base || isConfigOrDotfile(base)) return false;
   // Declaration-only file formats carry no runtime implementation — only

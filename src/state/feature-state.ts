@@ -5,9 +5,9 @@
  * Per-Feature State Management
  *
  * Manages individual state files for each feature, stored at
- * `.ff/feature-state/{slug}.json` (co-located with artifacts under the single `.ff` junction to
- * `~/.pi/feature-flow/artifacts/<key>/`). A one-time migration (workflow-monitor activation)
- * relocates legacy `.pi/feature-flow-state-{slug}.json` files to this location.
+ * `.featyard/feature-state/{slug}.json` (co-located with artifacts under the single `.featyard` junction to
+ * `~/.pi/featyard/artifacts/<key>/`). A one-time migration (workflow-monitor activation)
+ * relocates legacy `.pi/featyard-state-{slug}.json` files to this location.
  */
 
 import * as fs from "node:fs";
@@ -28,15 +28,15 @@ import { type Phase, type PhaseProgressionState, WORKFLOW_PHASES } from "../phas
 import type { FeatureSession } from "../state/feature-session.js";
 
 // --- Artifact directory constants (single source of truth) ---
-// Design docs live either in-repo (docs/ff/designs/, committed) or out-of-repo under .ff/designs/
-// (the gitignored .ff/ junction), per the designDocStorage setting. Task-plans, research, and
-// reviews always live under .ff/.
+// Design docs live either in-repo (docs/featyard/designs/, committed) or out-of-repo under .featyard/designs/
+// (the gitignored .featyard/ junction), per the designDocStorage setting. Task-plans, research, and
+// reviews always live under .featyard/.
 export {
   DESIGN_DOC_DIRS,
   type DesignDocStorageMode,
-  FF_RESEARCH_DIR,
-  FF_REVIEWS_DIR,
-  FF_TASK_PLANS_DIR,
+  FY_RESEARCH_DIR,
+  FY_REVIEWS_DIR,
+  FY_TASK_PLANS_DIR,
   resolveDesignRelativeDir,
 } from "./artifact-paths.js";
 
@@ -114,19 +114,19 @@ export interface FeatureState {
   design: {
     /** Design document path (recorded on write, recovered from disk on resume); null until created. */
     doc: string | null;
-    /** ff-design-review sub-loop currently active. */
+    /** fy-design-review sub-loop currently active. */
     reviewActive: boolean;
-    /** ff-design-review iteration count. */
+    /** fy-design-review iteration count. */
     reviewLoopCount: number;
   };
   plan: {
     /** Task-plan document path; null until created. */
     doc: string | null;
-    /** ff-plan-verifier iteration count. */
+    /** fy-plan-verifier iteration count. */
     verifyLoopCount: number;
-    /** ff-plan-review sub-loop currently active. */
+    /** fy-plan-review sub-loop currently active. */
     reviewActive: boolean;
-    /** ff-plan-review iteration count. */
+    /** fy-plan-review iteration count. */
     reviewLoopCount: number;
   };
   implement: {
@@ -134,13 +134,13 @@ export interface FeatureState {
     taskReviewRounds: Record<string, number>;
     /**
      * The plan-task the implementer is currently on (set by task_ready_advance), or null.
-     * Durable source of truth — drives the widget task segment, {{PI_FF_CURRENT_TASK}},
+     * Durable source of truth — drives the widget task segment, {{PI_FY_CURRENT_TASK}},
      * per-task report/known-issues paths, and the per-task review-loop key. Survives resume.
      */
     currentTask: string | null;
   };
   verify: {
-    /** ff-feature-verifier iteration count. */
+    /** fy-feature-verifier iteration count. */
     verifyLoopCount: number;
   };
   review: {
@@ -154,12 +154,12 @@ export interface FeatureState {
 // --- Path helpers ---
 
 /**
- * Returns the feature-state directory: `<cwd>/.ff/feature-state` (a real path through the
- * `.ff` junction into the external artifact store). The directory is created lazily by callers
- * that write (`saveFeatureState`); activation also pre-creates it via `ensureFfJunction`.
+ * Returns the feature-state directory: `<cwd>/.featyard/feature-state` (a real path through the
+ * `.featyard` junction into the external artifact store). The directory is created lazily by callers
+ * that write (`saveFeatureState`); activation also pre-creates it via `ensureFeatyardJunction`.
  */
 export function stateDir(): string {
-  return path.join(process.cwd(), ".ff", "feature-state");
+  return path.join(process.cwd(), ".featyard", "feature-state");
 }
 
 /**

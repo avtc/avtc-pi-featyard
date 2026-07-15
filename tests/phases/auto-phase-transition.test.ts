@@ -74,8 +74,8 @@ describe("auto phase transition execute → verify → review", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: "docs/ff/designs/2026-05-11-auto-trans-design.md",
-          plan: ".ff/task-plans/2026-05-11-auto-trans-task-plan.md",
+          design: "docs/featyard/designs/2026-05-11-auto-trans-design.md",
+          plan: ".featyard/task-plans/2026-05-11-auto-trans-task-plan.md",
           implement: null,
           verify: null,
           review: null,
@@ -114,12 +114,12 @@ describe("auto phase transition execute → verify → review", () => {
     } as unknown as ExtensionContext);
 
     expect((result.content[0] as { text: string }).text).toMatch(/advancing to the next phase/i);
-    // ff-verify is staged for agent_settled delivery — settle + drain before asserting.
+    // fy-verify is staged for agent_settled delivery — settle + drain before asserting.
     await fireAllHandlers(fake.handlers, "agent_end", {}, createCtx(NO_UI, NO_BRANCH));
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     // Should send exactly one followUp message with the verification skill
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-verify"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-verify"/);
     expect(fake.sentMessages[0].options).toEqual({ deliverAs: "followUp" });
 
     // Current phase should now be verify
@@ -143,8 +143,8 @@ describe("auto phase transition execute → verify → review", () => {
         },
         currentPhase: "verify",
         artifacts: {
-          design: "docs/ff/designs/2026-05-11-auto-trans-verify-design.md",
-          plan: ".ff/task-plans/2026-05-11-auto-trans-verify-task-plan.md",
+          design: "docs/featyard/designs/2026-05-11-auto-trans-verify-design.md",
+          plan: ".featyard/task-plans/2026-05-11-auto-trans-verify-task-plan.md",
           implement: null,
           verify: null,
           review: null,
@@ -206,7 +206,7 @@ describe("auto phase transition execute → verify → review", () => {
     } as unknown as ExtensionContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toMatch(/^<skill name="ff-review"/);
+    expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
     expect(fake.sentMessages[0].options).toEqual({ deliverAs: "followUp" });
   });
 
@@ -226,8 +226,8 @@ describe("auto phase transition execute → verify → review", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: "docs/ff/designs/2026-05-11-auto-no-prompt-design.md",
-          plan: ".ff/task-plans/2026-05-11-auto-no-prompt-task-plan.md",
+          design: "docs/featyard/designs/2026-05-11-auto-no-prompt-design.md",
+          plan: ".featyard/task-plans/2026-05-11-auto-no-prompt-task-plan.md",
           implement: null,
           verify: null,
           review: null,
@@ -304,7 +304,7 @@ describe("auto phase transition execute → verify → review", () => {
     expect(selectCalled).toBe(false);
   });
 
-  test("verify→review with maxFeatureReviewRounds enabled dispatches ff-review skill via phase_ready", async () => {
+  test("verify→review with maxFeatureReviewRounds enabled dispatches fy-review skill via phase_ready", async () => {
     const slug = "2026-05-12-verify-to-review-enabled";
     setSetting("maxFeatureReviewRounds", 3);
     setSetting("featureReviewMode", "general");
@@ -321,8 +321,8 @@ describe("auto phase transition execute → verify → review", () => {
         },
         currentPhase: "verify",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -369,7 +369,7 @@ describe("auto phase transition execute → verify → review", () => {
       ui: { setWidget: () => {}, select: vi.fn(), confirm: vi.fn(), input: vi.fn(), notify: vi.fn() },
     } as unknown as ExtensionContext);
 
-    // maxFeatureReviewRounds='3' → should dispatch ff-review (staged, drained at agent_end)
+    // maxFeatureReviewRounds='3' → should dispatch fy-review (staged, drained at agent_end)
     expect((result.content[0] as { text: string }).text).toBe("");
     await fireAllHandlers(fake.handlers, "agent_end", {}, {
       hasUI: false,
@@ -377,7 +377,7 @@ describe("auto phase transition execute → verify → review", () => {
     } as unknown as ExtensionContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
-    expect(fake.sentMessages[0].message).toContain('<skill name="ff-review"');
+    expect(fake.sentMessages[0].message).toContain('<skill name="fy-review"');
     expect(fake.sentMessages[0].options).toEqual({ deliverAs: "followUp" });
   });
 

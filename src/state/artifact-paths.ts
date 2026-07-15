@@ -4,9 +4,9 @@
 /**
  * Artifact directory path constants — single source of truth.
  *
- * Design docs live either IN-REPO (`docs/ff/designs/`, tracked) or OUT of the repo under `.ff/designs/`
- * (the gitignored `.ff/` junction → `~/.pi/feature-flow/artifacts/<key>/`), per the `designDocStorage`
- * setting. Task-plans, research, and reviews always live under `.ff/`. All consumers (feature-state,
+ * Design docs live either IN-REPO (`docs/featyard/designs/`, tracked) or OUT of the repo under `.featyard/designs/`
+ * (the gitignored `.featyard/` junction → `~/.pi/featyard/artifacts/<key>/`), per the `designDocStorage`
+ * setting. Task-plans, research, and reviews always live under `.featyard/`. All consumers (feature-state,
  * template-substitution, guardrails, feature-management, phase-progression, review-context) import
  * these to avoid drift.
  *
@@ -22,17 +22,17 @@ export type DesignDocStorageMode = "local" | "committed";
 /**
  * Directory holding design docs, RELATIVE to the project root, for a given storage mode.
  *
- * - `committed` → `docs/ff/designs/` — in-repo, tracked in git (published with the repo, survives clone).
- * - `local` → `.ff/designs/` — out-of-repo via the gitignored `.ff/` junction (not committed,
+ * - `committed` → `docs/featyard/designs/` — in-repo, tracked in git (published with the repo, survives clone).
+ * - `local` → `.featyard/designs/` — out-of-repo via the gitignored `.featyard/` junction (not committed,
  *   survives worktree removal, shared across worktrees of the project).
  *
  * Kept relative so it composes under any project root and resolves identically via git mv,
- * guardrail prefix-checks, and path.resolve. The `.ff/` path resolves through the junction
+ * guardrail prefix-checks, and path.resolve. The `.featyard/` path resolves through the junction
  * transparently; the guardrails' string-prefix checks match because agents write to this relative
  * path.
  */
 export function resolveDesignRelativeDir(mode: DesignDocStorageMode): string {
-  return mode === "local" ? ".ff/designs" : "docs/ff/designs";
+  return mode === "local" ? ".featyard/designs" : "docs/featyard/designs";
 }
 
 /**
@@ -46,9 +46,9 @@ export const DESIGN_DOC_DIRS: readonly string[] = [
   resolveDesignRelativeDir("local"),
   resolveDesignRelativeDir("committed"),
 ];
-export const FF_TASK_PLANS_DIR = ".ff/task-plans";
-export const FF_RESEARCH_DIR = ".ff/research";
-export const FF_REVIEWS_DIR = ".ff/reviews";
+export const FY_TASK_PLANS_DIR = ".featyard/task-plans";
+export const FY_RESEARCH_DIR = ".featyard/research";
+export const FY_REVIEWS_DIR = ".featyard/reviews";
 
 /** Sentinel for resolveKnownIssuesPath: no per-task scope (design/plan/feature-level review). */
 export const NO_TASK_NUM: string | undefined = undefined;
@@ -84,12 +84,12 @@ export function resolveKnownIssuesPath(
 ): string | null {
   if (!slug) return null;
   return phase === "design"
-    ? `${FF_REVIEWS_DIR}/${slug}/${slug}-design-known-issues.md`
+    ? `${FY_REVIEWS_DIR}/${slug}/${slug}-design-known-issues.md`
     : phase === "plan"
-      ? `${FF_REVIEWS_DIR}/${slug}/${slug}-plan-known-issues.md`
+      ? `${FY_REVIEWS_DIR}/${slug}/${slug}-plan-known-issues.md`
       : taskName
-        ? `${FF_REVIEWS_DIR}/${slug}/${slug}-task-${slugifyTaskDesignation(taskName)}-known-issues.md`
-        : `${FF_REVIEWS_DIR}/${slug}/${slug}-known-issues.md`;
+        ? `${FY_REVIEWS_DIR}/${slug}/${slug}-task-${slugifyTaskDesignation(taskName)}-known-issues.md`
+        : `${FY_REVIEWS_DIR}/${slug}/${slug}-known-issues.md`;
 }
 
 /**
@@ -117,7 +117,7 @@ export function buildFallbackKnownIssuesPath(
         : taskName
           ? `task-${slugifyTaskDesignation(taskName)}-known-issues`
           : "review-known-issues";
-  return `${FF_REVIEWS_DIR}/${date}/${date}-${suffix}.md`;
+  return `${FY_REVIEWS_DIR}/${date}/${date}-${suffix}.md`;
 }
 
 /** Regex special characters that need escaping in filename patterns. */
@@ -152,7 +152,7 @@ export function buildReportFilePath(
 ): string {
   const safeSlug = sanitizeForFilename(slug);
   const safePrefix = sanitizeForFilename(prefix);
-  const dir = `${FF_REVIEWS_DIR}/${safeSlug}`;
+  const dir = `${FY_REVIEWS_DIR}/${safeSlug}`;
 
   // Scan for existing files matching {slug}-{prefix}-{N}.md
   const escapedSlug = safeSlug.replace(REGEX_SPECIAL_CHARS, "\\$&");
@@ -190,7 +190,7 @@ export function buildReportFilePath(
 
 /**
  * Build a date-based fallback report path when no slug/feature is active.
- * Scans {FF_REVIEWS_DIR}/{date}/ for existing files matching {date}-{topic}-{agentName}-{N}.md,
+ * Scans {FY_REVIEWS_DIR}/{date}/ for existing files matching {date}-{topic}-{agentName}-{N}.md,
  * finds the highest N for this topic+agentName combo, and returns the next available path.
  * Creates the date subdirectory if it doesn't exist.
  */
@@ -200,7 +200,7 @@ export function buildFallbackReportPath(
   agentName: string | undefined,
   _fs: typeof import("node:fs"),
 ): string {
-  const reviewsDir = FF_REVIEWS_DIR;
+  const reviewsDir = FY_REVIEWS_DIR;
   const dateDir = `${reviewsDir}/${date}`;
   const safeTopic = sanitizeForFilename(topic) || "review";
   const safeAgent = agentName ? sanitizeForFilename(agentName) : undefined;

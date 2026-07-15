@@ -43,7 +43,7 @@ let spies: ReturnType<typeof vi.spyOn>[];
 
 beforeEach(() => {
   // Run in a temp dir: createMockCtx uses cwd:process.cwd(), and the "saves to project settings"
-  // path calls updateProjectSetting(process.cwd(), ...) which writes .pi/avtc-pi-feature-flow-settings.json.
+  // path calls updateProjectSetting(process.cwd(), ...) which writes .pi/avtc-pi-featyard-settings.json.
   // Must land in the temp, never the real repo.
   withTempCwd();
   setTestSettings(null);

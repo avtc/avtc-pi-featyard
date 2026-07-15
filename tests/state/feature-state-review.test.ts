@@ -36,19 +36,19 @@ afterEach(() => {
 
 describe("FeatureState review fields", () => {
   it("createFeatureState includes reviewLoopCount=0 and empty reviewHistory", () => {
-    const state = createFeatureState("2026-05-11-test", "docs/ff/designs/2026-05-11-test-design.md");
+    const state = createFeatureState("2026-05-11-test", "docs/featyard/designs/2026-05-11-test-design.md");
     expect(state.review.reviewLoopCount).toBe(0);
     expect(state.review.reviewHistory).toEqual([]);
   });
 
   it("createFeatureStateFromPlan includes reviewLoopCount=0 and empty reviewHistory", () => {
-    const state = createFeatureStateFromPlan("2026-05-11-test", ".ff/task-plans/2026-05-11-test-task-plan.md");
+    const state = createFeatureStateFromPlan("2026-05-11-test", ".featyard/task-plans/2026-05-11-test-task-plan.md");
     expect(state.review.reviewLoopCount).toBe(0);
     expect(state.review.reviewHistory).toEqual([]);
   });
 
   it("reviewLoopCount and reviewHistory persist to disk and reload", () => {
-    const state = createFeatureState("2026-05-11-test", "docs/ff/designs/2026-05-11-test-design.md");
+    const state = createFeatureState("2026-05-11-test", "docs/featyard/designs/2026-05-11-test-design.md");
     state.review.reviewLoopCount = 2;
     state.review.reviewHistory = [
       {
@@ -86,7 +86,7 @@ describe("FeatureState review fields", () => {
   });
 
   it("reviewHistory with multiple entries persists correctly", () => {
-    const state = createFeatureState("2026-05-11-test", "docs/ff/designs/2026-05-11-test-design.md");
+    const state = createFeatureState("2026-05-11-test", "docs/featyard/designs/2026-05-11-test-design.md");
     state.review.reviewLoopCount = 3;
     state.review.reviewHistory = [
       {
@@ -122,7 +122,7 @@ describe("FeatureState review fields", () => {
   });
 
   it("recordReviewHistory caps at MAX_REVIEW_HISTORY entries", () => {
-    const state = createFeatureState("2026-05-11-test", "docs/ff/designs/2026-05-11-test-design.md");
+    const state = createFeatureState("2026-05-11-test", "docs/featyard/designs/2026-05-11-test-design.md");
 
     // Add 102 entries to exceed the cap (100)
     for (let i = 0; i < 102; i++) {

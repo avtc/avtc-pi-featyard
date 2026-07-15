@@ -2,10 +2,7 @@ node_modules/
 
 # KotaDB local storage
 .kotadb/
-.pi/feature-flow-state*.json
 .worktrees/
 nul
 
-# feature-flow artifact junction (external storage)
-.ff
 .pi

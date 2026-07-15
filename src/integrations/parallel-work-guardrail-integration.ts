@@ -4,11 +4,11 @@
 /**
  * Parallel work guardrail integration layer.
  *
- * This is the ONLY file that imports from both avtc-pi-feature-flow internals
+ * This is the ONLY file that imports from both avtc-pi-featyard internals
  * and the vendored subscribe-to-guardrail drop-in.
  *
  * Exports initGuardrailIntegration(pi) which calls subscribeToGuardrail
- * with feature-flow-specific hooks (isWhitelisted).
+ * with featyard-specific hooks (isWhitelisted).
  *
  * The guardrail wires its own requestAttention via pi-notification — this layer
  * does NOT provide requestAttention.

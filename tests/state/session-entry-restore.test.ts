@@ -21,7 +21,7 @@ function makeBranch(entries: Array<{ customType?: string; data?: unknown; type?:
   }));
 }
 
-/** Create a feature_flow_state entry with full handler state.
+/** Create a featyard_state entry with full handler state.
  *  New wrapper shape: { featureState, guardrailsState }. Phase status is derived
  *  from currentPhase + completedAt (no phases map). */
 function stateEntry(
@@ -33,7 +33,7 @@ function stateEntry(
   // (status is derived from currentPhase + completedAt).
   void overrides.phases;
   return {
-    customType: "feature_flow_state",
+    customType: "featyard_state",
     data: {
       featureState: slug
         ? {
@@ -107,7 +107,7 @@ describe("session entry restore — resume", () => {
     await fireAllHandlers(fake.handlers, "session_start", { reason: "resume" }, makeMockCtx(branch));
 
     expect(getActiveFeatureSlug()).toBe("2026-05-10-resumed-feature");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-10-resumed-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-10-resumed-feature");
   });
 
   test("resume with no session entries clears state and does not show prompts", async () => {
@@ -117,7 +117,7 @@ describe("session entry restore — resume", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     // Pre-set env var to simulate stale state from previous session
-    process.env.PI_FF_FEATURE = "stale-feature";
+    process.env.PI_FY_FEATURE = "stale-feature";
 
     let selectCalled = false;
     const mockCtx = makeMockCtx(branch, {
@@ -132,7 +132,7 @@ describe("session entry restore — resume", () => {
     // No prompt shown, state cleared
     expect(selectCalled).toBe(false);
     expect(getActiveFeatureSlug()).toBeNull();
-    expect(process.env.PI_FF_FEATURE).toBeUndefined();
+    expect(process.env.PI_FY_FEATURE).toBeUndefined();
   });
 });
 
@@ -163,7 +163,7 @@ describe("session entry restore — fork", () => {
     await fireAllHandlers(fake.handlers, "session_start", { reason: "fork" }, makeMockCtx(branch));
 
     expect(getActiveFeatureSlug()).toBe("2026-05-10-forked-feature");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-10-forked-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-10-forked-feature");
   });
 
   test("fork with no session entries clears state", async () => {
@@ -172,7 +172,7 @@ describe("session entry restore — fork", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
-    process.env.PI_FF_FEATURE = "stale-feature";
+    process.env.PI_FY_FEATURE = "stale-feature";
 
     let selectCalled = false;
     const mockCtx = makeMockCtx(branch, {
@@ -186,7 +186,7 @@ describe("session entry restore — fork", () => {
 
     expect(selectCalled).toBe(false);
     expect(getActiveFeatureSlug()).toBeNull();
-    expect(process.env.PI_FF_FEATURE).toBeUndefined();
+    expect(process.env.PI_FY_FEATURE).toBeUndefined();
   });
 });
 
@@ -222,7 +222,7 @@ describe("session entry restore — tree", () => {
     );
 
     expect(getActiveFeatureSlug()).toBe("2026-05-10-tree-feature");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-10-tree-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-10-tree-feature");
   });
 
   test("session_tree with no entries clears state", async () => {
@@ -231,7 +231,7 @@ describe("session entry restore — tree", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
-    process.env.PI_FF_FEATURE = "stale-feature";
+    process.env.PI_FY_FEATURE = "stale-feature";
 
     let selectCalled = false;
     const mockCtx = makeMockCtx(branch, {
@@ -245,7 +245,7 @@ describe("session entry restore — tree", () => {
 
     expect(selectCalled).toBe(false);
     expect(getActiveFeatureSlug()).toBeNull();
-    expect(process.env.PI_FF_FEATURE).toBeUndefined();
+    expect(process.env.PI_FY_FEATURE).toBeUndefined();
   });
 });
 
@@ -276,7 +276,7 @@ describe("session entry restore — reload", () => {
     await fireAllHandlers(fake.handlers, "session_start", { reason: "reload" }, makeMockCtx(branch));
 
     expect(getActiveFeatureSlug()).toBe("2026-05-10-my-feature");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-10-my-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-10-my-feature");
   });
 
   test("reload restores design-phase state with null slug (original bug scenario)", async () => {
@@ -294,7 +294,7 @@ describe("session entry restore — reload", () => {
 
     expect(getActiveFeatureSlug()).toBeNull();
     // Env var should NOT be set when slug is null
-    expect(process.env.PI_FF_FEATURE).toBeUndefined();
+    expect(process.env.PI_FY_FEATURE).toBeUndefined();
   });
 
   test("reload with no session entries falls through to env-var path", async () => {
@@ -304,10 +304,10 @@ describe("session entry restore — reload", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     // Set env var + write feature state file to simulate the fallback path
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
     const slug = "fallback-feature";
     fs.writeFileSync(
-      path.join(".ff", "feature-state", `${slug}.json`),
+      path.join(".featyard", "feature-state", `${slug}.json`),
       JSON.stringify({
         featureSlug: slug,
         git: { branch: null, baseCommitSha: null, worktreePath: null, baseBranch: null },
@@ -324,13 +324,13 @@ describe("session entry restore — reload", () => {
         featureId: null,
       }),
     );
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     await fireAllHandlers(fake.handlers, "session_start", { reason: "reload" }, makeMockCtx(branch));
 
     // Falls through to env-var path — loads from file
     expect(getActiveFeatureSlug()).toBe(slug);
-    expect(process.env.PI_FF_FEATURE).toBe(slug);
+    expect(process.env.PI_FY_FEATURE).toBe(slug);
   });
 
   test("reload restores from last state entry when multiple exist", async () => {
@@ -361,7 +361,7 @@ describe("session entry restore — reload", () => {
 
     // Should use the LAST state entry (new-feature), not the first
     expect(getActiveFeatureSlug()).toBe("new-feature");
-    expect(process.env.PI_FF_FEATURE).toBe("new-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("new-feature");
   });
 
   test("reload does not scan disk or show prompts even when disk features exist", async () => {
@@ -376,9 +376,9 @@ describe("session entry restore — reload", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     // Create a stale feature state file on disk — reload should ignore it
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
     fs.writeFileSync(
-      path.join(".ff", "feature-state", "old-feature.json"),
+      path.join(".featyard", "feature-state", "old-feature.json"),
       JSON.stringify({ completedAt: null, featureSlug: "old-feature" }),
     );
 

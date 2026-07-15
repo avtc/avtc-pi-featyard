@@ -10,7 +10,7 @@ import * as logging from "../../src/log.js";
 import {
   createFeatureSession,
   createGuardrailsState,
-  type FeatureFlowStatePatch,
+  type FeatyardStatePatch,
 } from "../../src/state/feature-session.js";
 import type { FeatureState } from "../../src/state/feature-state.js";
 import { createFakePi, getSingleHandler, withTempCwd } from "../helpers/workflow-monitor-test-helpers.js";
@@ -19,7 +19,7 @@ describe("FeatureSession aggregated state persistence", () => {
   test("getFullState aggregates feature + verification state", () => {
     const handler = createFeatureSession(null);
 
-    handler.processSkillInput("/skill:ff-plan");
+    handler.processSkillInput("/skill:fy-plan");
     handler.recordVerificationWaiver();
 
     // Guardrails state is now verification-only (the TDD write-order check is
@@ -41,18 +41,18 @@ describe("FeatureSession aggregated state persistence", () => {
       completedAt: null,
       workflow: {
         currentPhase: "plan",
-        designDoc: "docs/ff/designs/2026-02-15-feature-design.md",
+        designDoc: "docs/featyard/designs/2026-02-15-feature-design.md",
         planDoc: null,
       },
       sessionFiles: [],
       featureId: null,
-      design: { doc: "docs/ff/designs/2026-02-15-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
+      design: { doc: "docs/featyard/designs/2026-02-15-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
       plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 0 },
       implement: { taskReviewRounds: {}, currentTask: null },
       verify: { verifyLoopCount: 0 },
       review: { reviewLoopCount: 0, reviewHistory: [] },
     };
-    const snapshot: FeatureFlowStatePatch = {
+    const snapshot: FeatyardStatePatch = {
       featureState,
       guardrailsState: { verification: "waived" },
     };
@@ -66,7 +66,7 @@ describe("FeatureSession aggregated state persistence", () => {
   test("round-trips full state snapshot", () => {
     const source = createFeatureSession(null);
 
-    source.processSkillInput("/skill:ff-plan");
+    source.processSkillInput("/skill:fy-plan");
     source.recordVerificationWaiver();
 
     const snapshot = source.getFullState();
@@ -80,7 +80,7 @@ describe("FeatureSession aggregated state persistence", () => {
   test("setFullState tolerates missing sections defensively", () => {
     const handler = createFeatureSession(null);
 
-    expect(() => handler.setFullState({} as FeatureFlowStatePatch)).not.toThrow();
+    expect(() => handler.setFullState({} as FeatyardStatePatch)).not.toThrow();
   });
 
   test("setFullState accepts partial guardrails input defensively", () => {
@@ -88,7 +88,7 @@ describe("FeatureSession aggregated state persistence", () => {
 
     // A partial guardrails patch (verification only) must apply without throwing.
     expect(() =>
-      handler.setFullState({ guardrailsState: { verification: "waived" } } as FeatureFlowStatePatch),
+      handler.setFullState({ guardrailsState: { verification: "waived" } } as FeatyardStatePatch),
     ).not.toThrow();
 
     expect(handler.getFullState().guardrailsState.verification).toBe("waived");
@@ -106,7 +106,7 @@ describe("FeatureSession aggregated state persistence", () => {
           verification: "passed",
           tdd: { stage: "red", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         },
-      } as FeatureFlowStatePatch),
+      } as FeatyardStatePatch),
     ).not.toThrow();
 
     expect(handler.getVerificationState()).toBe("passed");
@@ -115,7 +115,7 @@ describe("FeatureSession aggregated state persistence", () => {
   test("resetState restores all subsystems to defaults", () => {
     const handler = createFeatureSession(null);
 
-    handler.processSkillInput("/skill:ff-plan");
+    handler.processSkillInput("/skill:fy-plan");
     handler.recordVerificationWaiver();
 
     handler.resetState();
@@ -146,12 +146,12 @@ describe("file-based state persistence", () => {
       completedAt: null,
       workflow: {
         currentPhase: "plan",
-        designDoc: "docs/ff/designs/file-design.md",
+        designDoc: "docs/featyard/designs/file-design.md",
         planDoc: null,
       },
       sessionFiles: [],
       featureId: null,
-      design: { doc: "docs/ff/designs/file-design.md", reviewActive: false, reviewLoopCount: 0 },
+      design: { doc: "docs/featyard/designs/file-design.md", reviewActive: false, reviewLoopCount: 0 },
       plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 0 },
       implement: { taskReviewRounds: {}, currentTask: null },
       verify: { verifyLoopCount: 0 },
@@ -165,7 +165,7 @@ describe("file-based state persistence", () => {
     reconstructState(
       {
         sessionManager: {
-          getBranch: () => [{ type: "custom", customType: "feature_flow_state", data: { workflow: null } }],
+          getBranch: () => [{ type: "custom", customType: "featyard_state", data: { workflow: null } }],
         },
       } as unknown as ExtensionContext,
       handler,
@@ -227,7 +227,7 @@ describe("file-based state persistence", () => {
 describe("workflow-monitor state reconstruction + persistence wiring", () => {
   test("reconstructs fresh defaults when branch has no persisted state entries", () => {
     const handler = createFeatureSession(null);
-    handler.processSkillInput("/skill:ff-plan");
+    handler.processSkillInput("/skill:fy-plan");
     handler.recordVerificationWaiver();
 
     reconstructState(
@@ -252,7 +252,7 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
 
     const onInput = getSingleHandler(fake.handlers, "input");
     await onInput(
-      { type: "input", text: "/skill:ff-design" } as unknown as ExtensionEvent,
+      { type: "input", text: "/skill:fy-design" } as unknown as ExtensionEvent,
       {
         hasUI: false,
         sessionManager: { getBranch: () => [] },
@@ -267,7 +267,7 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
         type: "tool_call",
         toolCallId: "call-1",
         toolName: "read",
-        input: { path: "/home/pi/workspace/my-project/skills/ff-plan/SKILL.md" },
+        input: { path: "/home/pi/workspace/my-project/skills/fy-plan/SKILL.md" },
         content: [{ type: "text", text: "ok" }],
         details: {},
       } as unknown as ExtensionEvent,
@@ -280,7 +280,7 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
 
     expect(fake.appendedEntries.length).toBeGreaterThanOrEqual(1);
     const lastEntry = fake.appendedEntries[fake.appendedEntries.length - 1];
-    expect((lastEntry as { customType?: string })?.customType).toBe("feature_flow_state");
+    expect((lastEntry as { customType?: string })?.customType).toBe("featyard_state");
     expect((lastEntry as { data?: { featureState?: FeatureState | null } })?.data?.featureState).toBeNull();
   });
 });

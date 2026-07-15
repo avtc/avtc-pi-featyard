@@ -47,10 +47,10 @@ describe("isReviewPhase", () => {
 
 describe("reviewSkillName", () => {
   it("maps design phase to design-review skill", () => {
-    expect(reviewSkillName("design")).toBe("ff-design-review");
+    expect(reviewSkillName("design")).toBe("fy-design-review");
   });
 
   it("maps plan phase to plan-review skill", () => {
-    expect(reviewSkillName("plan")).toBe("ff-plan-review");
+    expect(reviewSkillName("plan")).toBe("fy-plan-review");
   });
 });

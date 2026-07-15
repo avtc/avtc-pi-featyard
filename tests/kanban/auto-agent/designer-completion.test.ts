@@ -42,7 +42,7 @@ describe("auto-designer completion via phase_ready only", () => {
         },
         currentPhase: "design",
         artifacts: {
-          design: "docs/ff/designs/test-design.md",
+          design: "docs/featyard/designs/test-design.md",
           plan: null,
           implement: null,
           verify: null,
@@ -107,7 +107,7 @@ describe("auto-designer completion via phase_ready only", () => {
         },
         currentPhase: "design",
         artifacts: {
-          design: "docs/ff/designs/test-design.md",
+          design: "docs/featyard/designs/test-design.md",
           plan: null,
           implement: null,
           verify: null,

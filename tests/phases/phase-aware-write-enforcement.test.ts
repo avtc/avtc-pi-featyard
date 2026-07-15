@@ -71,7 +71,7 @@ describe("phase-aware file write enforcement", () => {
       .join("\n");
 
     expect(text).toContain("⚠️ PROCESS VIOLATION");
-    expect(text).toContain("docs/ff/designs/");
+    expect(text).toContain("docs/featyard/designs/");
   });
 
   test("writing to./docs/plans is allowed during design", async () => {
@@ -101,7 +101,7 @@ describe("phase-aware file write enforcement", () => {
         type: "tool_call",
         toolCallId: "p1",
         toolName: "write",
-        input: { path: "./docs/ff/designs/x.md", content: "x" },
+        input: { path: "./docs/featyard/designs/x.md", content: "x" },
       },
       ctx as unknown as ExtensionContext,
     );
@@ -110,7 +110,7 @@ describe("phase-aware file write enforcement", () => {
       {
         toolCallId: "p1",
         toolName: "write",
-        input: { path: "./docs/ff/designs/x.md", content: "x" },
+        input: { path: "./docs/featyard/designs/x.md", content: "x" },
         content: [{ type: "text", text: "ok" }],
         details: {},
       } as unknown as ExtensionEvent,
@@ -147,7 +147,7 @@ describe("phase-aware file write enforcement", () => {
       ctx as unknown as ExtensionContext,
     );
 
-    const plansPath = `${process.cwd()}/docs/ff/designs/design.md`;
+    const plansPath = `${process.cwd()}/docs/featyard/designs/design.md`;
 
     await onToolCall(
       { type: "tool_call", toolCallId: "abs1", toolName: "write", input: { path: plansPath, content: "x" } },

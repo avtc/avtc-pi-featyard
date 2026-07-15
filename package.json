@@ -1,6 +1,6 @@
 {
-  "name": "avtc-pi-feature-flow",
-  "version": "1.0.5",
+  "name": "avtc-pi-featyard",
+  "version": "1.1.0",
   "description": "Predictable, deterministic feature development for pi — deep upfront design, configurable comprehensive review and verification rigor, and auto-agents draining a backlog",
   "type": "module",
   "keywords": [
@@ -23,7 +23,7 @@
   "author": "avtc <tarasenkov@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/avtc/avtc-pi-feature-flow.git"
+    "url": "https://github.com/avtc/avtc-pi-featyard.git"
   },
   "files": [
     "index.ts",
@@ -79,7 +79,7 @@
     "avtc-pi-unstuck": "^1.0.0"
   },
   "bugs": {
-    "url": "https://github.com/avtc/avtc-pi-feature-flow/issues"
+    "url": "https://github.com/avtc/avtc-pi-featyard/issues"
   },
-  "homepage": "https://github.com/avtc/avtc-pi-feature-flow"
+  "homepage": "https://github.com/avtc/avtc-pi-featyard"
 }

@@ -11,7 +11,7 @@
  * /new, /resume, /fork, /reload) left it pinned to a dead runner.
  *
  * State branch: bind/resume/reset the active feature per the session reason
- * (reload/startup/resume/fork/new + PI_FF_FEATURE binding), via the session-lifecycle
+ * (reload/startup/resume/fork/new + PI_FY_FEATURE binding), via the session-lifecycle
  * domain object (ISessionLifecycle.onSessionStart).
  */
 

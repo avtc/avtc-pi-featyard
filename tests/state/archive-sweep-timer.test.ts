@@ -77,7 +77,7 @@ describe("archive sweep timer lifecycle", () => {
     const clearSpy = vi.spyOn(globalThis, "clearInterval");
 
     // Re-activate (simulates /reload re-evaluating the module).
-    delete (globalThis as Record<string, unknown>).__avtcPiFeatureFlowWired;
+    delete (globalThis as Record<string, unknown>).__avtcPiFeatyardWired;
     await workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     const second = globalThis.__piWorkflowMonitor?.archiveTimer;
 

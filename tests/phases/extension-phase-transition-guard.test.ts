@@ -59,12 +59,12 @@ describe("extension-level agent phase transition guard", () => {
     } as unknown as ExtensionContext;
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
-    // Agent reads ff-implement skill — no longer triggers phase transition
+    // Agent reads fy-implement skill — no longer triggers phase transition
     const result = await onToolResult(
       {
         toolCallId: "s1",
         toolName: "read",
-        input: { path: "skills/ff-implement/SKILL.md" },
+        input: { path: "skills/fy-implement/SKILL.md" },
         content: [{ type: "text", text: "skill content" }],
       } as unknown as ExtensionEvent,
       ctx,
@@ -113,12 +113,12 @@ describe("extension-level agent phase transition guard", () => {
     } as unknown as ExtensionContext;
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
-    // Agent reads ff-implement skill — plan has artifact, should be allowed
+    // Agent reads fy-implement skill — plan has artifact, should be allowed
     const result = await onToolResult(
       {
         toolCallId: "s1",
         toolName: "read",
-        input: { path: "skills/ff-implement/SKILL.md" },
+        input: { path: "skills/fy-implement/SKILL.md" },
         content: [{ type: "text", text: "skill content" }],
       } as unknown as ExtensionEvent,
       ctx,

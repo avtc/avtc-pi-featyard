@@ -26,8 +26,8 @@ describe("review loop counter in workflow widget", () => {
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "review",
-        designDoc: "docs/ff/designs/2026-05-11-review-widget-design.md",
-        planDoc: ".ff/task-plans/2026-05-11-review-widget-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-11-review-widget-design.md",
+        planDoc: ".featyard/task-plans/2026-05-11-review-widget-task-plan.md",
       },
       review: { reviewLoopCount: 3, reviewHistory: [] },
     });
@@ -67,8 +67,8 @@ describe("review loop counter in workflow widget", () => {
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "review",
-        designDoc: "docs/ff/designs/2026-05-11-review-no-loop-design.md",
-        planDoc: ".ff/task-plans/2026-05-11-review-no-loop-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-11-review-no-loop-design.md",
+        planDoc: ".featyard/task-plans/2026-05-11-review-no-loop-task-plan.md",
       },
       review: { reviewLoopCount: 0, reviewHistory: [] },
     });
@@ -146,7 +146,7 @@ describe("review loop counter in workflow widget", () => {
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "plan",
-        designDoc: "docs/ff/designs/2026-05-22-plan-widget-design.md",
+        designDoc: "docs/featyard/designs/2026-05-22-plan-widget-design.md",
         planDoc: null,
       },
       plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 3 },

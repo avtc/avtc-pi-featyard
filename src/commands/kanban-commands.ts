@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Register kanban UI commands (/ff:kanban, /ff:kanban-release) + the shared kanban
+ * Register kanban UI commands (/fy:kanban, /fy:kanban-release) + the shared kanban
  * HTTP server management + agent-lookup helpers shared by the auto-agent loop.
  * The add_to_backlog tool lives separately in tools/add-to-backlog.ts.
  */
@@ -16,7 +16,7 @@ import type { KanbanContext } from "../kanban/kanban-context.js";
 import { createGenerateTitleCallback } from "../kanban/kanban-generate-title.js";
 import { createServer } from "../kanban/kanban-server.js";
 import { log } from "../log.js";
-import { DEFAULT_GLOBAL_DIR, getSettings, loadFeatureFlowConfig, NO_CWD_OVERRIDE } from "../settings/settings-ui.js";
+import { DEFAULT_GLOBAL_DIR, getSettings, loadFeatyardConfig, NO_CWD_OVERRIDE } from "../settings/settings-ui.js";
 
 /** AutoAgentStateMachine (type-only alias to avoid repeating the inline import across findAgent* helpers). */
 type AutoAgent = import("../kanban/auto-agent/auto-agent-state-machine.js").AutoAgentStateMachine;
@@ -110,18 +110,18 @@ async function tryConnectToExistingServer(
   }
 }
 
-/** Register the kanban UI slash commands (/ff:kanban, /ff:kanban-release). */
+/** Register the kanban UI slash commands (/fy:kanban, /fy:kanban-release). */
 export function registerKanbanCommands(pi: ExtensionAPI, ctx: KanbanContext): void {
   const { getDatabase, getTools } = ctx;
 
-  // Register /ff:kanban command
-  pi.registerCommand("ff:kanban", {
+  // Register /fy:kanban command
+  pi.registerCommand("fy:kanban", {
     description: "Open kanban board in browser (starts HTTP server if needed)",
     async handler(_args, cmdCtx) {
       const database = await getDatabase();
-      const config = loadFeatureFlowConfig(DEFAULT_GLOBAL_DIR, NO_CWD_OVERRIDE);
+      const config = loadFeatyardConfig(DEFAULT_GLOBAL_DIR, NO_CWD_OVERRIDE);
       const desiredPort = config["kanban-port"] ?? 0;
-      const dataDir = join(homedir(), ".pi", "feature-flow", "kanban");
+      const dataDir = join(homedir(), ".pi", "featyard", "kanban");
       const staticDir = join(__dirname, "../kanban/kanban-board-ui");
 
       if (!getSharedServer()) {
@@ -182,13 +182,13 @@ export function registerKanbanCommands(pi: ExtensionAPI, ctx: KanbanContext): vo
     },
   });
 
-  // Register /ff:kanban-release command
-  pi.registerCommand("ff:kanban-release", {
+  // Register /fy:kanban-release command
+  pi.registerCommand("fy:kanban-release", {
     description: "Release a feature lock so others can pick it up",
     async handler(args, cmdCtx) {
       const featureId = parseInt(args.trim(), 10);
       if (!featureId || featureId <= 0) {
-        cmdCtx.ui.notify("Usage: /ff:kanban-release <feature-id>", "warning");
+        cmdCtx.ui.notify("Usage: /fy:kanban-release <feature-id>", "warning");
         return;
       }
 

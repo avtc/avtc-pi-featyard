@@ -9,7 +9,7 @@ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { getSettings } from "../../settings/settings-ui.js";
 import type { FeatureSession } from "../../state/feature-session.js";
 import type { FeatureState } from "../../state/feature-state.js";
-import { NO_STATUS } from "../../ui/feature-flow-widget.js";
+import { NO_STATUS } from "../../ui/featyard-widget.js";
 import type { ExecFn } from "./worktree-lifecycle.js";
 import { cleanupWorktreeOnFinish } from "./worktree-lifecycle.js";
 

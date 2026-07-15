@@ -103,7 +103,7 @@ async function startWorker(
   registeredCommands: Map<string, { description: string; handler: (...args: unknown[]) => Promise<void> }>,
   notifications: Array<{ message: string; level: string }>,
 ): Promise<void> {
-  const startCmd = registeredCommands.get("ff:auto-worker");
+  const startCmd = registeredCommands.get("fy:auto-worker");
   expect(startCmd).toBeDefined();
   await (startCmd as { handler: (args: string, ctx: unknown) => Promise<void> }).handler("", makeCtx(notifications));
 }
@@ -132,7 +132,7 @@ describe("external session replacement pauses orphaned auto-agent", () => {
     expect(pauseNotify).toBeDefined();
     expect(pauseNotify?.level).toBe("warning");
     // Re-run hint references the worker command
-    expect(pauseNotify?.message).toContain("/ff:auto-worker");
+    expect(pauseNotify?.message).toContain("/fy:auto-worker");
   });
 
   test("external resume, fork, and reload each pause the agent", async () => {
@@ -239,7 +239,7 @@ describe("external session replacement pauses orphaned auto-agent", () => {
     await fireSessionStart(eventHandlers, "new", makeCtx(notifications));
     expect((sm as { getState: () => string }).getState()).toBe("paused");
 
-    // User re-runs /ff:auto-worker → tryResumePausedAgent unpauses + refreshes __piCtx with fresh ctx
+    // User re-runs /fy:auto-worker → tryResumePausedAgent unpauses + refreshes __piCtx with fresh ctx
     await startWorker(registeredCommands, notifications);
     expect((sm as { getState: () => string }).getState()).toBe("working");
     const resumeNotify = notifications.find((n) => n.message === "Auto-worker resumed");

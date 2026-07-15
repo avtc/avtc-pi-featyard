@@ -43,7 +43,7 @@ describe("auto-agent finishing skill template substitution", () => {
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
   });
 
-  test("PI_FF_AUTO_AGENT_SECTION removed when no auto-agent active", async () => {
+  test("PI_FY_AUTO_AGENT_SECTION removed when no auto-agent active", async () => {
     const fake = createFakePi();
     initGitDir(process.cwd());
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -51,7 +51,7 @@ describe("auto-agent finishing skill template substitution", () => {
 
     // Dynamic import to get the exported function after extension loads
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Interactive mode should include branch context + options (not empty)
     expect(result).toContain("Interactive Mode");
@@ -59,10 +59,10 @@ describe("auto-agent finishing skill template substitution", () => {
     // Should NOT contain auto-agent instructions
     expect(result).not.toContain("Auto-Agent Mode");
     // Should still contain the regular skill content
-    expect(result).toContain("ff-finish");
+    expect(result).toContain("fy-finish");
   });
 
-  test("PI_FF_AUTO_AGENT_SECTION expanded when auto-agent is active", async () => {
+  test("PI_FY_AUTO_AGENT_SECTION expanded when auto-agent is active", async () => {
     const fake = createFakePi();
     initGitDir(process.cwd());
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -76,7 +76,7 @@ describe("auto-agent finishing skill template substitution", () => {
       isActive: () => true,
     });
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Should contain auto-agent section
     expect(result).toContain("Auto-Agent Mode");
@@ -87,7 +87,7 @@ describe("auto-agent finishing skill template substitution", () => {
     // Note: --theirs appears in SKILL.md rules as a prohibition, so we check the section doesn't use it as an instruction
   });
 
-  test("PI_FF_AUTO_AGENT_SECTION includes worktree info when available", async () => {
+  test("PI_FY_AUTO_AGENT_SECTION includes worktree info when available", async () => {
     const fake = createFakePi();
     initGitDir(process.cwd());
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -111,7 +111,7 @@ describe("auto-agent finishing skill template substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("branchPolicy: worktree");
     expect(result).toContain("baseBranch: main");
@@ -143,7 +143,7 @@ describe("auto-agent finishing skill template substitution", () => {
     setSetting("branchPolicy", "current-branch");
     setSetting("baseBranch", branchName || "main");
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // On base branch: should say changes are already on base branch
     expect(result).toContain("already on the base branch");
@@ -168,7 +168,7 @@ describe("auto-agent finishing skill template substitution", () => {
     setSetting("branchPolicy", "current-branch");
     setSetting("baseBranch", "main");
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Auto-agent + current-branch = commit-only, NO merge
     expect(result).toContain("feature/test-branch");
@@ -177,15 +177,15 @@ describe("auto-agent finishing skill template substitution", () => {
     // Note: --theirs appears in SKILL.md rules as a prohibition
   });
 
-  // --- New tests for PI_FF_FINISH_INSTRUCTIONS ---
+  // --- New tests for PI_FY_FINISH_INSTRUCTIONS ---
 
-  test("PI_FF_FINISH_INSTRUCTIONS: current-branch + interactive = options with runtime detection", async () => {
+  test("PI_FY_FINISH_INSTRUCTIONS: current-branch + interactive = options with runtime detection", async () => {
     const fake = createFakePi();
     initGitDir(process.cwd());
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Interactive mode should include branch context + options
     expect(result).toContain("branchPolicy: current-branch");
@@ -195,7 +195,7 @@ describe("auto-agent finishing skill template substitution", () => {
     expect(result).not.toContain("Auto-Agent Mode");
   });
 
-  test("PI_FF_FINISH_INSTRUCTIONS: current-branch + auto-agent = commit-only", async () => {
+  test("PI_FY_FINISH_INSTRUCTIONS: current-branch + auto-agent = commit-only", async () => {
     const fake = createFakePi();
     initGitDir(process.cwd());
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -213,7 +213,7 @@ describe("auto-agent finishing skill template substitution", () => {
     setSetting("branchPolicy", "current-branch");
     setSetting("baseBranch", "main");
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("branchPolicy: current-branch");
     expect(result).toContain("Auto-Agent Mode");
@@ -225,7 +225,7 @@ describe("auto-agent finishing skill template substitution", () => {
     expect(result).toContain("NOT merged");
   });
 
-  test("PI_FF_FINISH_INSTRUCTIONS: worktree + interactive = worktree options", async () => {
+  test("PI_FY_FINISH_INSTRUCTIONS: worktree + interactive = worktree options", async () => {
     const fake = createFakePi();
     initGitDir(process.cwd());
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -246,7 +246,7 @@ describe("auto-agent finishing skill template substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("branchPolicy: worktree");
     expect(result).toContain("Interactive Mode");
@@ -260,7 +260,7 @@ describe("auto-agent finishing skill template substitution", () => {
     expect(result).not.toContain("Auto-Agent Mode");
   });
 
-  test("PI_FF_FINISH_INSTRUCTIONS: worktree + auto-agent = full merge lifecycle", async () => {
+  test("PI_FY_FINISH_INSTRUCTIONS: worktree + auto-agent = full merge lifecycle", async () => {
     const fake = createFakePi();
     initGitDir(process.cwd());
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -282,7 +282,7 @@ describe("auto-agent finishing skill template substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("branchPolicy: worktree");
     expect(result).toContain("Auto-Agent Mode");
@@ -318,7 +318,7 @@ describe("auto-agent finishing skill template substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Feature state baseBranch ("custom") should win over settings ("develop")
     expect(result).toContain("baseBranch: custom");
@@ -343,7 +343,7 @@ describe("auto-agent finishing skill template substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Settings baseBranch ("develop") should be used since feature state has none
     expect(result).toContain("baseBranch: develop");
@@ -386,7 +386,7 @@ describe("auto-agent finishing skill template substitution", () => {
     // Clear flag first
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Injection produces worktree auto-agent content (the flag itself is now armed
     // by the agent_start handler during the finish phase — see agent-lifecycle tests).
@@ -419,7 +419,7 @@ describe("auto-agent finishing skill template substitution", () => {
     // Clear flag before test
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Should fall back to current-branch behavior
     expect(result).toContain("branchPolicy: current-branch");
@@ -452,7 +452,7 @@ describe("auto-agent finishing skill template substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("Error");
     expect(result).toContain("baseBranch not configured");
@@ -469,7 +469,7 @@ describe("auto-agent finishing skill template substitution", () => {
     setSetting("branchPolicy", "current-branch");
     setSetting("baseBranch", NO_BASE_BRANCH);
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     expect(result).toContain("Interactive Mode");
     expect(result).toContain("not set — will auto-detect");
@@ -494,7 +494,7 @@ describe("auto-agent finishing skill template substitution", () => {
     // Clear flag before test
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
 
-    expandSkillCommand("/skill:ff-finish", null, null);
+    expandSkillCommand("/skill:fy-finish", null, null);
 
     // Flag should NOT be set for current-branch policy
     expect(isFinishPhaseWhitelisted()).toBe(false);
@@ -524,7 +524,7 @@ describe("auto-agent finishing skill template substitution", () => {
     // Clear flag before test
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
 
-    const result = expandSkillCommand("/skill:ff-finish", null, null);
+    const result = expandSkillCommand("/skill:fy-finish", null, null);
 
     // Injection produces worktree interactive content with Option 1 (the flag itself
     // is now armed by the agent_start handler — see agent-lifecycle tests).
@@ -537,7 +537,7 @@ describe("auto-agent finishing skill template substitution", () => {
   });
 });
 
-describe("{{PI_FF_WORKTREE_CONTEXT}} placeholder substitution", () => {
+describe("{{PI_FY_WORKTREE_CONTEXT}} placeholder substitution", () => {
   beforeEach(() => {
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
     setSetting("branchPolicy", "current-branch");
@@ -558,7 +558,7 @@ describe("{{PI_FF_WORKTREE_CONTEXT}} placeholder substitution", () => {
 
     setSetting("branchPolicy", "current-branch");
 
-    const result = substituteTemplates("Before {{PI_FF_WORKTREE_CONTEXT}} After", null, null);
+    const result = substituteTemplates("Before {{PI_FY_WORKTREE_CONTEXT}} After", null, null);
     expect(result.text).toBe("Before  After");
   });
 
@@ -582,7 +582,7 @@ describe("{{PI_FF_WORKTREE_CONTEXT}} placeholder substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = substituteTemplates("{{PI_FF_WORKTREE_CONTEXT}}", null, null);
+    const result = substituteTemplates("{{PI_FY_WORKTREE_CONTEXT}}", null, null);
     expect(result.text).toContain("## Worktree Context");
     expect(result.text).toContain("Worktree path: /project/.worktrees/test-worktree-ctx");
     expect(result.text).toContain("Feature branch: feature/test-worktree-ctx");
@@ -606,7 +606,7 @@ describe("{{PI_FF_WORKTREE_CONTEXT}} placeholder substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = substituteTemplates("{{PI_FF_WORKTREE_CONTEXT}}", null, null);
+    const result = substituteTemplates("{{PI_FY_WORKTREE_CONTEXT}}", null, null);
     expect(result.text).toContain("⚠️ Worktree creation failed");
     expect(result.text).toContain("Do NOT set cwd on subagent dispatches");
   });
@@ -620,7 +620,7 @@ describe("{{PI_FF_WORKTREE_CONTEXT}} placeholder substitution", () => {
     setSetting("branchPolicy", "worktree");
     // No feature state, no active slug
 
-    const result = substituteTemplates("Before {{PI_FF_WORKTREE_CONTEXT}} After", null, null);
+    const result = substituteTemplates("Before {{PI_FY_WORKTREE_CONTEXT}} After", null, null);
     expect(result.text).toBe("Before  After");
   });
 
@@ -644,7 +644,7 @@ describe("{{PI_FF_WORKTREE_CONTEXT}} placeholder substitution", () => {
     const handler = globalThis.__piWorkflowMonitor?.handler;
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
-    const result = substituteTemplates("{{PI_FF_WORKTREE_CONTEXT}}", null, null);
+    const result = substituteTemplates("{{PI_FY_WORKTREE_CONTEXT}}", null, null);
     expect(result.text).toContain("Base branch: main");
     expect(result.text).toContain("git merge main");
   });
@@ -676,7 +676,7 @@ describe("{{PI_FF_WORKTREE_CONTEXT}} placeholder substitution", () => {
     handler?.setActiveFeatureState(loadFeatureState(slug, null));
 
     // resolveMainRepoPathSync returns null when git commands fail
-    const result = substituteTemplates("{{PI_FF_WORKTREE_CONTEXT}}", null, null);
+    const result = substituteTemplates("{{PI_FY_WORKTREE_CONTEXT}}", null, null);
     expect(result.text).toContain("## Worktree Context");
     expect(result.text).not.toContain("Main repo path:");
 

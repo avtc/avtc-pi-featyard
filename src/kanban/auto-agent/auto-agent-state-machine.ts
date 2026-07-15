@@ -33,8 +33,8 @@ const ROLE_LANES: Record<AutoAgentRole, Lane[]> = {
 
 /** Skill to inject based on the lane the feature was picked from */
 const LANE_TO_SKILL: Record<string, string> = {
-  design: "ff-design",
-  ready: "ff-plan",
+  design: "fy-design",
+  ready: "fy-plan",
 };
 
 // Cross-extension bridge: set by kanban extension, called by workflow-monitor
@@ -217,7 +217,7 @@ export class AutoAgentStateMachine {
    * "waiting-for-response" overlay, then transitions to "stopped". This is an
    * immediate stop — there is no deferred "finish current feature first"
    * behavior. Callers that need the current feature's lock preserved must
-   * reassign it themselves (e.g. /ff:auto-stop reassigns the UUID lock to
+   * reassign it themselves (e.g. /fy:auto-stop reassigns the UUID lock to
    * session:<slug> so it survives without a heartbeat).
    */
   requestStop(): void {
@@ -474,7 +474,7 @@ export class AutoAgentStateMachine {
     // Use the lane we searched when the feature was found, not the (possibly moved) feature.lane.
     // kanbanTake moves ready→in-progress, so feature.lane may differ from the search lane.
     this.currentFeatureLane = foundInLane;
-    const skill = foundInLane ? LANE_TO_SKILL[foundInLane] : "ff-design";
+    const skill = foundInLane ? LANE_TO_SKILL[foundInLane] : "fy-design";
 
     // Handle null slug: assign temp slug kanban-{id}
     const resolvedFeature = feature.slug ? feature : { ...feature, slug: `kanban-${feature.id}` as string };

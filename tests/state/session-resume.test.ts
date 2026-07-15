@@ -46,7 +46,7 @@ describe("Session resume from last session file", () => {
       sessionFiles: [sessionFile],
     });
 
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const mockCtx = {
       hasUI: true,
@@ -72,7 +72,7 @@ describe("Session resume from last session file", () => {
       expect.objectContaining({ withSession: expect.any(Function) }),
     );
 
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("continues fresh when user declines resume", async () => {
@@ -103,7 +103,7 @@ describe("Session resume from last session file", () => {
       sessionFiles: [sessionFile],
     });
 
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const mockCtx = {
       hasUI: true,
@@ -121,7 +121,7 @@ describe("Session resume from last session file", () => {
     // User declined — switchSession should NOT be called
     expect(mockCtx.switchSession).not.toHaveBeenCalled();
 
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("skips resume offer when session file does not exist on disk", async () => {
@@ -147,7 +147,7 @@ describe("Session resume from last session file", () => {
       sessionFiles: ["/nonexistent/session.jsonl"],
     });
 
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const mockCtx = {
       hasUI: true,
@@ -170,6 +170,6 @@ describe("Session resume from last session file", () => {
     expect(resumeCall).toBeUndefined();
     expect(mockCtx.switchSession).not.toHaveBeenCalled();
 
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 });

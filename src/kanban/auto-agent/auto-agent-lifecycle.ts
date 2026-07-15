@@ -154,7 +154,7 @@ export async function activateFeature(
     }
     // Ensure state_file is populated on the kanban feature. NOTE: the DB `state_file` column
     // stores an ABSOLUTE path captured at creation; after the one-time relocation to
-    // .ff/feature-state/ older rows point at the legacy.pi path and are stale.
+    // .featyard/feature-state/ older rows point at the legacy.pi path and are stale.
     // This is benign — the card renders from DB metadata; resume uses stateDir/scanActiveFeatures
     // as ground truth. Only freshly-created (no state_file) rows get the current path here.
     const feature = database.getFeature(result.kanbanFeatureId);
@@ -172,7 +172,7 @@ export async function activateFeature(
   const lastSession = existingState?.sessionFiles?.at(-1);
 
   // Placeholder substitution function for skill expansion.
-  // Uses the closure's `slug` (from result.feature.slug), NOT process.env.PI_FF_FEATURE
+  // Uses the closure's `slug` (from result.feature.slug), NOT process.env.PI_FY_FEATURE
   // (the env var is deleted before this point).
   const substituteFn = (text: string) => substitutePlaceholders(text, { slug });
 

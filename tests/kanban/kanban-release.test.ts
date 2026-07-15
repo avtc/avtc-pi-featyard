@@ -49,7 +49,7 @@ function createFakeApi(): {
   return { api, registeredCommands };
 }
 
-describe("ff:kanban-release command handler", () => {
+describe("fy:kanban-release command handler", () => {
   test("releases a locked feature", async () => {
     const { db, projectId } = await setupTestDb();
 
@@ -85,7 +85,7 @@ describe("ff:kanban-release command handler", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:kanban-release");
+    const cmd = registeredCommands.get("fy:kanban-release");
     if (cmd) await cmd.handler(String(featureId), ctx as unknown as ExtensionCommandContext);
 
     // Verify lock released
@@ -117,7 +117,7 @@ describe("ff:kanban-release command handler", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:kanban-release");
+    const cmd = registeredCommands.get("fy:kanban-release");
     if (cmd) await cmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     expect(notifications.some((n) => n.message.includes("Usage"))).toBe(true);
@@ -144,7 +144,7 @@ describe("ff:kanban-release command handler", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:kanban-release");
+    const cmd = registeredCommands.get("fy:kanban-release");
     if (cmd) await cmd.handler("abc", ctx as unknown as ExtensionCommandContext);
 
     expect(notifications.some((n) => n.message.includes("Usage"))).toBe(true);
@@ -171,7 +171,7 @@ describe("ff:kanban-release command handler", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:kanban-release");
+    const cmd = registeredCommands.get("fy:kanban-release");
     if (cmd) await cmd.handler("99999", ctx as unknown as ExtensionCommandContext);
 
     // DELETE on non-existent row succeeds silently

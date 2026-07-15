@@ -32,7 +32,7 @@ describe("resolveReviewSkill", () => {
   it("returns null when maxFeatureReviewRounds is 0 (disabled)", () => {
     expect(resolveReviewSkill({ maxFeatureReviewRounds: 0 })).toBeNull();
   });
-  it("returns ff-review when enabled", () => {
-    expect(resolveReviewSkill({ maxFeatureReviewRounds: 3 })).toBe("ff-review");
+  it("returns fy-review when enabled", () => {
+    expect(resolveReviewSkill({ maxFeatureReviewRounds: 3 })).toBe("fy-review");
   });
 });

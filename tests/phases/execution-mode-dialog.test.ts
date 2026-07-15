@@ -7,7 +7,7 @@
  * Formerly triggered by task_tracker init; after task_tracker removal the
  * plan→implement execution-mode application lives in the phase_ready(plan)
  * branch (maxPlanReviewRounds=0 applies it directly). These tests verify that
- * each implementMode setting dispatches the ff-implement skill.
+ * each implementMode setting dispatches the fy-implement skill.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
@@ -29,7 +29,7 @@ async function firePlanReady() {
   setSetting("maxPlanReviewRounds", 0);
 
   writeFeatureStateFile(PLAN_SLUG, {
-    workflow: { currentPhase: "plan", designDoc: "docs/ff/designs/test-design.md", planDoc: null },
+    workflow: { currentPhase: "plan", designDoc: "docs/featyard/designs/test-design.md", planDoc: null },
   });
   await fireAllHandlers(
     fake.handlers,
@@ -55,7 +55,7 @@ async function firePlanReady() {
     hasUI: false,
     ui: { setWidget: () => {}, select: async () => "Continue" },
   });
-  // ff-implement is staged for agent_settled delivery — settle + drain it so callers can assert on it.
+  // fy-implement is staged for agent_settled delivery — settle + drain it so callers can assert on it.
   await fireAllHandlers(
     fake.handlers,
     "agent_end",
@@ -77,28 +77,28 @@ describe("Execution mode applied on phase_ready(plan)", () => {
 
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_EXECUTION_MODE;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_EXECUTION_MODE;
   });
 
-  test("current-session (checkpoint) mode dispatches ff-implement skill", async () => {
+  test("current-session (checkpoint) mode dispatches fy-implement skill", async () => {
     setSetting("implementMode", "current-session");
     const { fake } = await firePlanReady();
     expect(fake.sentMessages.length).toBeGreaterThan(0);
-    expect(fake.sentMessages[fake.sentMessages.length - 1].message).toContain("ff-implement");
+    expect(fake.sentMessages[fake.sentMessages.length - 1].message).toContain("fy-implement");
   });
 
-  test("subagent-driven mode dispatches ff-implement skill", async () => {
+  test("subagent-driven mode dispatches fy-implement skill", async () => {
     setSetting("implementMode", "subagent-driven");
     const { fake } = await firePlanReady();
     expect(fake.sentMessages.length).toBeGreaterThan(0);
-    expect(fake.sentMessages[fake.sentMessages.length - 1].message).toContain("ff-implement");
+    expect(fake.sentMessages[fake.sentMessages.length - 1].message).toContain("fy-implement");
   });
 
-  test("subagent-driven-fork mode dispatches ff-implement skill (auto-proceed, no dialog)", async () => {
+  test("subagent-driven-fork mode dispatches fy-implement skill (auto-proceed, no dialog)", async () => {
     setSetting("implementMode", "subagent-driven-fork");
     const { fake } = await firePlanReady();
     expect(fake.sentMessages.length).toBeGreaterThan(0);
-    expect(fake.sentMessages[fake.sentMessages.length - 1].message).toContain("ff-implement");
+    expect(fake.sentMessages[fake.sentMessages.length - 1].message).toContain("fy-implement");
   });
 });

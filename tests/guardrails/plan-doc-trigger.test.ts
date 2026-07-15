@@ -25,7 +25,7 @@ describe("plan doc creates feature state file", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: ".ff/task-plans/2026-05-10-my-feature-task-plan.md" },
+        input: { path: ".featyard/task-plans/2026-05-10-my-feature-task-plan.md" },
       },
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
@@ -35,7 +35,7 @@ describe("plan doc creates feature state file", () => {
     const state = loadFeatureState("2026-05-10-my-feature", null);
     expect(state).not.toBeNull();
     expect(state?.completedAt).toBeNull();
-    expect(state?.plan.doc).toBe(".ff/task-plans/2026-05-10-my-feature-task-plan.md");
+    expect(state?.plan.doc).toBe(".featyard/task-plans/2026-05-10-my-feature-task-plan.md");
     expect(
       isPhaseDone(
         { currentPhase: state?.workflow.currentPhase ?? null, completedAt: state?.completedAt ?? null },
@@ -48,13 +48,13 @@ describe("plan doc creates feature state file", () => {
         "plan",
       ),
     ).toBe(true);
-    expect(state?.plan.doc).toBe(".ff/task-plans/2026-05-10-my-feature-task-plan.md");
+    expect(state?.plan.doc).toBe(".featyard/task-plans/2026-05-10-my-feature-task-plan.md");
   });
 
-  test("writing a plan doc sets PI_FF_FEATURE env var", async () => {
+  test("writing a plan doc sets PI_FY_FEATURE env var", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call") as (event: unknown, ctx: unknown) => void;
 
@@ -62,12 +62,12 @@ describe("plan doc creates feature state file", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: ".ff/task-plans/2026-05-10-cool-thing-task-plan.md" },
+        input: { path: ".featyard/task-plans/2026-05-10-cool-thing-task-plan.md" },
       },
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-10-cool-thing");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-10-cool-thing");
   });
 
   test("writing design doc after plan doc updates existing state", async () => {
@@ -81,7 +81,7 @@ describe("plan doc creates feature state file", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: ".ff/task-plans/2026-05-10-multi-feature-task-plan.md" },
+        input: { path: ".featyard/task-plans/2026-05-10-multi-feature-task-plan.md" },
       },
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
@@ -91,7 +91,7 @@ describe("plan doc creates feature state file", () => {
       {
         toolCallId: "call-2",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-10-multi-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-10-multi-feature-design.md" },
       },
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
@@ -102,8 +102,8 @@ describe("plan doc creates feature state file", () => {
     // already-active feature mirrors the doc into the active record (persisted on
     // the next persist trigger); read it from the handler to verify it was recorded.
     const active = globalThis.__piWorkflowMonitor?.handler?.getActiveFeatureState();
-    expect(active?.design.doc).toBe("docs/ff/designs/2026-05-10-multi-feature-design.md");
-    expect(active?.plan.doc).toBe(".ff/task-plans/2026-05-10-multi-feature-task-plan.md");
+    expect(active?.design.doc).toBe("docs/featyard/designs/2026-05-10-multi-feature-design.md");
+    expect(active?.plan.doc).toBe(".featyard/task-plans/2026-05-10-multi-feature-task-plan.md");
   });
 });
 
@@ -138,7 +138,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-0",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -151,7 +151,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-sub-feature-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-sub-feature-task-plan.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -159,7 +159,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       // Verify sub-feature state was created with plan artifact
       const subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
-      expect(subState?.plan.doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(subState?.plan.doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
       // Verify design artifact is NOT set (plan doc case passes "" to avoid it)
       expect(subState?.design.doc).toBeNull();
       expect(subState?.featureId).toBe(subFeatureId);
@@ -168,10 +168,10 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       // Verify kanban feature columns were updated
       const updatedFeature = db.getFeature(subFeatureId);
       expect(updatedFeature?.state_file).toContain("2026-05-22-sub-feature");
-      expect(updatedFeature?.plan_doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(updatedFeature?.plan_doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -201,7 +201,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-0",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -220,7 +220,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-sub-feature-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-sub-feature-task-plan.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -228,13 +228,13 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       // Verify existing state was updated (not replaced)
       const subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
-      expect(subState?.plan.doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(subState?.plan.doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
       expect(subState?.featureId).toBe(subFeatureId);
       // Active feature still main
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -248,7 +248,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       {
         toolCallId: "call-0",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
       },
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
@@ -261,7 +261,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-hallucinated-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-hallucinated-task-plan.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -271,7 +271,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       // Active feature should still be main
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -284,7 +284,11 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
 
     // Activate the main feature
     await onToolCall(
-      { toolCallId: "call-0", toolName: "write", input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" } },
+      {
+        toolCallId: "call-0",
+        toolName: "write",
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
+      },
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
     expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
@@ -295,7 +299,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-other-feature-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-other-feature-task-plan.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -305,7 +309,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       expect(otherState).toBeNull();
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -330,7 +334,11 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
 
     // Activate the main feature
     await onToolCall(
-      { toolCallId: "call-0", toolName: "write", input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" } },
+      {
+        toolCallId: "call-0",
+        toolName: "write",
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
+      },
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
     expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
@@ -341,7 +349,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-sub-feature-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-sub-feature-task-plan.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -351,7 +359,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -377,7 +385,7 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-0",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
@@ -388,14 +396,14 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-sub-feature-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-sub-feature-task-plan.md" },
         },
         { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
       );
 
       let subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
-      expect(subState?.plan.doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(subState?.plan.doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
 
       // Second write: plan doc again with a different path — should NOT overwrite
       await onToolCall(
@@ -410,11 +418,11 @@ describe("plan doc isAlreadyActive — kanban sub-feature check", () => {
       subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
       // Should still be the first path — guard prevented overwrite
-      expect(subState?.plan.doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(subState?.plan.doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 });

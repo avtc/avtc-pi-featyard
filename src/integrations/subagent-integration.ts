@@ -2,14 +2,14 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Subagent integration layer — connects feature-flow-specific
+ * Subagent integration layer — connects featyard-specific
  * dependencies to the generic pi-subagent extension.
  *
  * This is the ONLY file that imports from both pi-subagent (via vendored drop-in)
- * and feature-flow internals (settings, template-substitution, logging).
+ * and featyard internals (settings, template-substitution, logging).
  *
  * Exports initSubagentIntegration(pi) which calls subscribeToSubagent
- * with feature-flow-specific hooks (transformPrompt, etc.).
+ * with featyard-specific hooks (transformPrompt, etc.).
  */
 
 import * as path from "node:path";
@@ -20,47 +20,47 @@ import { generateTopic } from "../kanban/kanban-generate-topic.js";
 import { log } from "../log.js";
 import { getLoopCountForPhase } from "../phases/phase-transitions.js";
 import { substitutePlaceholders } from "../prompts/template-engine.js";
-import { DEFAULT_GLOBAL_DIR, loadFeatureFlowConfig, resolveStageModelOnly } from "../settings/settings-ui.js";
+import { DEFAULT_GLOBAL_DIR, loadFeatyardConfig, resolveStageModelOnly } from "../settings/settings-ui.js";
 import { getActiveFeatureSlug, getHandlerRef } from "../shared/workflow-refs.js";
 import { subscribeToSubagent } from "../snippets/vendored/subscribe-to-subagent.js";
 import { slugifyTaskDesignation } from "../state/artifact-paths.js";
 
-/** The extension name feature-flow reports when registering agents via the pi-subagent
+/** The extension name featyard reports when registering agents via the pi-subagent
  *  addAgentsPaths API. Lets extension-provided name-collision messages (in avtc-pi-subagent)
- *  identify feature-flow as the contributor. */
-const SUBAGENT_EXTENSION_NAME = "avtc-pi-feature-flow";
+ *  identify featyard as the contributor. */
+const SUBAGENT_EXTENSION_NAME = "avtc-pi-featyard";
 
 /** Fork context injected into an agent's system prompt when it runs in a forked
  * (branched-session) subagent. Agent-specific entries take precedence over the
  * generic fallback. Only the placeholder agent files reference this; resolution
  * lives here because the `isFork` signal is only available on the subagent path. */
 const FORK_CONTEXT_BY_AGENT: Record<string, string> = {
-  "ff-design-reviewer":
+  "fy-design-reviewer":
     "Pay special attention to:\n" +
     "- Decisions discussed but not captured in the final document\n" +
     "- Implicit assumptions that are clear from conversation but missing from the doc\n" +
     "- Changes in direction that weren't fully reflected",
-  "ff-plan-reviewer":
+  "fy-plan-reviewer":
     "Also check for:\n" + "- **Context gaps:** Discussed constraints or decisions not reflected in the plan",
 };
 
 /** Generic fork-context fallback for agents that have the
- * `{{PI_FF_FORK_CONTEXT_INJECTION}}` placeholder but no dedicated entry above. */
+ * `{{PI_FY_FORK_CONTEXT_INJECTION}}` placeholder but no dedicated entry above. */
 const FORK_CONTEXT_FALLBACK =
   "Pay special attention to:\n" +
   "- Decisions discussed but not captured in the written documents\n" +
   "- Implicit assumptions clear from conversation but missing from formal output";
 
-/** Resolve the `{{PI_FF_FORK_CONTEXT_INJECTION}}` placeholder in an agent system prompt.
+/** Resolve the `{{PI_FY_FORK_CONTEXT_INJECTION}}` placeholder in an agent system prompt.
  * Injects agent-specific (or fallback) bullets when forking; empty string otherwise. */
 function resolveForkContextInjection(systemPrompt: string, agentName: string, isFork: boolean): string {
-  if (!systemPrompt.includes("{{PI_FF_FORK_CONTEXT_INJECTION}}")) return systemPrompt;
+  if (!systemPrompt.includes("{{PI_FY_FORK_CONTEXT_INJECTION}}")) return systemPrompt;
   if (!isFork) {
-    return systemPrompt.replaceAll("{{PI_FF_FORK_CONTEXT_INJECTION}}", "");
+    return systemPrompt.replaceAll("{{PI_FY_FORK_CONTEXT_INJECTION}}", "");
   }
   const baseName = agentName.replace(/-fork$/, "");
   const injection = FORK_CONTEXT_BY_AGENT[baseName] ?? FORK_CONTEXT_FALLBACK;
-  return systemPrompt.replaceAll("{{PI_FF_FORK_CONTEXT_INJECTION}}", injection);
+  return systemPrompt.replaceAll("{{PI_FY_FORK_CONTEXT_INJECTION}}", injection);
 }
 
 /**
@@ -77,7 +77,7 @@ function resolveCurrentTaskName(): string | undefined {
  * Resolve the loop index for a subagent invocation.
  *
  * Three cases:
- * 1. Per-task verify/review (ff-task-verifier or ff-general-reviewer during implement
+ * 1. Per-task verify/review (fy-task-verifier or fy-general-reviewer during implement
  *    phase) — PURE READ of the task's taskReviewRounds on the active feature record.
  *    (task_ready_advance's gate is the sole incrementer; this only reads the current round
  *    to give each round a unique report file path.)
@@ -97,8 +97,8 @@ export function _resolveReviewLoopIndex(
   // Case 1: Per-task verify/review during implement phase — PURE READ.
   // task_ready_advance's gate is the sole incrementer of taskReviewRounds; this function
   // only reads the current round so per-task reports render numbered paths. Covers both
-  // ff-general-reviewer and ff-task-verifier.
-  if ((agentName === "ff-general-reviewer" || agentName === "ff-task-verifier") && taskName) {
+  // fy-general-reviewer and fy-task-verifier.
+  if ((agentName === "fy-general-reviewer" || agentName === "fy-task-verifier") && taskName) {
     if (stage === "implement" && featureState) {
       const key = slugifyTaskDesignation(taskName);
       return featureState.implement.taskReviewRounds[key] ?? 0;
@@ -116,11 +116,11 @@ export function initSubagentIntegration(pi: ExtensionAPI): void {
   subscribeToSubagent(
     pi,
     async (systemPrompt, context) => {
-      // Resolve slug, current plan-task designation, loopIndex from feature-flow context.
+      // Resolve slug, current plan-task designation, loopIndex from featyard context.
       // All read from the in-memory handler feature-state (the durable source of truth);
-      // the only env var consulted here is PI_FF_FEATURE as a slug fallback when no
+      // the only env var consulted here is PI_FY_FEATURE as a slug fallback when no
       // handler is wired (the child loads its feature-state file from that slug on start).
-      const slug = getActiveFeatureSlug() ?? process.env.PI_FF_FEATURE;
+      const slug = getActiveFeatureSlug() ?? process.env.PI_FY_FEATURE;
       const taskName = resolveCurrentTaskName();
       const loopIndex = _resolveReviewLoopIndex(context.agentName, slug, taskName);
 
@@ -152,7 +152,7 @@ export function initSubagentIntegration(pi: ExtensionAPI): void {
       // reached when explicitModel === undefined. This hook yields a stage-model
       // (rotating by review-loop index) for the workflow's current stage, else
       // undefined so pi-subagent's Phase 3 default-model applies.
-      const config = loadFeatureFlowConfig(DEFAULT_GLOBAL_DIR, process.cwd());
+      const config = loadFeatyardConfig(DEFAULT_GLOBAL_DIR, process.cwd());
       const handler = getHandlerRef();
       const featureState = handler?.getActiveFeatureState() ?? null;
       const stage = handler?.getWorkflowState()?.currentPhase ?? null;

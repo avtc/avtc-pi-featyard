@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Register auto-agent commands (/ff:auto-agent, /ff:auto-worker, /ff:auto-designer, /ff:auto-pause)
+ * Register auto-agent commands (/fy:auto-agent, /fy:auto-worker, /fy:auto-designer, /fy:auto-pause)
  * + startAutoAgent + _activateFeature + polling/grace-period
  * + onFeatureComplete/onFeatureError/onBlock/onUnblock/onFeatureUatHandoff callbacks.
  */
@@ -113,7 +113,7 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
   function checkWorkerNotRunning(projectId: number): string | null {
     const current = globalThis.__piKanban?.autoAgent;
     if (current && current.getRole() === "worker" && current.projectId === projectId && isAgentLive(current)) {
-      return "An auto-worker is already running for this project. Pause it with /ff:auto-pause first.";
+      return "An auto-worker is already running for this project. Pause it with /fy:auto-pause first.";
     }
     return null;
   }
@@ -127,7 +127,7 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
   ): Promise<boolean> {
     try {
       const { getActiveFeatureSlug } = await import("../index.js");
-      const activeSlug = process.env.PI_FF_FEATURE ?? getActiveFeatureSlug();
+      const activeSlug = process.env.PI_FY_FEATURE ?? getActiveFeatureSlug();
       if (!activeSlug) return false;
       const database = await getDatabase();
       const feature = database.findFeatureBySlug(activeSlug, projectId);
@@ -457,28 +457,28 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
     }
   }
 
-  pi.registerCommand("ff:auto-agent", {
+  pi.registerCommand("fy:auto-agent", {
     description: "Start autonomous loop: picks from design and ready lanes",
     async handler(_args, cmdCtx) {
       await startAutoAgent("agent", cmdCtx);
     },
   });
 
-  pi.registerCommand("ff:auto-worker", {
+  pi.registerCommand("fy:auto-worker", {
     description: "Start autonomous loop: picks from ready lane only",
     async handler(_args, cmdCtx) {
       await startAutoAgent("worker", cmdCtx);
     },
   });
 
-  pi.registerCommand("ff:auto-designer", {
+  pi.registerCommand("fy:auto-designer", {
     description: "Start autonomous loop: picks from design lane only",
     async handler(_args, cmdCtx) {
       await startAutoAgent("designer", cmdCtx);
     },
   });
 
-  pi.registerCommand("ff:auto-pause", {
+  pi.registerCommand("fy:auto-pause", {
     description: "Pause auto-loop (keeps current feature, heartbeat alive)",
     async handler(_args, cmdCtx) {
       const current = globalThis.__piKanban?.autoAgent;
@@ -635,19 +635,19 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
   });
 }
 
-// === UAT command (ff:auto-stop) — merged from uat-commands.ts ===
+// === UAT command (fy:auto-stop) — merged from uat-commands.ts ===
 
 /**
  * UAT-related commands.
  *
  * UAT is a collaborative phase: the agent works WITH the user to fix issues in
- * place, and the user advances out of UAT via /ff:next (which routes one step,
- * uat-aware, including terminal completion). This module registers /ff:auto-stop.
+ * place, and the user advances out of UAT via /fy:next (which routes one step,
+ * uat-aware, including terminal completion). This module registers /fy:auto-stop.
  */
 
 import type { FeatureSession } from "../state/feature-session.js";
 import { persistState } from "../state/state-persistence.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 
 export interface UatCommandDeps {
   handler: FeatureSession;
@@ -661,7 +661,7 @@ export function registerUatCommands(pi: ExtensionAPI, deps: UatCommandDeps): voi
   // --- Continue Interactive Command ---
   // Allows user to manually unblock a conversation that was waiting for auto-agent.
   // Clears any auto-agent waiting state and continues the session interactively.
-  pi.registerCommand("ff:auto-stop", {
+  pi.registerCommand("fy:auto-stop", {
     description: "Stop the auto-agent and resume interactive control (detaches auto-agent, no skill re-dispatch)",
     async handler(_args, ctx: ExtensionCommandContext) {
       globalThis.__piCtx?.refresh(ctx);
@@ -684,10 +684,10 @@ export function registerUatCommands(pi: ExtensionAPI, deps: UatCommandDeps): voi
         current.requestStop();
 
         // requestStop does not own the GracePeriodManager (it is stopped externally
-        // by its caller — see /ff:auto-pause). If the agent was in grace-period state,
+        // by its caller — see /fy:auto-pause). If the agent was in grace-period state,
         // stop the GPM too so its setInterval doesn't keep ticking widget updates
         // for up to 30s after the user stopped the agent (requirement: clear timers
-        // from any state). Mirrors the /ff:auto-pause GPM stop.
+        // from any state). Mirrors the /fy:auto-pause GPM stop.
         globalThis.__piKanban?.gracePeriod?.stop();
 
         // Reassign the agent-held lock to the interactive identity so it persists

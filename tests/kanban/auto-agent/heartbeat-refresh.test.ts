@@ -83,7 +83,7 @@ describe("subagent stream heartbeat refresh", () => {
         },
       },
     };
-    const workerCmd = registeredCommands.get("ff:auto-worker");
+    const workerCmd = registeredCommands.get("fy:auto-worker");
     await (workerCmd as NonNullable<typeof workerCmd>).handler("", ctx as unknown as ExtensionCommandContext);
 
     // Verify the feature was picked and locked

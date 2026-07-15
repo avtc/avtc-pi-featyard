@@ -35,7 +35,7 @@ describe("ensureDatabase", () => {
     // Reset any existing instance first
     resetInstances();
 
-    // Pre-seed a temp DB so ensureDatabase returns it instead of creating one at ~/.pi/feature-flow/kanban
+    // Pre-seed a temp DB so ensureDatabase returns it instead of creating one at ~/.pi/featyard/kanban
     const tempDb = await createTempDb();
     setDatabaseInstance(tempDb);
 

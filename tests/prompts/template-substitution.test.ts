@@ -27,7 +27,7 @@ describe("context event template substitution", () => {
 
     const messages = [
       { role: "user", content: "Hello" },
-      { role: "assistant", content: "I see {{PI_FF_FEATURE_SLUG}} in my context" },
+      { role: "assistant", content: "I see {{PI_FY_FEATURE_SLUG}} in my context" },
       { role: "user", content: "Thanks" },
     ];
 
@@ -43,7 +43,7 @@ describe("context event template substitution", () => {
     // No substitution in assistant messages — result should be undefined (no modifications)
     expect(result).toBeUndefined();
     // Verify assistant message content was NOT modified
-    expect(messages[1].content).toBe("I see {{PI_FF_FEATURE_SLUG}} in my context");
+    expect(messages[1].content).toBe("I see {{PI_FY_FEATURE_SLUG}} in my context");
   });
 
   test("is no-op when no placeholders present", async () => {
@@ -82,7 +82,7 @@ describe("context event template substitution", () => {
 
     const messages = [
       // Placeholder in plain text (not inside <skill> block) — should NOT be substituted
-      { role: "user", content: "I saw {{PI_FF_FEATURE_SLUG}} in a doc" },
+      { role: "user", content: "I saw {{PI_FY_FEATURE_SLUG}} in a doc" },
     ];
 
     const result = await onContext(
@@ -97,7 +97,7 @@ describe("context event template substitution", () => {
     // No modification returned (nothing changed) ...
     expect(result).toBeUndefined();
     // ... AND the placeholder text must survive untouched in the message.
-    expect(messages[0].content).toContain("{{PI_FF_FEATURE_SLUG}}");
+    expect(messages[0].content).toContain("{{PI_FY_FEATURE_SLUG}}");
   });
 
   test("scans ALL user messages including before assistant messages", async () => {
@@ -109,7 +109,7 @@ describe("context event template substitution", () => {
     const onContext = getSingleHandler(fake.handlers, "context");
 
     const messages = [
-      { role: "user", content: '# Old message with <skill name="test">{{PI_FF_FEATURE_SLUG}}</skill>' },
+      { role: "user", content: '# Old message with <skill name="test">{{PI_FY_FEATURE_SLUG}}</skill>' },
       { role: "assistant", content: "I responded" },
       { role: "user", content: "New message, no placeholder" },
     ];
@@ -127,7 +127,7 @@ describe("context event template substitution", () => {
     // (we scan all messages, not just after last assistant).
     expect(result as unknown).toBeDefined();
     expect((result as { messages: unknown[] }).messages).toBeDefined();
-    expect((result as { messages: [{ content: string }] }).messages[0].content).not.toContain("{{PI_FF_FEATURE_SLUG}}");
+    expect((result as { messages: [{ content: string }] }).messages[0].content).not.toContain("{{PI_FY_FEATURE_SLUG}}");
   });
 
   test("handles non-string message content without errors", async () => {
@@ -141,7 +141,7 @@ describe("context event template substitution", () => {
     const messages = [
       { role: "user", content: [{ type: "image", data: "base64..." }] },
       { role: "assistant", content: "Got it" },
-      { role: "user", content: [{ type: "text", text: '<skill name="test">{{PI_FF_FEATURE_SLUG}}</skill>' }] },
+      { role: "user", content: [{ type: "text", text: '<skill name="test">{{PI_FY_FEATURE_SLUG}}</skill>' }] },
     ];
 
     // Should not throw — non-string content is skipped
@@ -164,7 +164,7 @@ describe("context event template substitution", () => {
     // The text part should have the placeholder substituted (no longer raw)
     expect(
       (result as { messages: Array<{ content: Array<{ text: string }> }> }).messages[2].content[0].text,
-    ).not.toContain("{{PI_FF_FEATURE_SLUG}}");
+    ).not.toContain("{{PI_FY_FEATURE_SLUG}}");
   });
 
   test("substitutes multiple occurrences of the same placeholder (replaceAll)", async () => {
@@ -178,7 +178,7 @@ describe("context event template substitution", () => {
     const messages = [
       {
         role: "user",
-        content: '<skill name="test">Before {{PI_FF_FEATURE_SLUG}} middle {{PI_FF_FEATURE_SLUG}} after</skill>',
+        content: '<skill name="test">Before {{PI_FY_FEATURE_SLUG}} middle {{PI_FY_FEATURE_SLUG}} after</skill>',
       },
     ];
 
@@ -193,7 +193,7 @@ describe("context event template substitution", () => {
 
     expect(result as unknown).toBeDefined();
     // BOTH occurrences must be substituted — this verifies replaceAll, not replace
-    expect((result as { messages: [{ content: string }] }).messages[0].content).not.toContain("{{PI_FF_FEATURE_SLUG}}");
+    expect((result as { messages: [{ content: string }] }).messages[0].content).not.toContain("{{PI_FY_FEATURE_SLUG}}");
     // The replacement text should appear twice (once for each occurrence)
     const content = (result as { messages: [{ content: string }] }).messages[0].content as string;
     const matchCount = (content.match(/YYYY-MM-DD-<topic>/g) || []).length;
@@ -212,9 +212,9 @@ describe("context event template substitution", () => {
       {
         role: "user",
         content:
-          '<skill name="a">A: {{PI_FF_FEATURE_SLUG}}</skill>' +
+          '<skill name="a">A: {{PI_FY_FEATURE_SLUG}}</skill>' +
           " plain text between blocks " +
-          '<skill name="b">B: {{PI_FF_FEATURE_SLUG}}</skill>',
+          '<skill name="b">B: {{PI_FY_FEATURE_SLUG}}</skill>',
       },
     ];
 
@@ -230,7 +230,7 @@ describe("context event template substitution", () => {
     expect(result as unknown).toBeDefined();
     const content = (result as { messages: [{ content: string }] }).messages[0].content as string;
     // BOTH blocks are substituted (no raw placeholders remain) ...
-    expect(content).not.toContain("{{PI_FF_FEATURE_SLUG}}");
+    expect(content).not.toContain("{{PI_FY_FEATURE_SLUG}}");
     // ... the intervening plain text is preserved ...
     expect(content).toContain("plain text between blocks");
     // ... and each block got its own substitution (two resolved copies).
@@ -250,7 +250,7 @@ describe("context event template substitution", () => {
       {
         role: "user",
         content:
-          '<skill name="test">inside {{PI_FF_FEATURE_SLUG}} inside</skill> outside {{PI_FF_FEATURE_SLUG}} outside',
+          '<skill name="test">inside {{PI_FY_FEATURE_SLUG}} inside</skill> outside {{PI_FY_FEATURE_SLUG}} outside',
       },
     ];
 
@@ -268,9 +268,9 @@ describe("context event template substitution", () => {
     // The inside placeholder is resolved ...
     expect(content).toContain("YYYY-MM-DD-<topic>");
     // ... while exactly one raw placeholder survives (the outside one).
-    const rawCount = (content.match(/\{\{PI_FF_FEATURE_SLUG\}\}/g) || []).length;
+    const rawCount = (content.match(/\{\{PI_FY_FEATURE_SLUG\}\}/g) || []).length;
     expect(rawCount).toBe(1);
-    expect(content).toContain("outside {{PI_FF_FEATURE_SLUG}} outside");
+    expect(content).toContain("outside {{PI_FY_FEATURE_SLUG}} outside");
   });
 
   test("leaves an unknown placeholder inside a <skill> block unchanged", async () => {
@@ -284,7 +284,7 @@ describe("context event template substitution", () => {
     const messages = [
       {
         role: "user",
-        content: '<skill name="test">known {{PI_FF_FEATURE_SLUG}} unknown {{PI_FF_NONEXISTENT_XYZ}}</skill>',
+        content: '<skill name="test">known {{PI_FY_FEATURE_SLUG}} unknown {{PI_FY_NONEXISTENT_XYZ}}</skill>',
       },
     ];
 
@@ -300,8 +300,8 @@ describe("context event template substitution", () => {
     // The known placeholder IS resolved, but the unknown one survives untouched.
     expect(result as unknown).toBeDefined();
     const content = (result as { messages: [{ content: string }] }).messages[0].content as string;
-    expect(content).not.toContain("{{PI_FF_FEATURE_SLUG}}");
-    expect(content).toContain("{{PI_FF_NONEXISTENT_XYZ}}");
+    expect(content).not.toContain("{{PI_FY_FEATURE_SLUG}}");
+    expect(content).toContain("{{PI_FY_NONEXISTENT_XYZ}}");
   });
 
   test("returns undefined for empty messages array", async () => {
@@ -326,20 +326,20 @@ describe("context event template substitution", () => {
     expect(result).toBeUndefined();
   });
 
-  test("substitutes {{PI_FF_FEATURE_SLUG}} in pi 0.73 skill block format (array content)", async () => {
+  test("substitutes {{PI_FY_FEATURE_SLUG}} in pi 0.73 skill block format (array content)", async () => {
     // This test simulates the message format pi 0.73 produces when a user
     // types /skill:code-reviewer and presses Enter:
     // 1. pi core's _expandSkillCommand reads the skill file, strips frontmatter,
-    //    produces <skill name="code-reviewer" ...>{{PI_FF_FEATURE_SLUG}}...</skill>
+    //    produces <skill name="code-reviewer" ...>{{PI_FY_FEATURE_SLUG}}...</skill>
     // 2. prompt() creates message with content: [{type:"text", text: expandedText}]
-    // 3. transformContext (our context handler) must substitute {{PI_FF_*}} placeholders
+    // 3. transformContext (our context handler) must substitute {{PI_FY_*}} placeholders
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
     const onContext = getSingleHandler(fake.handlers, "context");
 
-    const skillBody = "# Code Review\n\nSome intro text...\n\n{{PI_FF_FEATURE_SLUG}}\n\n## After";
+    const skillBody = "# Code Review\n\nSome intro text...\n\n{{PI_FY_FEATURE_SLUG}}\n\n## After";
     const expandedText = `<skill name="code-reviewer" location="/path/to/skills/code-reviewer/SKILL.md">\nReferences are relative to /path/to/skills/code-reviewer.\n\n${skillBody}\n</skill>`;
 
     const messages = [
@@ -362,11 +362,11 @@ describe("context event template substitution", () => {
     expect((result as { messages: unknown[] }).messages).toBeDefined();
     const substitutedText = (result as { messages: Array<{ content: Array<{ text: string }> }> }).messages[0].content[0]
       .text;
-    expect(substitutedText).not.toContain("{{PI_FF_FEATURE_SLUG}}");
+    expect(substitutedText).not.toContain("{{PI_FY_FEATURE_SLUG}}");
     expect(substitutedText).toContain("YYYY-MM-DD-<topic>");
   });
 
-  test("leaves unknown PI_FF_ placeholders unchanged", async () => {
+  test("leaves unknown PI_FY_ placeholders unchanged", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -374,7 +374,7 @@ describe("context event template substitution", () => {
 
     const onContext = getSingleHandler(fake.handlers, "context");
 
-    const messages = [{ role: "user", content: "Some text {{PI_FF_UNKNOWN_FUTURE}} more text" }];
+    const messages = [{ role: "user", content: "Some text {{PI_FY_UNKNOWN_FUTURE}} more text" }];
 
     const result = await onContext(
       { messages: messages as AgentMessage[] } as ExtensionEvent,
@@ -387,7 +387,7 @@ describe("context event template substitution", () => {
 
     // Unknown placeholder should remain — substituteTemplates doesn't match it
     expect(result).toBeUndefined();
-    expect(messages[0].content).toContain("{{PI_FF_UNKNOWN_FUTURE}}");
+    expect(messages[0].content).toContain("{{PI_FY_UNKNOWN_FUTURE}}");
   });
 });
 
@@ -396,7 +396,7 @@ describe("subagent isolation", () => {
     // Subagents only load extensions from their agent frontmatter's `extensions` field.
     // Neither design-reviewer nor plan-reviewer should specify extensions,
     // so workflow-monitor is never loaded in subagent sessions.
-    for (const agentFile of ["ff-design-reviewer.md", "ff-plan-reviewer.md"]) {
+    for (const agentFile of ["fy-design-reviewer.md", "fy-plan-reviewer.md"]) {
       const agentPath = path.resolve(__dirname, "../../agents", agentFile);
       // Assert file exists — test must fail if agent file is missing
       expect(fs.existsSync(agentPath)).toBe(true);
@@ -433,7 +433,7 @@ describe("tool_result template substitution scope", () => {
       content: [
         {
           type: "text" as const,
-          text: "The placeholder is {{PI_FF_FEATURE_SLUG}} and should NOT be substituted.",
+          text: "The placeholder is {{PI_FY_FEATURE_SLUG}} and should NOT be substituted.",
         },
       ],
       details: {},
@@ -449,6 +449,6 @@ describe("tool_result template substitution scope", () => {
     );
 
     // Verify the original content was NOT modified — placeholder should remain
-    expect((event as { content: Array<{ text: string }> }).content[0].text).toContain("{{PI_FF_FEATURE_SLUG}}");
+    expect((event as { content: Array<{ text: string }> }).content[0].text).toContain("{{PI_FY_FEATURE_SLUG}}");
   });
 });

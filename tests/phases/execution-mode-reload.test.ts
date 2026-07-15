@@ -9,7 +9,7 @@ import { createFakePi, fireAllHandlers, writeFeatureStateFile } from "../helpers
 describe("Execution mode on session reload", () => {
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("does not show an execution mode dialog on session_start — mode comes from settings", async () => {
@@ -30,8 +30,8 @@ describe("Execution mode on session reload", () => {
           finish: "pending",
         },
         artifacts: {
-          design: "docs/ff/designs/2026-05-11-test-reload-design.md",
-          plan: ".ff/task-plans/2026-05-11-test-reload-task-plan.md",
+          design: "docs/featyard/designs/2026-05-11-test-reload-design.md",
+          plan: ".featyard/task-plans/2026-05-11-test-reload-task-plan.md",
           implement: null,
           verify: null,
           review: null,
@@ -79,8 +79,8 @@ describe("Execution mode on session reload", () => {
           finish: "pending",
         },
         artifacts: {
-          design: "docs/ff/designs/2026-05-11-test-no-pending-design.md",
-          plan: ".ff/task-plans/2026-05-11-test-no-pending-task-plan.md",
+          design: "docs/featyard/designs/2026-05-11-test-no-pending-design.md",
+          plan: ".featyard/task-plans/2026-05-11-test-no-pending-task-plan.md",
           implement: null,
           verify: null,
           review: null,

@@ -29,7 +29,7 @@ describe("workflow monitor widget", () => {
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0] & { notify?: () => void }, TUI_MODE);
 
     const onInput = getSingleHandler(fake.handlers, "input");
-    await onInput({ source: "user" as const, text: "/skill:ff-plan" } as unknown as ExtensionEvent, ctx);
+    await onInput({ source: "user" as const, text: "/skill:fy-plan" } as unknown as ExtensionEvent, ctx);
 
     expect(renderer).toBeTypeOf("function");
 

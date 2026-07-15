@@ -62,9 +62,12 @@ describe("background design-doc archive sweep — gating + roots", () => {
 
   test("resolveDesignsDirs returns BOTH roots the background sweep scans", () => {
     // The shared helper drives both the manual command and the background sweep — it must return
-    // the out-of-repo (.ff/designs via externalDir) AND in-repo (docs/ff/designs) roots so docs from
+    // the out-of-repo (.featyard/designs via externalDir) AND in-repo (docs/featyard/designs) roots so docs from
     // either mode age out together. Uses path.join so the assertion is platform-agnostic.
     const dirs = resolveDesignsDirs(path.join("/", "tmp", "ext"), path.join("/", "repo"));
-    expect(dirs).toEqual([path.join("/", "tmp", "ext", "designs"), path.join("/", "repo", "docs", "ff", "designs")]);
+    expect(dirs).toEqual([
+      path.join("/", "tmp", "ext", "designs"),
+      path.join("/", "repo", "docs", "featyard", "designs"),
+    ]);
   });
 });

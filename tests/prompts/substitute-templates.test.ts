@@ -28,23 +28,23 @@ describe("substituteTemplates", () => {
     resetSettingsToDefaults();
   });
 
-  describe("PI_FF_IMPLEMENT_MODE", () => {
+  describe("PI_FY_IMPLEMENT_MODE", () => {
     test("replaces with the implementer guidance when no execution mode (current-session)", () => {
-      const result = substituteTemplates("{{PI_FF_IMPLEMENT_MODE}}", null, null);
+      const result = substituteTemplates("{{PI_FY_IMPLEMENT_MODE}}", null, null);
       // current-session emits the full implementer guidance (IMPLEMENTER_GUIDANCE)
       expect(result.text).toContain("## Cycle");
       expect(result.text).toContain("## Blockers");
-      expect(result.text).not.toContain("{{PI_FF_IMPLEMENT_MODE}}");
+      expect(result.text).not.toContain("{{PI_FY_IMPLEMENT_MODE}}");
       expect(result.text).not.toContain("orchestrator");
     });
 
     test("replaces with subagent orchestrator + escalation instructions when executionMode is subagent", () => {
       setSetting("implementMode", "subagent-driven");
       const featureState = makeFeatureState("test-slug", {});
-      const result = substituteTemplates("{{PI_FF_IMPLEMENT_MODE}}", featureState, null);
+      const result = substituteTemplates("{{PI_FY_IMPLEMENT_MODE}}", featureState, null);
       expect(result.text).toContain("orchestrator");
       expect(result.text).toContain("Escalate to the user");
-      expect(result.text).not.toContain("{{PI_FF_IMPLEMENT_MODE}}");
+      expect(result.text).not.toContain("{{PI_FY_IMPLEMENT_MODE}}");
       // subagent mode does NOT emit the implementer guidance (the subagent carries it)
       expect(result.text).not.toContain("## Cycle");
     });
@@ -52,52 +52,52 @@ describe("substituteTemplates", () => {
     test("replaces with the implementer guidance when executionMode is checkpoint", () => {
       setSetting("implementMode", "current-session");
       const featureState = makeFeatureState("test-slug", {});
-      const result = substituteTemplates("{{PI_FF_IMPLEMENT_MODE}}", featureState, null);
+      const result = substituteTemplates("{{PI_FY_IMPLEMENT_MODE}}", featureState, null);
       expect(result.text).toContain("## Cycle");
       expect(result.text).not.toContain("orchestrator");
     });
   });
 
-  describe("PI_FF_WORTH_NOTES", () => {
+  describe("PI_FY_WORTH_NOTES", () => {
     test("subagent mode: emits the collect-and-append instruction with the resolved path", () => {
       setSetting("implementMode", "subagent-driven");
       const featureState = makeFeatureState("test-slug", {});
-      const result = substituteTemplates("{{PI_FF_WORTH_NOTES}}", featureState, null);
-      expect(result.text).not.toContain("{{PI_FF_WORTH_NOTES}}");
+      const result = substituteTemplates("{{PI_FY_WORTH_NOTES}}", featureState, null);
+      expect(result.text).not.toContain("{{PI_FY_WORTH_NOTES}}");
       expect(result.text).toContain("Collect worth-notes");
-      // nested {{PI_FF_WORTH_NOTES_PATH}} is resolved by the chained generic pass
+      // nested {{PI_FY_WORTH_NOTES_PATH}} is resolved by the chained generic pass
       expect(result.text).toContain("test-slug/test-slug-worth-notes.md");
-      expect(result.text).not.toContain("{{PI_FF_WORTH_NOTES_PATH}}");
+      expect(result.text).not.toContain("{{PI_FY_WORTH_NOTES_PATH}}");
     });
 
     test("direct mode: emits the append-your-own instruction", () => {
       setSetting("implementMode", "current-session");
       const featureState = makeFeatureState("test-slug", {});
-      const result = substituteTemplates("{{PI_FF_WORTH_NOTES}}", featureState, null);
-      expect(result.text).not.toContain("{{PI_FF_WORTH_NOTES}}");
+      const result = substituteTemplates("{{PI_FY_WORTH_NOTES}}", featureState, null);
+      expect(result.text).not.toContain("{{PI_FY_WORTH_NOTES}}");
       expect(result.text).toContain("append it to");
       // direct instruction must NOT carry the subagent collect wording
       expect(result.text).not.toContain("Collect worth-notes");
       expect(result.text).toContain("test-slug/test-slug-worth-notes.md");
     });
   });
-  describe("PI_FF_WORKTREE_CONTEXT", () => {
+  describe("PI_FY_WORKTREE_CONTEXT", () => {
     test("replaces with empty string when default current-branch policy", () => {
-      const result = substituteTemplates("{{PI_FF_WORKTREE_CONTEXT}}", null, null);
+      const result = substituteTemplates("{{PI_FY_WORKTREE_CONTEXT}}", null, null);
       // Default settings use current-branch policy — no worktree context
       expect(result.text).toBe("");
     });
   });
 
-  describe("PI_FF_FINISH_INSTRUCTIONS", () => {
+  describe("PI_FY_FINISH_INSTRUCTIONS", () => {
     test("replaces with current-branch interactive section by default", () => {
-      const result = substituteTemplates("{{PI_FF_FINISH_INSTRUCTIONS}}", null, null);
-      expect(result.text).not.toContain("{{PI_FF_FINISH_INSTRUCTIONS}}");
+      const result = substituteTemplates("{{PI_FY_FINISH_INSTRUCTIONS}}", null, null);
+      expect(result.text).not.toContain("{{PI_FY_FINISH_INSTRUCTIONS}}");
       expect(result.text.length).toBeGreaterThan(0);
     });
 
     test("substitutes finish instructions for current-branch policy", () => {
-      const result = substituteTemplates("{{PI_FF_FINISH_INSTRUCTIONS}}", null, null);
+      const result = substituteTemplates("{{PI_FY_FINISH_INSTRUCTIONS}}", null, null);
       expect(result.text).toContain("branchPolicy: current-branch");
     });
   });
@@ -107,10 +107,10 @@ describe("substituteTemplates", () => {
       const featureState = makeFeatureState("test-slug", { executionMode: "checkpoint" } as Partial<
         import("../../src/state/feature-state.js").FeatureState
       >);
-      const text = "Mode: {{PI_FF_IMPLEMENT_MODE}}\nNotes: {{PI_FF_WORTH_NOTES}}\nEnd";
+      const text = "Mode: {{PI_FY_IMPLEMENT_MODE}}\nNotes: {{PI_FY_WORTH_NOTES}}\nEnd";
       const result = substituteTemplates(text, featureState, null);
-      expect(result.text).not.toContain("{{PI_FF_IMPLEMENT_MODE}}");
-      expect(result.text).not.toContain("{{PI_FF_WORTH_NOTES}}");
+      expect(result.text).not.toContain("{{PI_FY_IMPLEMENT_MODE}}");
+      expect(result.text).not.toContain("{{PI_FY_WORTH_NOTES}}");
       expect(result.text).toContain("Mode: ");
       expect(result.text).toContain("Notes: ");
       expect(result.text).toContain("End");
@@ -131,20 +131,20 @@ describe("substituteTemplates", () => {
   });
 
   describe("generic placeholder substitution", () => {
-    test("replaces PI_FF_FEATURE_SLUG placeholder", () => {
-      const text = "Review passes: {{PI_FF_FEATURE_SLUG}}";
+    test("replaces PI_FY_FEATURE_SLUG placeholder", () => {
+      const text = "Review passes: {{PI_FY_FEATURE_SLUG}}";
       const result = substituteTemplates(text, null, null);
       // After generic substitution, placeholder should be resolved
-      expect(result.text).not.toContain("{{PI_FF_FEATURE_SLUG}}");
+      expect(result.text).not.toContain("{{PI_FY_FEATURE_SLUG}}");
     });
   });
 
-  describe("{{PI_FF_BASE_COMMIT_SHA}}", () => {
+  describe("{{PI_FY_BASE_COMMIT_SHA}}", () => {
     test("resolves baseCommitSha from featureStateOverride", () => {
       const featureState = makeFeatureState("test-slug", {
         git: { branch: null, baseCommitSha: "abc123def456", worktreePath: null, baseBranch: null },
       });
-      const result = substituteTemplates("Base: {{PI_FF_BASE_COMMIT_SHA}}", featureState, null);
+      const result = substituteTemplates("Base: {{PI_FY_BASE_COMMIT_SHA}}", featureState, null);
       expect(result.text).toBe("Base: abc123def456");
     });
 
@@ -152,7 +152,7 @@ describe("substituteTemplates", () => {
       const featureState = makeFeatureState("test-slug", {
         git: { branch: null, baseCommitSha: null, worktreePath: null, baseBranch: null },
       });
-      const result = substituteTemplates("Base: {{PI_FF_BASE_COMMIT_SHA}}", featureState, null);
+      const result = substituteTemplates("Base: {{PI_FY_BASE_COMMIT_SHA}}", featureState, null);
       expect(result.text).toBe("Base: (not available)");
     });
 
@@ -160,12 +160,12 @@ describe("substituteTemplates", () => {
       const featureState = makeFeatureState("test-slug", {
         git: { branch: null, baseCommitSha: null, worktreePath: null, baseBranch: null },
       });
-      const result = substituteTemplates("Base: {{PI_FF_BASE_COMMIT_SHA}}", featureState, null);
+      const result = substituteTemplates("Base: {{PI_FY_BASE_COMMIT_SHA}}", featureState, null);
       expect(result.text).toBe("Base: (not available)");
     });
 
     test("resolves to (not available) when no featureStateOverride", () => {
-      const result = substituteTemplates("Base: {{PI_FF_BASE_COMMIT_SHA}}", null, null);
+      const result = substituteTemplates("Base: {{PI_FY_BASE_COMMIT_SHA}}", null, null);
       expect(result.text).toBe("Base: (not available)");
     });
   });

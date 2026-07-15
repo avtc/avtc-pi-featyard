@@ -7,7 +7,7 @@ import { resolve as resolvePath } from "node:path";
 
 import { log } from "../../log.js";
 import type { FeatureState } from "../../state/feature-state.js";
-import { NO_STATUS } from "../../ui/feature-flow-widget.js";
+import { NO_STATUS } from "../../ui/featyard-widget.js";
 
 /** Injectable execSync — tests can override via _setExecSync */
 let _execSync: typeof _realExecSync = _realExecSync;

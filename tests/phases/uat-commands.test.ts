@@ -34,11 +34,11 @@ function view(state: { workflow: { currentPhase: string | null }; completedAt: s
 }
 
 // UAT is no longer a gated accept/reject fork: the user advances out of UAT via
-// /ff:next, which routes one step uat-aware and replicates the former /uat-accept
+// /fy:next, which routes one step uat-aware and replicates the former /uat-accept
 // completion path exactly. The former /uat-accept and /uat-reject commands were
-// removed (decision #21). These tests cover the /ff:next UAT advance + completion.
+// removed (decision #21). These tests cover the /fy:next UAT advance + completion.
 
-describe("ff:next from UAT (replaces former /uat-accept)", () => {
+describe("fy:next from UAT (replaces former /uat-accept)", () => {
   beforeEach(() => {
     setTestSettings(null);
     enableSubagentMode();
@@ -52,7 +52,7 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
   test("completes the feature when finish already completed (after-finish mode)", async () => {
     setSetting("uatMode", "after-finish");
     const fake = createFakePi();
-    const slug = writeFeatureStateFile("2026-05-16-uat-ffnext-done-test", {
+    const slug = writeFeatureStateFile("2026-05-16-uat-fynext-done-test", {
       workflow: { ...UAT_ACTIVE_STATE.workflow },
     });
 
@@ -66,7 +66,7 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] } },
     );
 
-    const nextHandler = fake.registeredCommands?.get("ff:next");
+    const nextHandler = fake.registeredCommands?.get("fy:next");
     expect(nextHandler).toBeDefined();
 
     await (nextHandler as (args: string, ctx: unknown) => Promise<void>)?.("", mockCtx);
@@ -87,7 +87,7 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
   test("advances to finish when finish is pending (after-review mode)", async () => {
     setSetting("uatMode", "after-review");
     const fake = createFakePi();
-    const slug = writeFeatureStateFile("2026-05-16-uat-ffnext-finish-test", {
+    const slug = writeFeatureStateFile("2026-05-16-uat-fynext-finish-test", {
       workflow: { ...UAT_ACTIVE_STATE.workflow },
     });
 
@@ -100,7 +100,7 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] } },
     );
 
-    const nextHandler = fake.registeredCommands?.get("ff:next");
+    const nextHandler = fake.registeredCommands?.get("fy:next");
     await (nextHandler as (args: string, ctx: unknown) => Promise<void>)?.("", mockCtx);
 
     const state = loadFeatureState(slug, null);
@@ -114,18 +114,18 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
       ),
     ).toBe(true);
     expect(state?.workflow.currentPhase).toBe("finish");
-    // ff-finish is staged for agent_end delivery — drain before asserting.
+    // fy-finish is staged for agent_end delivery — drain before asserting.
     await fireAllHandlers(fake.handlers, "agent_end", {}, mockCtx);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     // Should send finishing skill
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
-    expect(fake.sentMessages[0].message).toContain("ff-finish");
+    expect(fake.sentMessages[0].message).toContain("fy-finish");
   });
 
   test("calls cleanupWorktreeOnFinish in after-finish mode when worktreePath is set", async () => {
     setSetting("uatMode", "after-finish");
     const fake = createFakePi();
-    const slug = writeFeatureStateFile("2026-05-16-uat-ffnext-worktree-cleanup", {
+    const slug = writeFeatureStateFile("2026-05-16-uat-fynext-worktree-cleanup", {
       git: { branch: null, baseCommitSha: null, worktreePath: "/tmp/worktree-test", baseBranch: null },
       workflow: { ...UAT_ACTIVE_STATE.workflow },
     });
@@ -147,7 +147,7 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
     });
     const ctxWithExec = { ...mockCtx, actions: { exec: mockExec } };
 
-    const nextHandler = fake.registeredCommands?.get("ff:next");
+    const nextHandler = fake.registeredCommands?.get("fy:next");
     await (nextHandler as (args: string, ctx: unknown) => Promise<void>)?.("", ctxWithExec);
 
     // Should have called git worktree remove
@@ -161,7 +161,7 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
   test("notifies auto-agent on feature completion in after-finish mode", async () => {
     setSetting("uatMode", "after-finish");
     const fake = createFakePi();
-    const slug = writeFeatureStateFile("2026-05-16-uat-ffnext-auto-agent-test", {
+    const slug = writeFeatureStateFile("2026-05-16-uat-fynext-auto-agent-test", {
       workflow: { ...UAT_ACTIVE_STATE.workflow },
     });
 
@@ -183,7 +183,7 @@ describe("ff:next from UAT (replaces former /uat-accept)", () => {
       isActive: () => true,
     });
 
-    const nextHandler = fake.registeredCommands?.get("ff:next");
+    const nextHandler = fake.registeredCommands?.get("fy:next");
     await (nextHandler as (args: string, ctx: unknown) => Promise<void>)?.("", mockCtx);
 
     // Auto-agent should be notified of feature completion

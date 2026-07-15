@@ -39,8 +39,8 @@ function setupReviewPhase(slug: string, options: { reviewLoopCount?: number } | 
       },
       currentPhase: "review",
       artifacts: {
-        design: `docs/ff/designs/${slug}-design.md`,
-        plan: `.ff/task-plans/${slug}-task-plan.md`,
+        design: `docs/featyard/designs/${slug}-design.md`,
+        plan: `.featyard/task-plans/${slug}-task-plan.md`,
         implement: null,
         verify: null,
         review: null,
@@ -71,8 +71,8 @@ function writeReviewReport(slug: string, loopNumber: number, reviewers: string[]
 
 describe("review loop: empty-loop tracking", () => {
   beforeEach(async () => {
-    delete process.env.PI_FF_REVIEW_LOOP;
-    delete process.env.PI_FF_STAGE;
+    delete process.env.PI_FY_REVIEW_LOOP;
+    delete process.env.PI_FY_STAGE;
     _resetAllEmptyLoops();
     // Reset the once-per-agent-turn phase_ready guard so each test starts clean.
     // The guard collapses repeated phase_ready calls within one agent turn into a
@@ -93,13 +93,13 @@ describe("review loop: empty-loop tracking", () => {
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
     // Write review report where quality found nothing (only "testing" category in issues)
-    writeReviewReport(slug, 0, ["ff-quality-reviewer", "ff-testing-reviewer"], ["testing"]);
+    writeReviewReport(slug, 0, ["fy-quality-reviewer", "fy-testing-reviewer"], ["testing"]);
 
     // Complete fix tasks (all fixed) — 1 fixed → issuesFound=1, cannotFix=0
     await phaseReady.execute("tc-complete", { issuesFound: 1, cannotFix: 0 }, undefined, undefined, ctx);
 
     // quality-reviewer had no issues → empty loop count incremented
-    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "ff-quality-reviewer": 1 });
+    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "fy-quality-reviewer": 1 });
   });
 
   test("empty-loop tracking resets for reviewers that found issues", async () => {
@@ -113,7 +113,7 @@ describe("review loop: empty-loop tracking", () => {
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
     // Both reviewers found issues
-    writeReviewReport(slug, 0, ["ff-quality-reviewer", "ff-testing-reviewer"], ["quality", "testing"]);
+    writeReviewReport(slug, 0, ["fy-quality-reviewer", "fy-testing-reviewer"], ["quality", "testing"]);
 
     // Complete fix task (fixed) — 1 fixed → issuesFound=1, cannotFix=0
     await phaseReady.execute("tc-complete", { issuesFound: 1, cannotFix: 0 }, undefined, undefined, ctx);
@@ -134,31 +134,31 @@ describe("review loop: empty-loop tracking", () => {
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
     // === Loop 0: quality finds nothing, testing finds issues ===
-    writeReviewReport(slug, 0, ["ff-quality-reviewer", "ff-testing-reviewer"], ["testing"]);
+    writeReviewReport(slug, 0, ["fy-quality-reviewer", "fy-testing-reviewer"], ["testing"]);
 
     // Loop 0: 1 fixed → issuesFound=1, cannotFix=0
     await phaseReady.execute("tc-complete", { issuesFound: 1, cannotFix: 0 }, undefined, undefined, ctx);
 
     // After loop 0: quality had no issues → increment to 1, testing had issues → not tracked
-    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "ff-quality-reviewer": 1 });
+    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "fy-quality-reviewer": 1 });
 
     // Simulate agent turn ending before the next review iteration
     await fireAllHandlers(fake.handlers, "agent_end", {}, ctx);
 
     // === Loop 1: quality finds issues this time, testing finds nothing ===
-    writeReviewReport(slug, 1, ["ff-quality-reviewer", "ff-testing-reviewer"], ["quality"]);
+    writeReviewReport(slug, 1, ["fy-quality-reviewer", "fy-testing-reviewer"], ["quality"]);
 
     // Loop 1: 1 fixed → issuesFound=1, cannotFix=0
     await phaseReady.execute("tc-complete", { issuesFound: 1, cannotFix: 0 }, undefined, undefined, ctx);
 
     // After loop 1: quality found issues → reset to 0, testing had no issues → increment to 1
-    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "ff-testing-reviewer": 1 });
+    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "fy-testing-reviewer": 1 });
 
     // Simulate agent turn ending before the next review iteration
     await fireAllHandlers(fake.handlers, "agent_end", {}, ctx);
 
     // === Loop 2: neither finds issues ===
-    writeReviewReport(slug, 2, ["ff-quality-reviewer", "ff-testing-reviewer"], []);
+    writeReviewReport(slug, 2, ["fy-quality-reviewer", "fy-testing-reviewer"], []);
 
     // Loop 2: 1 false-positive → issuesFound=0, cannotFix=0, falsePositives=1
     await phaseReady.execute(
@@ -170,7 +170,7 @@ describe("review loop: empty-loop tracking", () => {
     );
 
     // After loop 2: quality had no issues → increment to 1, testing had no issues → increment to 2
-    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "ff-quality-reviewer": 1, "ff-testing-reviewer": 2 });
+    expect(_getEmptyLoopsForSlug(slug)).toEqual({ "fy-quality-reviewer": 1, "fy-testing-reviewer": 2 });
   });
 
   test("tracks empty loops for -reviewer suffix agents (design-reviewer, code-reviewer)", async () => {
@@ -178,12 +178,12 @@ describe("review loop: empty-loop tracking", () => {
     const { fake, registeredTools } = setupReviewPhase(slug, NO_REVIEW_OPTIONS);
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const ctx = createCtx();
-    const statePath = path.join(process.cwd(), ".ff", "feature-state", `${slug}.json`);
+    const statePath = path.join(process.cwd(), ".featyard", "feature-state", `${slug}.json`);
 
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
     // Dispatch design-reviewer and code-reviewer (both use -reviewer suffix pattern)
-    writeReviewReport(slug, 0, ["ff-design-reviewer", "code-reviewer"], ["design"]);
+    writeReviewReport(slug, 0, ["fy-design-reviewer", "code-reviewer"], ["design"]);
     // design-reviewer: category "design" found in report → reset (0 empty loops)
     // code-reviewer: category "code" NOT found in report → increment (1 empty loop)
 
@@ -211,7 +211,7 @@ describe("review loop: empty-loop tracking", () => {
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
     // Write review report with quality reviewer
-    writeReviewReport(slug, 0, ["ff-quality-reviewer"], ["quality"]);
+    writeReviewReport(slug, 0, ["fy-quality-reviewer"], ["quality"]);
 
     // Pre-create a known-issues file to verify it stays unchanged
     const knownIssuesPath = path.join(process.cwd(), "docs", "reviews", slug, `${slug}-known-issues.md`);
@@ -247,7 +247,7 @@ describe("review loop: empty-loop tracking", () => {
 
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
-    writeReviewReport(slug, 0, ["ff-quality-reviewer"], ["quality"]);
+    writeReviewReport(slug, 0, ["fy-quality-reviewer"], ["quality"]);
 
     // Do NOT create a known-issues file — verify extension doesn't create one
     const knownIssuesPath = path.join(process.cwd(), "docs", "reviews", slug, `${slug}-known-issues.md`);

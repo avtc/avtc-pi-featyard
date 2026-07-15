@@ -8,14 +8,14 @@
  * through the pi-subagent:ready event, and that the resolver reads from
  * model-overrides config to produce the right model string.
  *
- * The feature-flow resolver is stage-only (resolveStageModelOnly): it returns a
+ * The featyard resolver is stage-only (resolveStageModelOnly): it returns a
  * stage-model when the workflow stage matches, otherwise yields undefined.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { initSubagentIntegration } from "../../src/integrations/subagent-integration.js";
-import type { FeatureFlowConfig } from "../../src/settings/model-overrides.js";
+import type { FeatyardConfig } from "../../src/settings/model-overrides.js";
 import * as modelOverrides from "../../src/settings/model-overrides.js";
 import { setHandlerRef } from "../../src/shared/workflow-refs.js";
 import type { SubagentModelResolver } from "../../src/snippets/vendored/subscribe-to-subagent.js";
@@ -62,15 +62,15 @@ function createFakePi() {
 describe("resolveModel wiring", () => {
   beforeEach(() => {
     setSubagentTestSettings(null);
-    modelOverrides.resetFeatureFlowConfig();
+    modelOverrides.resetFeatyardConfig();
   });
 
   afterEach(() => {
     resetSubagentTestSettings();
-    modelOverrides.resetFeatureFlowConfig();
+    modelOverrides.resetFeatyardConfig();
     setHandlerRef(null);
-    delete process.env.PI_FF_STAGE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_STAGE;
+    delete process.env.PI_FY_REVIEW_LOOP;
   });
 
   /** Install a handler ref so the resolver reads stage + loop count from feature-state
@@ -100,11 +100,11 @@ describe("resolveModel wiring", () => {
   });
 
   test("resolver returns undefined for explicit model (caller handles it)", () => {
-    modelOverrides.setFeatureFlowConfig({
+    modelOverrides.setFeatyardConfig({
       "stage-models": {},
       "default-model": "test-provider/model-c",
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const { pi, fireReady } = createFakePi();
     initSubagentIntegration(pi);
@@ -122,19 +122,19 @@ describe("resolveModel wiring", () => {
     // The resolver hook must NOT handle explicitModel itself: pi-subagent's Phase 0
     // short-circuits an explicit --model param before any Phase 2 hook runs, so the
     // hook is only reached with explicitModel === undefined. With no stage active
-    // (empty stage-models, no PI_FF_STAGE), the hook yields undefined so
+    // (empty stage-models, no PI_FY_STAGE), the hook yields undefined so
     // pi-subagent's Phase 3 default-model applies. The explicit value is the caller's
     // responsibility, never the hook's.
-    const result = (capturedResolver ?? (() => null))({ agentName: "ff-researcher", explicitModel: "openai/gpt-5" });
+    const result = (capturedResolver ?? (() => null))({ agentName: "fy-researcher", explicitModel: "openai/gpt-5" });
     expect(result).toBeUndefined();
   });
 
   test("resolver returns undefined when no config override and no default", () => {
-    modelOverrides.setFeatureFlowConfig({
+    modelOverrides.setFeatyardConfig({
       "stage-models": {},
       "default-model": null,
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const { pi, fireReady } = createFakePi();
     initSubagentIntegration(pi);
@@ -156,11 +156,11 @@ describe("resolveModel wiring", () => {
   test("resolver uses stage-model when stage matches", () => {
     installHandlerRef({ phase: "review", reviewLoopCount: 0 });
 
-    modelOverrides.setFeatureFlowConfig({
+    modelOverrides.setFeatyardConfig({
       "stage-models": { review: "test-provider/model-b" },
       "default-model": "test-provider/model-c",
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const { pi, fireReady } = createFakePi();
     initSubagentIntegration(pi);
@@ -187,11 +187,11 @@ describe("resolveModel wiring", () => {
     // closure (the `resolver uses stage-model` test above covers the single-string case only).
     installHandlerRef({ phase: "review", reviewLoopCount: 0 });
 
-    modelOverrides.setFeatureFlowConfig({
+    modelOverrides.setFeatyardConfig({
       "stage-models": { review: ["M1/1", "M2/2", "M3/3"] },
       "default-model": null,
       "kanban-port": null,
-    } as unknown as Required<FeatureFlowConfig>);
+    } as unknown as Required<FeatyardConfig>);
 
     const { pi, fireReady } = createFakePi();
     initSubagentIntegration(pi);

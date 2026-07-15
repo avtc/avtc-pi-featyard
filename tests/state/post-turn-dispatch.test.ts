@@ -32,7 +32,7 @@ describe("post-turn-dispatch", () => {
 
   test("schedule then drain delivers exactly one followUp after the delay", () => {
     const { pi, sent } = makeFakePi();
-    schedulePostTurnFollowUp("ff-design-review #2");
+    schedulePostTurnFollowUp("fy-design-review #2");
 
     // Nothing delivered immediately when drain is scheduled...
     schedulePostTurnDrain(pi);
@@ -45,7 +45,7 @@ describe("post-turn-dispatch", () => {
     // Delivered exactly once when the delay fires.
     vi.advanceTimersByTime(1);
     expect(sent).toHaveLength(1);
-    expect(sent[0]).toEqual({ text: "ff-design-review #2", deliverAs: "followUp" });
+    expect(sent[0]).toEqual({ text: "fy-design-review #2", deliverAs: "followUp" });
   });
 
   test("schedulePostTurnDrain is a no-op when nothing is staged", () => {
@@ -57,7 +57,7 @@ describe("post-turn-dispatch", () => {
 
   test("a followUp is delivered at most once — a second drain after delivery sends nothing", () => {
     const { pi, sent } = makeFakePi();
-    schedulePostTurnFollowUp("ff-plan");
+    schedulePostTurnFollowUp("fy-plan");
     schedulePostTurnDrain(pi);
     vi.advanceTimersByTime(500);
     // Slot is cleared on delivery; scheduling drain again (nothing staged) is a no-op.
@@ -78,7 +78,7 @@ describe("post-turn-dispatch", () => {
 
   test("clear drops a staged followUp and cancels a pending drain", () => {
     const { pi, sent } = makeFakePi();
-    schedulePostTurnFollowUp("ff-review");
+    schedulePostTurnFollowUp("fy-review");
     schedulePostTurnDrain(pi);
     clearPostTurnFollowUp();
     vi.advanceTimersByTime(1000);
@@ -87,7 +87,7 @@ describe("post-turn-dispatch", () => {
 
   test("a second schedulePostTurnDrain while one is pending is a no-op (no double delivery)", () => {
     const { pi, sent } = makeFakePi();
-    schedulePostTurnFollowUp("ff-review");
+    schedulePostTurnFollowUp("fy-review");
     schedulePostTurnDrain(pi);
     schedulePostTurnDrain(pi); // pending drain already exists — ignored
     vi.advanceTimersByTime(500);

@@ -65,8 +65,8 @@ describe("FeatureSession focused domain methods", () => {
   });
 
   describe("processSkillInput", () => {
-    test("skill invocation /skill:ff-plan activates the plan phase", () => {
-      const changed = handler.processSkillInput("/skill:ff-plan");
+    test("skill invocation /skill:fy-plan activates the plan phase", () => {
+      const changed = handler.processSkillInput("/skill:fy-plan");
       expect(changed).toBe(true);
       expect(handler.getWorkflowState()?.currentPhase).toBe("plan");
     });

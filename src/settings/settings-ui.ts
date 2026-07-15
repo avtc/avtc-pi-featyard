@@ -2,14 +2,14 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Settings extension — the single feature-flow settings handle.
+ * Settings extension — the single featyard settings handle.
  *
- * Registers the `/ff:settings` command + modal via avtc-pi-settings-ui's {@link registerSettingsCommand}
+ * Registers the `/fy:settings` command + modal via avtc-pi-settings-ui's {@link registerSettingsCommand}
  * (the sole public entry point; it creates the typed handle internally) and exposes typed accessors.
- * `pi` is only available at activation, so the handle is created lazily by {@link initFeatureFlowSettings}
+ * `pi` is only available at activation, so the handle is created lazily by {@link initFeatyardSettings}
  * (called from the extension's activate function); all reads happen at runtime, after activation.
  *
- * feature-flow's own settings code here is intentionally thin: a typed `getSettings` cast over the
+ * featyard's own settings code here is intentionally thin: a typed `getSettings` cast over the
  * handle's buffer (settings-ui already caches + fills defaults — no second cache), an `updateSetting`
  * wrapper that syncs the fork-mode env var, and the clampFn + fork-mode helpers. model-overrides
  * (the legacy shared-settings.json config for model routing) are re-exported unchanged.
@@ -20,25 +20,25 @@ import { registerSettingsCommand, type SettingsHandle } from "avtc-pi-settings-u
 import { log } from "../log.js";
 import { PiCtx } from "../shared/types.js";
 import { subscribeToDialogCoordinator } from "../snippets/vendored/subscribe-to-dialog-coordinator.js";
-import { clampFeatureFlowSettings, FEATURE_FLOW_SCHEMA } from "./settings-schema.js";
-import type { FeatureFlowSettings } from "./settings-types.js";
+import { clampFeatyardSettings, FEATYARD_SCHEMA } from "./settings-schema.js";
+import type { FeatyardSettings } from "./settings-types.js";
 
-let handle: SettingsHandle<FeatureFlowSettings> | undefined;
+let handle: SettingsHandle<FeatyardSettings> | undefined;
 
-/** Required keys in FeatureFlowSettings (all non-optional interface fields). */
-const REQUIRED_SETTINGS_KEYS = FEATURE_FLOW_SCHEMA.settings.map((s) => s.id);
+/** Required keys in FeatyardSettings (all non-optional interface fields). */
+const REQUIRED_SETTINGS_KEYS = FEATYARD_SCHEMA.settings.map((s) => s.id);
 
 /**
- * Cast the handle's `Record<string, unknown>` buffer to {@link FeatureFlowSettings}.
+ * Cast the handle's `Record<string, unknown>` buffer to {@link FeatyardSettings}.
  * Validates that all required keys are present; logs a warning if any are missing. A pure cast +
  * dev-time check — no runtime transformation, nothing to memoize.
  */
-function asSettings(raw: Record<string, unknown>): FeatureFlowSettings {
+function asSettings(raw: Record<string, unknown>): FeatyardSettings {
   const missing = REQUIRED_SETTINGS_KEYS.filter((key) => !(key in raw));
   if (missing.length > 0) {
     log.warn(`[settings] asSettings: missing keys: ${missing.join(", ")} — returning partial object`);
   }
-  return raw as unknown as FeatureFlowSettings;
+  return raw as unknown as FeatyardSettings;
 }
 
 /** @internal Test-only export for validating asSettings warning path */
@@ -49,7 +49,7 @@ export { asSettings as _asSettings };
 // ---------------------------------------------------------------------------
 
 /** Test-only override for the settings read (DI/mock pattern). */
-let _getSettingsOverride: (() => FeatureFlowSettings) | null = null;
+let _getSettingsOverride: (() => FeatyardSettings) | null = null;
 
 /** Test-only override for the settings write (DI/mock pattern). When set, production
  *  `updateSetting` calls (e.g. resolve-base-branch persisting baseBranch) mutate the mock holder
@@ -61,7 +61,7 @@ let _updateSettingsOverride:
   | null = null;
 
 /** Test-only: inject a mock settings source for reads (pass `null` to restore the real handle). */
-export function _setGetSettings(fn: (() => FeatureFlowSettings) | null): void {
+export function _setGetSettings(fn: (() => FeatyardSettings) | null): void {
   _getSettingsOverride = fn;
 }
 
@@ -76,10 +76,10 @@ export function _setUpdateSettingsOverride(
 // Typed accessors
 // ---------------------------------------------------------------------------
 
-/** Get typed feature-flow settings (settings-ui's buffer is the single cache; no second layer). */
-export function getSettings(): FeatureFlowSettings {
+/** Get typed featyard settings (settings-ui's buffer is the single cache; no second layer). */
+export function getSettings(): FeatyardSettings {
   if (_getSettingsOverride) return _getSettingsOverride();
-  if (!handle) throw new Error("feature-flow settings not initialized — initFeatureFlowSettings not called");
+  if (!handle) throw new Error("featyard settings not initialized — initFeatyardSettings not called");
   return handle.getSettings();
 }
 
@@ -99,7 +99,7 @@ export function updateSetting(
     syncForkModeEnv();
     return;
   }
-  if (!handle) throw new Error("feature-flow settings not initialized — initFeatureFlowSettings not called");
+  if (!handle) throw new Error("featyard settings not initialized — initFeatyardSettings not called");
   handle.updateSetting(key, value, opts ?? undefined);
   syncForkModeEnv();
 }
@@ -114,7 +114,7 @@ export function updateSetting(
  * Pure (reads env + settings, no side effects) so it stays testable and can be
  * shared between phase-driven sync (syncEnvVarsFromState) and settings-ui edits.
  */
-export function resolveForkModeForPhase(phase: string | undefined, settings: FeatureFlowSettings): string {
+export function resolveForkModeForPhase(phase: string | undefined, settings: FeatyardSettings): string {
   switch (phase) {
     case "design":
     case "plan":
@@ -138,7 +138,7 @@ export function resolveForkModeForPhase(phase: string | undefined, settings: Fea
  */
 export function syncForkModeEnv(): void {
   if (process.env.PI_SUBAGENT_PARENT_PID !== undefined) return; // root session only
-  const mode = resolveForkModeForPhase(process.env.PI_FF_STAGE, getSettings());
+  const mode = resolveForkModeForPhase(process.env.PI_FY_STAGE, getSettings());
   if (mode) {
     process.env.PI_SUBAGENT_FORK_MODE = mode;
   } else {
@@ -151,17 +151,17 @@ export function syncForkModeEnv(): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Register the `/ff:settings` command + modal and create the settings handle. Called from the
+ * Register the `/fy:settings` command + modal and create the settings handle. Called from the
  * extension's activate function (needs `pi`). `beforeOpen` stashes the command ctx for the modal;
  * `onAfterChange` refreshes the fork-mode env var after a mid-turn edit.
  */
-export function initFeatureFlowSettings(pi: ExtensionAPI): void {
-  handle = registerSettingsCommand<FeatureFlowSettings>(pi, FEATURE_FLOW_SCHEMA, {
-    commandName: "ff:settings",
-    title: "Feature Flow Settings",
-    titleRight: "avtc-pi-feature-flow",
-    clampFn: clampFeatureFlowSettings,
-    envVar: "PI_FF_SETTINGS",
+export function initFeatyardSettings(pi: ExtensionAPI): void {
+  handle = registerSettingsCommand<FeatyardSettings>(pi, FEATYARD_SCHEMA, {
+    commandName: "fy:settings",
+    title: "Featyard Settings",
+    titleRight: "avtc-pi-featyard",
+    clampFn: clampFeatyardSettings,
+    envVar: "PI_FY_SETTINGS",
     beforeOpen: (ctx) => {
       if (!globalThis.__piCtx) globalThis.__piCtx = new PiCtx();
       globalThis.__piCtx.refresh(ctx);
@@ -176,32 +176,32 @@ export function initFeatureFlowSettings(pi: ExtensionAPI): void {
 // Re-exports from sub-modules
 // ---------------------------------------------------------------------------
 
-// NOTE: feature-flow consumes avtc-pi-settings-ui; it must NOT re-export settings-ui's
+// NOTE: featyard consumes avtc-pi-settings-ui; it must NOT re-export settings-ui's
 // symbols (transitive re-export anti-pattern). Any code needing them should import
 // directly from "avtc-pi-settings-ui".
 export {
   DEFAULT_GLOBAL_DIR,
-  type FeatureFlowConfig,
+  type FeatyardConfig,
   invalidateConfigCache,
   invalidateConfigCacheIfChanged,
-  loadFeatureFlowConfig,
+  loadFeatyardConfig,
   type ModelOverride,
   NO_CWD_OVERRIDE,
-  resetFeatureFlowConfig,
+  resetFeatyardConfig,
   resolveModelOverride,
   resolveReviewSkill,
   resolveStageModelOnly,
-  setFeatureFlowConfig,
+  setFeatyardConfig,
 } from "./model-overrides.js";
-export { clampFeatureFlowSettings, FEATURE_FLOW_SCHEMA, parseContextCompactValue } from "./settings-schema.js";
+export { clampFeatyardSettings, FEATYARD_SCHEMA, parseContextCompactValue } from "./settings-schema.js";
 export type {
   AutoOnBlock,
   BranchPolicy,
   DesignDocStorage,
   ExecutionFlow,
-  FeatureFlowSettings,
   FeatureReviewMode,
   FeatureReviewSubagentsMode,
+  FeatyardSettings,
   NestedResearchers,
   PerTaskReviewMode,
   PlanReviewMode,
@@ -217,6 +217,6 @@ export type {
 // ---------------------------------------------------------------------------
 
 export default function settingsExtension(pi: ExtensionAPI): void {
-  initFeatureFlowSettings(pi);
+  initFeatyardSettings(pi);
   subscribeToDialogCoordinator(pi);
 }

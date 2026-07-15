@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Workflow Monitor extension — feature-flow orchestration.
+ * Workflow Monitor extension — featyard orchestration.
  *
  * Wires the tool_call / tool_result / session event handlers that drive a
  * feature through its phases (design → plan → implement → verify → review →
@@ -36,15 +36,15 @@ import { clearActiveFeatureEnv, syncEnvVarsFromState } from "./phases/env-sync.j
 import { createExecutionModeApplier } from "./phases/execution-mode.js";
 import type { Phase } from "./phases/phase-progression.js";
 import { createReviewLoopHandlers } from "./review/review-loops.js";
-import { DEFAULT_GLOBAL_DIR, getSettings, loadFeatureFlowConfig, resolveReviewSkill } from "./settings/settings-ui.js";
+import { DEFAULT_GLOBAL_DIR, getSettings, loadFeatyardConfig, resolveReviewSkill } from "./settings/settings-ui.js";
 import { PiCtx } from "./shared/types.js";
 // --- Orchestrator refs (shared module-level state for child modules) ---
 import * as orchestratorRefs from "./shared/workflow-refs.js";
 import { subscribeToNotificationApi } from "./snippets/vendored/subscribe-to-notifications.js";
 import { archiveDesignsOlderThan, archiveStaleArtifacts, MS_PER_DAY } from "./state/archive-artifacts.js";
 import {
-  type EnsureFfJunctionResult,
-  ensureFfJunction,
+  type EnsureFeatyardJunctionResult,
+  ensureFeatyardJunction,
   resolveArchiveBase,
   resolveDesignsDirs,
 } from "./state/artifact-junction.js";
@@ -66,9 +66,9 @@ import { isSubagentSession, reconstructState } from "./state/state-persistence.j
 import { registerPhaseReady } from "./tools/phase-ready.js";
 import { registerTaskReadyAdvance } from "./tools/task-ready-advance.js";
 
-// Idempotent wiring guard. feature-flow can be bundled into the avtc-pi umbrella
+// Idempotent wiring guard. featyard can be bundled into the avtc-pi umbrella
 // AND installed standalone — whichever copy loads first wires, the rest no-op.
-const WIRED_KEY = "__avtcPiFeatureFlowWired";
+const WIRED_KEY = "__avtcPiFeatyardWired";
 type GlobalWithWired = typeof globalThis & { [WIRED_KEY]?: boolean };
 
 export { stripFrontmatter } from "@earendil-works/pi-coding-agent";
@@ -104,29 +104,29 @@ export async function _ensureWorktreeForExecution(
       exec: gitExec,
     });
 
-    // .ff must never be tracked. git worktree add may have checked out a tracked.ff/ as a
-    // real directory; untrack it from the worktree index (aligns with the.ff guardrail) so
+    // .featyard must never be tracked. git worktree add may have checked out a tracked.featyard/ as a
+    // real directory; untrack it from the worktree index (aligns with the.featyard guardrail) so
     // the worktree's git status stays clean and the implementer never sees a wall of
-    // "deleted.ff/..." files. --ignore-unmatch makes this a no-op when.ff is untracked.
+    // "deleted.featyard/..." files. --ignore-unmatch makes this a no-op when.featyard is untracked.
     // Non-fatal: a failure here (e.g. exotic git state) only leaves stale index entries; the
     // junction is still created below, so log rather than halt worktree setup.
-    const rmResult = await gitExec("git rm -r --cached --ignore-unmatch .ff", { cwd: result.path });
+    const rmResult = await gitExec("git rm -r --cached --ignore-unmatch .featyard", { cwd: result.path });
     if (rmResult.exitCode !== 0) {
       log.info(
-        `[workflow] git rm --cached .ff in worktree ${result.path} exited ${rmResult.exitCode} (non-fatal): ${rmResult.stdout.trim()}`,
+        `[workflow] git rm --cached .featyard in worktree ${result.path} exited ${rmResult.exitCode} (non-fatal): ${rmResult.stdout.trim()}`,
       );
     }
 
-    // Ensure <worktree>/.ff is a junction to the shared external store (same key/dir the
-    // main repo uses). ensureFfJunction heals any real-directory / wrong-target entry into
+    // Ensure <worktree>/.featyard is a junction to the shared external store (same key/dir the
+    // main repo uses). ensureFeatyardJunction heals any real-directory / wrong-target entry into
     // the correct junction. Required before the implementer subagent runs in this worktree
-    // (its skills read/write relative.ff/... paths, resolved against the worktree cwd).
-    // Worktree checkout: a real-dir.ff here is the git-checked-out tracked content (also in
+    // (its skills read/write relative.featyard/... paths, resolved against the worktree cwd).
+    // Worktree checkout: a real-dir.featyard here is the git-checked-out tracked content (also in
     // git + the external store), so delete-and-replace is safe — avoids leaving stale backups.
-    ensureFfJunction(
+    ensureFeatyardJunction(
       result.path,
       settings.branchPolicy ?? "current-branch",
-      process.env.PI_FF_HOME ?? homedir(),
+      process.env.PI_FY_HOME ?? homedir(),
       "delete",
     );
 
@@ -142,7 +142,7 @@ export async function _ensureWorktreeForExecution(
     if (err instanceof TypeError || err instanceof ReferenceError || err instanceof SyntaxError) {
       throw err;
     }
-    // Predictable setup failure (git error,.ff healing, path validation). In worktree mode
+    // Predictable setup failure (git error,.featyard healing, path validation). In worktree mode
     // execution cannot fall back to the main repo (the implementer is dispatched into the
     // worktree with path-rewriting interception), so HALT visibly without throwing (pi must
     // not exit over this). The caller checks worktreePath and skips dispatch when unset.
@@ -201,7 +201,7 @@ export async function resumeWorkflowForFeature(
 }
 
 // globalThis keys for workflow-initiated new-session state.
-// Set before ctx.newSession by /ff:next.
+// Set before ctx.newSession by /fy:next.
 // Checked in session_start (reason="new") to distinguish user-initiated vs workflow-initiated /new.
 
 export { applyModelOverride } from "./phases/phase-transitions.js";
@@ -279,29 +279,31 @@ export default async function (pi: ExtensionAPI) {
 }
 
 async function initWorkflowMonitor(pi: ExtensionAPI, _deps: { todoApi: ReturnType<typeof initTodoIntegration> }) {
-  // Ensure the.ff junction for external artifact storage (throws on failure — visible + debuggable).
+  // Ensure the.featyard junction for external artifact storage (throws on failure — visible + debuggable).
   // Runs at init (cwd is fixed for the pi process). Cross-platform; aggregates worktrees.
-  // When PI_FF_HOME is set we're in the test sandbox → be best-effort (never block extension load
-  // on test-filesystem quirks). Production (no PI_FF_HOME) throws so real failures surface.
-  const ffHome = process.env.PI_FF_HOME;
-  const testSandbox = ffHome !== undefined;
-  let ffResult: EnsureFfJunctionResult | undefined;
+  // When PI_FY_HOME is set we're in the test sandbox → be best-effort (never block extension load
+  // on test-filesystem quirks). Production (no PI_FY_HOME) throws so real failures surface.
+  const fyHome = process.env.PI_FY_HOME;
+  const testSandbox = fyHome !== undefined;
+  let featyardResult: EnsureFeatyardJunctionResult | undefined;
   try {
-    // Main-repo/init path: a stray real-dir.ff is preserved (moved aside) — never lose data.
-    ffResult = ensureFfJunction(
+    // Main-repo/init path: a stray real-dir.featyard is preserved (moved aside) — never lose data.
+    featyardResult = ensureFeatyardJunction(
       process.cwd(),
       getSettings().branchPolicy ?? "current-branch",
-      ffHome ?? homedir(),
+      fyHome ?? homedir(),
       "rename",
     );
-    if (ffResult.created) {
-      log.info(`[feature-flow] .ff junction ready at .ff → ${ffResult.externalDir} (root: ${ffResult.rootSource})`);
+    if (featyardResult.created) {
+      log.info(
+        `[featyard] .featyard junction ready at .featyard → ${featyardResult.externalDir} (root: ${featyardResult.rootSource})`,
+      );
     }
   } catch (err) {
     if (testSandbox) {
-      log.warn(`[feature-flow] .ff junction setup skipped in test sandbox: ${err}`);
+      log.warn(`[featyard] .featyard junction setup skipped in test sandbox: ${err}`);
     } else {
-      log.error("[feature-flow] Failed to set up .ff junction", err);
+      log.error("[featyard] Failed to set up .featyard junction", err);
       throw err;
     }
   }
@@ -357,18 +359,18 @@ async function initWorkflowMonitor(pi: ExtensionAPI, _deps: { todoApi: ReturnTyp
   // into a sibling artifacts-archive/ dir. Main session only (subagents skip — durable state is
   // host-owned); non-blocking (dispatched as a fire-and-forget async sweep). Repeats every 24h; the interval handle
   // lives on the bridge so session_shutdown clears it (no leak across /reload re-evaluation).
-  if (ffResult) {
-    const archiveBase = resolveArchiveBase(ffResult);
-    const designsDirs = resolveDesignsDirs(ffResult.externalDir, process.cwd());
-    const sweepOpts = () => buildArchiveSweepOptions(ffResult.externalDir, archiveBase);
+  if (featyardResult) {
+    const archiveBase = resolveArchiveBase(featyardResult);
+    const designsDirs = resolveDesignsDirs(featyardResult.externalDir, process.cwd());
+    const sweepOpts = () => buildArchiveSweepOptions(featyardResult.externalDir, archiveBase);
     const runSweep = async () => {
       try {
         await archiveStaleArtifacts(sweepOpts());
       } catch (e) {
-        log.warn(`[feature-flow] background archive sweep failed: ${e instanceof Error ? e.message : e}`);
+        log.warn(`[featyard] background archive sweep failed: ${e instanceof Error ? e.message : e}`);
       }
       // Design-doc sweep: opt-in via autoArchiveDesignsOlderThanDays (null = disabled). Sweeps BOTH
-      // .ff/designs (local) and docs/ff/designs (committed) so docs from either mode age out.
+      // .featyard/designs (local) and docs/featyard/designs (committed) so docs from either mode age out.
       const designsDays = getSettings().autoArchiveDesignsOlderThanDays;
       if (designsDays != null) {
         try {
@@ -378,7 +380,7 @@ async function initWorkflowMonitor(pi: ExtensionAPI, _deps: { todoApi: ReturnTyp
             days: designsDays,
           });
         } catch (e) {
-          log.warn(`[feature-flow] background design-doc archive sweep failed: ${e instanceof Error ? e.message : e}`);
+          log.warn(`[featyard] background design-doc archive sweep failed: ${e instanceof Error ? e.message : e}`);
         }
       }
     };
@@ -391,7 +393,7 @@ async function initWorkflowMonitor(pi: ExtensionAPI, _deps: { todoApi: ReturnTyp
         clearInterval(bridge.archiveTimer);
       }
       if (bridge) {
-        // The on-start sweep dispatch is production-only: in the test sandbox (PI_FF_HOME set) the
+        // The on-start sweep dispatch is production-only: in the test sandbox (PI_FY_HOME set) the
         // async sweep's synchronous fs body would race with test setup under isolate:false. The
         // sweep itself is unit-tested in archive-feature.test.ts; the 24h timer (testable lifecycle)
         // still starts below so timer-wiring is covered by archive-sweep-timer.test.ts.
@@ -408,9 +410,9 @@ async function initWorkflowMonitor(pi: ExtensionAPI, _deps: { todoApi: ReturnTyp
   // session_shutdown router (events/session/session-shutdown.ts) handles teardown.
 
   function syncSourceExtensions(): void {
-    // source-extensions lives in the avtc-pi-feature-flow section of ~/.pi/agent/settings.json
-    // (NOT the settings-ui schema, which has no array editor). Read it from the feature-flow config.
-    const entries = loadFeatureFlowConfig(DEFAULT_GLOBAL_DIR, process.cwd())["source-extensions"];
+    // source-extensions lives in the avtc-pi-featyard section of ~/.pi/agent/settings.json
+    // (NOT the settings-ui schema, which has no array editor). Read it from the featyard config.
+    const entries = loadFeatyardConfig(DEFAULT_GLOBAL_DIR, process.cwd())["source-extensions"];
     if (entries) {
       const result = buildExtensionOverride(entries);
       if (result.kind === "custom") {
@@ -578,8 +580,8 @@ async function initWorkflowMonitor(pi: ExtensionAPI, _deps: { todoApi: ReturnTyp
   });
 
   // --- Kanban extension (absorbed from standalone) ---
-  // Registers /ff:auto-agent, /ff:auto-worker, /ff:auto-designer, /ff:auto-pause,
-  // /ff:kanban, /ff:kanban-release commands + add_to_backlog tool + event handlers
+  // Registers /fy:auto-agent, /fy:auto-worker, /fy:auto-designer, /fy:auto-pause,
+  // /fy:kanban, /fy:kanban-release commands + add_to_backlog tool + event handlers
   await kanbanExtension(pi, {
     activateWorkflowForFeature,
     resumeWorkflowForFeature,

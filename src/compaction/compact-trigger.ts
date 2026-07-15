@@ -4,7 +4,7 @@
 /**
  * Shared context-compaction trigger.
  *
- * One helper for every extension-driven compaction boundary in feature-flow:
+ * One helper for every extension-driven compaction boundary in featyard:
  *   - implement plan-task boundaries (`task_ready_advance`, `interTaskCompact` setting)
  *   - design/plan review iteration boundaries (`reviewIterationCompact` setting)
  *   - code-review loop boundaries (`reviewIterationCompact` setting)
@@ -41,8 +41,8 @@ export interface CompactPayload {
   settingValue: string;
   /**
    * Skill to re-inject after compaction. Omitted → the compact-handler derives the
-   * phase's expected skill (implement→ff-implement, review→ff-review,
-   * design/plan review sub-states→ff-design-review/ff-plan-review).
+   * phase's expected skill (implement→fy-implement, review→fy-review,
+   * design/plan review sub-states→fy-design-review/fy-plan-review).
    */
   skillName?: string;
   /** Caller note appended after the skill + framing. No `/skill:` prefix, no framing. */

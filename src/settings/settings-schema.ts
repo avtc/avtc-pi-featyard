@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Feature Flow settings schema.
+ * Featyard settings schema.
  *
  * Defines all 36 settings, 5 tab groups, file paths, and validation rules.
  * This single schema replaces SETTING_TYPE, SETTING_DESCRIPTIONS, buildTabGroups,
@@ -78,8 +78,8 @@ function makeAutoWaitTimeoutSetting(role: "worker" | "designer"): SettingSchema 
   };
 }
 
-export const FEATURE_FLOW_SCHEMA: SettingsSchema = {
-  ...settingsFilePaths("avtc-pi-feature-flow"),
+export const FEATYARD_SCHEMA: SettingsSchema = {
+  ...settingsFilePaths("avtc-pi-featyard"),
 
   settings: [
     // ── Workflow tab ──────────────────────────────────────────────────
@@ -147,18 +147,18 @@ export const FEATURE_FLOW_SCHEMA: SettingsSchema = {
       id: "designDocStorage",
       label: "Design doc storage",
       description:
-        "Where design docs live: local (.ff/designs/, out-of-repo and gitignored — not committed) or committed (docs/ff/designs/, tracked in git).",
+        "Where design docs live: local (.featyard/designs/, out-of-repo and gitignored — not committed) or committed (docs/featyard/designs/, tracked in git).",
       type: "string",
       defaultValue: "local",
       presets: ["local", "committed"],
     },
     {
       // Age threshold (days) for the background design-doc sweep. Null = disabled (Never).
-      // Sweeps both .ff/designs and docs/ff/designs; manual on-demand via /ff:archive-designs <days>.
+      // Sweeps both .featyard/designs and docs/featyard/designs; manual on-demand via /fy:archive-designs <days>.
       id: "autoArchiveDesignsOlderThanDays",
       label: "Auto-archive designs older than (days)",
       description:
-        "Background sweep relocates design docs older than this into the archive, sweeping both .ff/designs and docs/ff/designs. Never = disabled. Manual sweep via /ff:archive-designs <days>.",
+        "Background sweep relocates design docs older than this into the archive, sweeping both .featyard/designs and docs/featyard/designs. Never = disabled. Manual sweep via /fy:archive-designs <days>.",
       type: "number",
       defaultValue: null,
       min: 1,
@@ -438,7 +438,7 @@ export const FEATURE_FLOW_SCHEMA: SettingsSchema = {
 /**
  * Clamp inter-field constraints after normalization.
  */
-export function clampFeatureFlowSettings(result: Record<string, unknown>): void {
+export function clampFeatyardSettings(result: Record<string, unknown>): void {
   if (
     typeof result.researcherMinInstances === "number" &&
     typeof result.researcherMaxInstances === "number" &&

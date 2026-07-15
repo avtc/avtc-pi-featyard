@@ -12,7 +12,7 @@
  *
  * Compact fires in these phase_ready paths:
  * 1. Brainstorm shouldLoop=true — compact between review iterations
- * 2. Brainstorm shouldLoop=false non-auto — compact before ff-plan skill
+ * 2. Brainstorm shouldLoop=false non-auto — compact before fy-plan skill
  * 3. Brainstorm shouldLoop=false auto — compact before onFeatureComplete callback
  * 4. Plan shouldLoop=true — compact between review iterations
  * 5. Plan shouldLoop=false — compact before execution handoff message
@@ -54,8 +54,8 @@ describe("review iteration compact — design shouldLoop=true", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -155,8 +155,8 @@ describe("review iteration compact — design shouldLoop=false", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -167,7 +167,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
     } catch {}
   });
 
-  test("3. non-auto: reviewIterationCompact=compact → compact triggered, ff-plan sent in onComplete", async () => {
+  test("3. non-auto: reviewIterationCompact=compact → compact triggered, fy-plan sent in onComplete", async () => {
     setSetting("maxPlanReviewRounds", 3);
     setSetting("minReviewLoops", 0);
     setSetting("reviewIterationCompact", "compact");
@@ -175,13 +175,17 @@ describe("review iteration compact — design shouldLoop=false", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-false-nonauto", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/rir-bs-false-nonauto-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/rir-bs-false-nonauto-design.md", reviewActive: false, reviewLoopCount: 1 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/rir-bs-false-nonauto-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/rir-bs-false-nonauto-design.md", reviewActive: false, reviewLoopCount: 1 },
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/rir-bs-false-nonauto-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/rir-bs-false-nonauto-design.md", "# Design");
 
     const compactCalls: unknown[] = [];
     const selectFn = vi.fn().mockResolvedValue("Proceed with implementation");
@@ -216,14 +220,14 @@ describe("review iteration compact — design shouldLoop=false", () => {
     // Result should be empty (compact triggered)
     expect((result.content[0] as { text: string }).text).toBe("");
 
-    // ff-plan skill is passed as skillName (message is empty — handler expands the skill)
+    // fy-plan skill is passed as skillName (message is empty — handler expands the skill)
     const stored = globalThis.__piCompactFollowUp as {
       skillName?: string;
       message?: string;
       onAfterFollowUp?: () => void;
     };
     expect(stored).toBeDefined();
-    expect(stored.skillName).toBe("ff-plan");
+    expect(stored.skillName).toBe("fy-plan");
     expect(stored.message).toBe("");
     delete globalThis.__piCompactFollowUp;
   });
@@ -236,14 +240,18 @@ describe("review iteration compact — design shouldLoop=false", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-false-auto", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/rir-bs-false-auto-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/rir-bs-false-auto-design.md", reviewActive: false, reviewLoopCount: 1 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/rir-bs-false-auto-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/rir-bs-false-auto-design.md", reviewActive: false, reviewLoopCount: 1 },
       executionMode: "checkpoint",
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/rir-bs-false-auto-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/rir-bs-false-auto-design.md", "# Design");
 
     const compactCalls: unknown[] = [];
     const onFeatureCompleteCalls: string[] = [];
@@ -303,13 +311,13 @@ describe("review iteration compact — design shouldLoop=false", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-discuss", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/rir-bs-discuss-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/rir-bs-discuss-design.md", reviewActive: false, reviewLoopCount: 1 },
+      workflow: { currentPhase: "design", designDoc: "docs/featyard/designs/rir-bs-discuss-design.md", planDoc: null },
+      design: { doc: "docs/featyard/designs/rir-bs-discuss-design.md", reviewActive: false, reviewLoopCount: 1 },
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/rir-bs-discuss-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/rir-bs-discuss-design.md", "# Design");
 
     const compactCalls: unknown[] = [];
     const selectFn = vi.fn().mockResolvedValue("Discuss");
@@ -344,8 +352,8 @@ describe("review iteration compact — plan shouldLoop=true", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -408,8 +416,8 @@ describe("review iteration compact — plan shouldLoop=false", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -460,7 +468,7 @@ describe("review iteration compact — plan shouldLoop=false", () => {
       onAfterFollowUp?: () => void;
     };
     expect(stored).toBeDefined();
-    expect(stored.skillName).toBe("ff-implement");
+    expect(stored.skillName).toBe("fy-implement");
     expect(stored.message).toContain("Continuing to implementation");
     delete globalThis.__piCompactFollowUp;
   });
@@ -473,8 +481,8 @@ describe("review iteration compact — threshold behavior", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -566,8 +574,8 @@ describe("review iteration compact — error handling", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -663,14 +671,14 @@ describe("review iteration compact — error handling", () => {
       // on the failed compact). The exact skill is resolved by the compact-handler assembly.
       expect(fake.sentMessages.length).toBeGreaterThan(0);
       const last = fake.sentMessages[fake.sentMessages.length - 1];
-      expect(typeof last === "string" ? last : last.message).toMatch(/<skill name="ff-/);
+      expect(typeof last === "string" ? last : last.message).toMatch(/<skill name="fy-/);
     } finally {
       vi.useRealTimers();
       delete process.env.PI_SUBAGENT_CHILD_AGENT;
     }
   });
 
-  test("10c. compact fails (onError) in a subagent session → recovery routes to the subagent role reminder (not the host feature-flow skill)", async () => {
+  test("10c. compact fails (onError) in a subagent session → recovery routes to the subagent role reminder (not the host featyard skill)", async () => {
     vi.useFakeTimers();
     process.env.PI_SUBAGENT_CHILD_AGENT = "test-subagent";
     try {
@@ -699,7 +707,7 @@ describe("review iteration compact — error handling", () => {
 
       await vi.advanceTimersByTimeAsync(DEFERRED_COMPACT_FOLLOWUP_MS);
       // Subagent recovery path: handleSubagentCompact() injects the subagent role reminder,
-      // NOT the host feature-flow skill block (the untested quadrant per review loop 2).
+      // NOT the host featyard skill block (the untested quadrant per review loop 2).
       expect(fake.sentMessages.length).toBeGreaterThan(0);
       const last = fake.sentMessages[fake.sentMessages.length - 1];
       const text = typeof last === "string" ? last : last.message;
@@ -718,9 +726,9 @@ describe("review iteration compact — edge cases", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
-    delete process.env.PI_FF_AUTO_AGENT;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
+    delete process.env.PI_FY_AUTO_AGENT;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -742,13 +750,17 @@ describe("review iteration compact — edge cases", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-off-nocompact", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/rir-off-nocompact-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/rir-off-nocompact-design.md", reviewActive: false, reviewLoopCount: 0 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/rir-off-nocompact-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/rir-off-nocompact-design.md", reviewActive: false, reviewLoopCount: 0 },
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/rir-off-nocompact-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/rir-off-nocompact-design.md", "# Design");
 
     const compactCalls: unknown[] = [];
     const selectFn = vi.fn().mockResolvedValue("Proceed with implementation");
@@ -778,7 +790,7 @@ describe("review iteration compact — edge cases", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain("ff-plan");
+    expect(lastMessage.message).toContain("fy-plan");
   });
 
   test("11b. maxPlanReviewRounds=off with reviewIterationCompact=compact → no compact (design shouldLoop=false auto)", async () => {
@@ -792,8 +804,8 @@ describe("review iteration compact — edge cases", () => {
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/rir-off-auto-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/rir-off-auto-design.md", "# Design");
 
     const compactCalls: unknown[] = [];
     const ctx = {
@@ -803,7 +815,7 @@ describe("review iteration compact — edge cases", () => {
       },
     };
 
-    process.env.PI_FF_AUTO_AGENT = "1";
+    process.env.PI_FY_AUTO_AGENT = "1";
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);

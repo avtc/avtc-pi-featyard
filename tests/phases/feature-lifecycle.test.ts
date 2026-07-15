@@ -93,20 +93,20 @@ describe("full feature lifecycle", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-08-lifecycle-test-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-08-lifecycle-test-design.md" },
       } as unknown as ExtensionEvent,
       noUICtx,
     );
 
     expect(getActiveFeatureSlug()).toBe("2026-05-08-lifecycle-test");
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-08-lifecycle-test");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-08-lifecycle-test");
 
     const state1 = loadFeatureState("2026-05-08-lifecycle-test", null);
     expect(state1).not.toBeNull();
     expect(state1?.completedAt).toBeNull();
     expect(state1?.workflow.currentPhase).toBe("design");
     expect(isPhaseActive(view(state1), "design")).toBe(true);
-    expect(state1?.design.doc).toBe("docs/ff/designs/2026-05-08-lifecycle-test-design.md");
+    expect(state1?.design.doc).toBe("docs/featyard/designs/2026-05-08-lifecycle-test-design.md");
 
     // --- 3. Advance to plan phase and record the plan artifact ---
     // (In the SOTS model, phase changes are pointer moves on the in-memory record;
@@ -124,7 +124,7 @@ describe("full feature lifecycle", () => {
       {
         toolCallId: "call-2",
         toolName: "write",
-        input: { path: ".ff/task-plans/2026-05-08-lifecycle-test-task-plan.md" },
+        input: { path: ".featyard/task-plans/2026-05-08-lifecycle-test-task-plan.md" },
       } as unknown as ExtensionEvent,
       noUICtx,
     );
@@ -138,7 +138,7 @@ describe("full feature lifecycle", () => {
     const state2 = loadFeatureState("2026-05-08-lifecycle-test", null);
     expect(isPhaseActive(view(state2), "plan")).toBe(true);
     expect(state2?.workflow.currentPhase).toBe("plan");
-    expect(state2?.plan.doc).toBe(".ff/task-plans/2026-05-08-lifecycle-test-task-plan.md");
+    expect(state2?.plan.doc).toBe(".featyard/task-plans/2026-05-08-lifecycle-test-task-plan.md");
 
     // --- 5. Advance plan → implement (phase_ready drives this in production) ---
     advanceTo("implement");
@@ -195,7 +195,7 @@ describe("full feature lifecycle", () => {
 
     // Create a fresh extension instance for the new session
     const fake2 = createFakePi();
-    delete (globalThis as Record<string, unknown>).__avtcPiFeatureFlowWired;
+    delete (globalThis as Record<string, unknown>).__avtcPiFeatyardWired;
     workflowMonitorExtension(fake2.api as unknown as ExtensionAPI);
 
     let selectCalled = false;
@@ -227,11 +227,17 @@ describe("full feature lifecycle", () => {
     const _tempDir = process.cwd();
 
     // Create two feature state files in the same temp dir
-    const state1 = createFeatureState("2026-01-01-feature-alpha", "docs/ff/designs/2026-01-01-feature-alpha-design.md");
+    const state1 = createFeatureState(
+      "2026-01-01-feature-alpha",
+      "docs/featyard/designs/2026-01-01-feature-alpha-design.md",
+    );
     state1.updatedAt = "2026-01-01T00:00:00.000Z";
     saveFeatureState(state1, null);
 
-    const state2 = createFeatureState("2026-02-01-feature-beta", "docs/ff/designs/2026-02-01-feature-beta-design.md");
+    const state2 = createFeatureState(
+      "2026-02-01-feature-beta",
+      "docs/featyard/designs/2026-02-01-feature-beta-design.md",
+    );
     state2.updatedAt = "2026-02-01T00:00:00.000Z";
     state2.workflow.currentPhase = "implement";
     saveFeatureState(state2, null);
@@ -245,7 +251,7 @@ describe("full feature lifecycle", () => {
     delete globalThis.__piCtx;
 
     // Simulate root session setting env var before spawning new session
-    process.env.PI_FF_FEATURE = "2026-02-01-feature-beta";
+    process.env.PI_FY_FEATURE = "2026-02-01-feature-beta";
 
     // Create a new extension instance in the SAME temp dir
     // Don't call createFakePi (which changes CWD), manually set up
@@ -284,20 +290,20 @@ describe("full feature lifecycle", () => {
  *
  * `pi --session <id>` / `--continue` / `--fork` open an EXISTING session — pi emits
  * reason "startup" (not "resume"). The session branch carries the last-persisted
- * feature_flow_state custom entry, so startup MUST restore it (otherwise the
+ * featyard_state custom entry, so startup MUST restore it (otherwise the
  * widget + feature-state never reactivate). A CLEAN new session has an empty
  * branch and must stay clean (fall through, no stale restore).
  */
 describe("session_start startup restore", () => {
   const SLUG = "2026-06-01-startup-restore";
 
-  /** Build a branch whose latest entry is a feature_flow_state custom snapshot. */
+  /** Build a branch whose latest entry is a featyard_state custom snapshot. */
   function branchWithFeatureEntry(slug: string) {
-    const fs = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const fs = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     fs.workflow.currentPhase = "implement";
     saveFeatureState(fs, null);
     const snapshot = { featureState: fs, guardrailsState: { tdd: { stage: "idle" }, verification: "not-run" } };
-    return [{ type: "custom", customType: "feature_flow_state", data: snapshot }];
+    return [{ type: "custom", customType: "featyard_state", data: snapshot }];
   }
 
   function makeCtx(branch: unknown[]) {
@@ -318,7 +324,7 @@ describe("session_start startup restore", () => {
   afterEach(() => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("startup with a feature entry in the branch restores feature state + widget", async () => {
@@ -333,7 +339,7 @@ describe("session_start startup restore", () => {
 
     // Feature state is reactivated from the session branch entry
     expect(getActiveFeatureSlug()).toBe(SLUG);
-    expect(process.env.PI_FF_FEATURE).toBe(SLUG);
+    expect(process.env.PI_FY_FEATURE).toBe(SLUG);
     // The restored in-memory record carries the persisted phase pointer
     expect(globalThis.__piWorkflowMonitor?.handler.getActiveFeatureState()?.workflow.currentPhase).toBe("implement");
     // Widget was rendered (not cleared)

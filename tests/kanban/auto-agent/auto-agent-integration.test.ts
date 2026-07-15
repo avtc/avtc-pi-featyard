@@ -246,7 +246,7 @@ describe("auto-agent loop integration", () => {
       const result = sm.pickNextFeature(tools, projectId, "sess-1");
       expect(result).not.toBeNull();
       expect((result as NonNullable<typeof result>).feature.id).toBe(readyId);
-      expect((result as NonNullable<typeof result>).skill).toBe("ff-plan");
+      expect((result as NonNullable<typeof result>).skill).toBe("fy-plan");
       expect((result as NonNullable<typeof result>).kanbanFeatureId).toBe(readyId);
     } finally {
       db.close();
@@ -274,7 +274,7 @@ describe("auto-agent loop integration", () => {
       const result = sm.pickNextFeature(tools, projectId, "sess-2");
       expect(result).not.toBeNull();
       expect((result as NonNullable<typeof result>).feature.id).toBe(designId);
-      expect((result as NonNullable<typeof result>).skill).toBe("ff-design");
+      expect((result as NonNullable<typeof result>).skill).toBe("fy-design");
     } finally {
       db.close();
     }
@@ -300,13 +300,13 @@ describe("auto-agent loop integration", () => {
       const first = sm.pickNextFeature(tools, projectId, "sess-3");
       expect(first).not.toBeNull();
       expect((first as NonNullable<typeof first>).feature.id).toBe(designId);
-      expect((first as NonNullable<typeof first>).skill).toBe("ff-design");
+      expect((first as NonNullable<typeof first>).skill).toBe("fy-design");
 
       // handleFeatureCompletion moves design feature to design-approval (default) and picks next
       const second = sm.handleFeatureCompletion(tools, designId, "sess-3", projectId);
       expect(second).not.toBeNull();
       expect((second as NonNullable<typeof second>).feature.id).toBe(readyId);
-      expect((second as NonNullable<typeof second>).skill).toBe("ff-plan");
+      expect((second as NonNullable<typeof second>).skill).toBe("fy-plan");
 
       // Verify design feature was moved to design-approval (not done)
       const designFeature = db.getFeature(designId);

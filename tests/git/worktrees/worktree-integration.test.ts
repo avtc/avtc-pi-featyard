@@ -26,14 +26,14 @@ describe("worktree integration", () => {
     cleanupAfterTest();
   });
 
-  test("ensureWorktreeForExecution creates worktree + wires.ff junction when branchPolicy is worktree", async () => {
+  test("ensureWorktreeForExecution creates worktree + wires.featyard junction when branchPolicy is worktree", async () => {
     setSetting("branchPolicy", "worktree");
     setSetting("baseBranch", "main"); // Set explicit base branch to skip detection
 
     const { _ensureWorktreeForExecution } = await import("../../../src/index.js");
 
     // createWorktree returns ".worktrees/<slug>"; create the real dir on disk so the REAL
-    // ensureFfJunction (writing under the test PI_FF_HOME sandbox) can set up the junction.
+    // ensureFeatyardJunction (writing under the test PI_FY_HOME sandbox) can set up the junction.
     const worktreeDir = path.resolve(".worktrees", "test-feature");
     mkdirSync(worktreeDir, { recursive: true });
     try {
@@ -53,20 +53,20 @@ describe("worktree integration", () => {
       expect(mockExec).toHaveBeenCalled();
       expect(mockExec.mock.calls[0][0]).toContain("git worktree add");
       expect(result.git.worktreePath).toBeTruthy();
-      // .ff setup: untrack any git-checked-out.ff from the worktree index, then heal into a junction.
-      // --ignore-unmatch MUST be present so this is a no-op when.ff is untracked (dropping it would
+      // .featyard setup: untrack any git-checked-out.featyard from the worktree index, then heal into a junction.
+      // --ignore-unmatch MUST be present so this is a no-op when.featyard is untracked (dropping it would
       // make git rm error out) — assert it explicitly to lock the contract.
       expect(
         mockExec.mock.calls.some(
           (c: unknown[]) =>
             String(c[0]).includes("git rm -r --cached") &&
-            String(c[0]).includes(".ff") &&
+            String(c[0]).includes(".featyard") &&
             String(c[0]).includes("--ignore-unmatch"),
         ),
       ).toBe(true);
-      // The REAL ensureFfJunction created a.ff junction in the worktree pointing at the external store.
-      expect(existsSync(path.join(worktreeDir, ".ff"))).toBe(true);
-      expect(path.resolve(readlinkSync(path.join(worktreeDir, ".ff")))).toBeTruthy();
+      // The REAL ensureFeatyardJunction created a.featyard junction in the worktree pointing at the external store.
+      expect(existsSync(path.join(worktreeDir, ".featyard"))).toBe(true);
+      expect(path.resolve(readlinkSync(path.join(worktreeDir, ".featyard")))).toBeTruthy();
     } finally {
       rmSync(worktreeDir, { recursive: true, force: true });
     }
@@ -111,10 +111,10 @@ describe("worktree integration", () => {
     expect(msg).toContain(getLogFilePath(new Date())); // exact log file path
   });
 
-  // Note: an ensureFfJunction throw (the other entry into the same catch) is now near-impossible
-  // to trigger — ensureFfJunction self-heals plain dirs / wrong-target links and only throws on
+  // Note: an ensureFeatyardJunction throw (the other entry into the same catch) is now near-impossible
+  // to trigger — ensureFeatyardJunction self-heals plain dirs / wrong-target links and only throws on
   // rmSync failure (covered indirectly). The catch→notify→halt path above exercises the same
-  // handler, so the.ff-failure case is not duplicated here.
+  // handler, so the.fy-failure case is not duplicated here.
 
   test("ensureWorktreeForExecution skips when branchPolicy is current-branch", async () => {
     setSetting("branchPolicy", "current-branch");

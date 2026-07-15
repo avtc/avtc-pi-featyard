@@ -7,16 +7,16 @@
  * `autoArchiveArtifactsOlderThanDays` into a dedicated "Artifacts" tab.
  *
  * Defaults/normalization/gate behavior are settings-ui's responsibility (see the
- * clamp-feature-flow-settings test header); here we assert feature-flow's OWN schema shape —
- * the setting definitions and tab grouping — since that is what feature-flow authors.
+ * clamp-featyard-settings test header); here we assert featyard's OWN schema shape —
+ * the setting definitions and tab grouping — since that is what featyard authors.
  */
 
 import { describe, expect, test } from "vitest";
-import { FEATURE_FLOW_SCHEMA } from "../../src/settings/settings-schema.js";
+import { FEATYARD_SCHEMA } from "../../src/settings/settings-schema.js";
 
-const byId = (id: string) => FEATURE_FLOW_SCHEMA.settings.find((s) => s.id === id);
+const byId = (id: string) => FEATYARD_SCHEMA.settings.find((s) => s.id === id);
 
-describe("FEATURE_FLOW_SCHEMA — Artifacts settings", () => {
+describe("FEATYARD_SCHEMA — Artifacts settings", () => {
   test("designDocStorage is a string setting defaulting to 'local' with local/committed presets", () => {
     const s = byId("designDocStorage");
     expect(s).toBeDefined();
@@ -44,8 +44,8 @@ describe("FEATURE_FLOW_SCHEMA — Artifacts settings", () => {
   });
 });
 
-describe("FEATURE_FLOW_SCHEMA — Artifacts tab grouping", () => {
-  const tab = (label: string) => FEATURE_FLOW_SCHEMA.tabs.find((t) => t.label === label);
+describe("FEATYARD_SCHEMA — Artifacts tab grouping", () => {
+  const tab = (label: string) => FEATYARD_SCHEMA.tabs.find((t) => t.label === label);
 
   test("has an 'Artifacts' tab", () => {
     expect(tab("Artifacts")).toBeDefined();
@@ -64,8 +64,8 @@ describe("FEATURE_FLOW_SCHEMA — Artifacts tab grouping", () => {
   });
 
   test("every tab setting id references a defined setting (no dangling refs)", () => {
-    const ids = new Set(FEATURE_FLOW_SCHEMA.settings.map((s) => s.id));
-    for (const tab of FEATURE_FLOW_SCHEMA.tabs) {
+    const ids = new Set(FEATYARD_SCHEMA.settings.map((s) => s.id));
+    for (const tab of FEATYARD_SCHEMA.tabs) {
       for (const id of tab.settingIds) {
         expect(ids.has(id), `tab '${tab.label}' references unknown setting '${id}'`).toBe(true);
       }
@@ -74,8 +74,8 @@ describe("FEATURE_FLOW_SCHEMA — Artifacts tab grouping", () => {
 
   test("every setting appears in exactly one tab (no orphans, no duplicates)", () => {
     const referenced: string[] = [];
-    for (const tab of FEATURE_FLOW_SCHEMA.tabs) referenced.push(...tab.settingIds);
-    const defined = FEATURE_FLOW_SCHEMA.settings.map((s) => s.id);
+    for (const tab of FEATYARD_SCHEMA.tabs) referenced.push(...tab.settingIds);
+    const defined = FEATYARD_SCHEMA.settings.map((s) => s.id);
     expect(referenced.sort()).toEqual([...defined].sort());
     expect(new Set(referenced).size).toBe(referenced.length);
   });

@@ -19,13 +19,13 @@ describe("transitionToUat", () => {
 
   test("sets currentPhase to uat and derives uat as active", () => {
     // Advance through phases to review complete
-    handler.processSkillInput("/skill:ff-design");
-    handler.recordDoc("docs/ff/designs/2026-05-16-test-design.md");
-    handler.processSkillInput("/skill:ff-plan");
-    handler.recordDoc(".ff/task-plans/2026-05-16-test-task-plan.md");
-    handler.processSkillInput("/skill:ff-implement");
-    handler.processSkillInput("/skill:ff-verify");
-    handler.processSkillInput("/skill:ff-review");
+    handler.processSkillInput("/skill:fy-design");
+    handler.recordDoc("docs/featyard/designs/2026-05-16-test-design.md");
+    handler.processSkillInput("/skill:fy-plan");
+    handler.recordDoc(".featyard/task-plans/2026-05-16-test-task-plan.md");
+    handler.processSkillInput("/skill:fy-implement");
+    handler.processSkillInput("/skill:fy-verify");
+    handler.processSkillInput("/skill:fy-review");
     handler.completeCurrentWorkflowPhase({ uatMode: "off" as const, maxFeatureReviewRounds: 3 as const }); // complete review → finish
 
     // Now transition to UAT (new model: explicit pointer move to uat)
@@ -40,13 +40,13 @@ describe("transitionToUat", () => {
 
   test("after-finish mode: re-enter uat by moving the pointer (uat becomes active)", () => {
     // Advance all the way through finish
-    handler.processSkillInput("/skill:ff-design");
-    handler.recordDoc("docs/ff/designs/2026-05-16-test-design.md");
-    handler.processSkillInput("/skill:ff-plan");
-    handler.recordDoc(".ff/task-plans/2026-05-16-test-task-plan.md");
-    handler.processSkillInput("/skill:ff-implement");
-    handler.processSkillInput("/skill:ff-verify");
-    handler.processSkillInput("/skill:ff-review");
+    handler.processSkillInput("/skill:fy-design");
+    handler.recordDoc("docs/featyard/designs/2026-05-16-test-design.md");
+    handler.processSkillInput("/skill:fy-plan");
+    handler.recordDoc(".featyard/task-plans/2026-05-16-test-task-plan.md");
+    handler.processSkillInput("/skill:fy-implement");
+    handler.processSkillInput("/skill:fy-verify");
+    handler.processSkillInput("/skill:fy-review");
     handler.completeCurrentWorkflowPhase({ uatMode: "off" as const, maxFeatureReviewRounds: 3 as const }); // complete review → finish
     handler.completeCurrentWorkflowPhase({ uatMode: "off" as const, maxFeatureReviewRounds: 3 as const }); // complete finish → completed
 
@@ -62,13 +62,13 @@ describe("transitionToUat", () => {
   });
 
   test("skipping UAT moves the pointer to finish (uat derived done)", () => {
-    handler.processSkillInput("/skill:ff-design");
-    handler.recordDoc("docs/ff/designs/2026-05-16-test-design.md");
-    handler.processSkillInput("/skill:ff-plan");
-    handler.recordDoc(".ff/task-plans/2026-05-16-test-task-plan.md");
-    handler.processSkillInput("/skill:ff-implement");
-    handler.processSkillInput("/skill:ff-verify");
-    handler.processSkillInput("/skill:ff-review");
+    handler.processSkillInput("/skill:fy-design");
+    handler.recordDoc("docs/featyard/designs/2026-05-16-test-design.md");
+    handler.processSkillInput("/skill:fy-plan");
+    handler.recordDoc(".featyard/task-plans/2026-05-16-test-task-plan.md");
+    handler.processSkillInput("/skill:fy-implement");
+    handler.processSkillInput("/skill:fy-verify");
+    handler.processSkillInput("/skill:fy-review");
     handler.completeCurrentWorkflowPhase({ uatMode: "off" as const, maxFeatureReviewRounds: 3 as const }); // complete review → finish
 
     // skip=true → setCurrentPhase("finish")

@@ -33,8 +33,8 @@ export function isReviewPhase(phase: Phase | undefined): phase is "design" | "pl
   return phase === "design" || phase === "plan";
 }
 
-export function reviewSkillName(phase: "design" | "plan"): "ff-design-review" | "ff-plan-review" {
-  return phase === "design" ? "ff-design-review" : "ff-plan-review";
+export function reviewSkillName(phase: "design" | "plan"): "fy-design-review" | "fy-plan-review" {
+  return phase === "design" ? "fy-design-review" : "fy-plan-review";
 }
 
 /**
@@ -44,9 +44,9 @@ export function computeReviewMethod(isDesign: boolean, settings: { planReviewMod
   const mode = settings.planReviewMode;
   if (mode === "parallel-subagents") {
     if (isDesign) {
-      return "Dispatch reviewer: `subagent({ agent: 'ff-design-reviewer', task: 'Review the design document for design mistakes. Read the design doc and relevant project files, then output findings following the ff-design-review skill format.' })`";
+      return "Dispatch reviewer: `subagent({ agent: 'fy-design-reviewer', task: 'Review the design document for design mistakes. Read the design doc and relevant project files, then output findings following the fy-design-review skill format.' })`";
     } else {
-      return "Dispatch reviewer: `subagent({ agent: 'ff-plan-reviewer', task: 'Review the implementation plan against the design document for gaps, inconsistencies, and mistakes. Read both documents and relevant project files, then output findings.' })`";
+      return "Dispatch reviewer: `subagent({ agent: 'fy-plan-reviewer', task: 'Review the implementation plan against the design document for gaps, inconsistencies, and mistakes. Read both documents and relevant project files, then output findings.' })`";
     }
   }
   if (isDesign) {

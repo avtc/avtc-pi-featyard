@@ -103,7 +103,7 @@ describe("expired lock cleanup on feature activation", () => {
       },
     };
 
-    const workerCmd = registeredCommands.get("ff:auto-worker");
+    const workerCmd = registeredCommands.get("fy:auto-worker");
     if (workerCmd) await workerCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // The auto-worker started
@@ -155,7 +155,7 @@ describe("expired lock cleanup on feature activation", () => {
       },
     };
 
-    const workerCmd = registeredCommands.get("ff:auto-worker");
+    const workerCmd = registeredCommands.get("fy:auto-worker");
     if (workerCmd) await workerCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Fresh lock should still exist
@@ -223,7 +223,7 @@ describe("expired lock cleanup on feature activation", () => {
     db.lockFeature(reassignedFeatureId, agentUuid);
     db.lockFeature(controlFeatureId, controlUuid);
 
-    // /ff:auto-stop reassigns the agent-held lock to the interactive identity
+    // /fy:auto-stop reassigns the agent-held lock to the interactive identity
     // (session:<slug>) so it persists without a heartbeat.
     const interactiveSession = interactiveSessionIdFor("2026-05-17-reassigned");
     expect(db.reassignLock(reassignedFeatureId, agentUuid, interactiveSession)).toBe(true);

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Feature Flow-specific model override configuration.
+ * Featyard-specific model override configuration.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -13,7 +13,7 @@ import { log } from "../log.js";
 
 export type ModelOverride = string | string[];
 
-export interface FeatureFlowConfig {
+export interface FeatyardConfig {
   "stage-models"?: Record<string, ModelOverride>;
   "default-model": string | null;
   "kanban-port"?: number | null;
@@ -80,9 +80,9 @@ function filterValidOverrides(globalRaw: unknown, projectRaw: unknown): Record<s
   return result;
 }
 
-function extractFeatureFlowSection(raw: Record<string, unknown> | null): Record<string, unknown> | null {
+function extractFeatyardSection(raw: Record<string, unknown> | null): Record<string, unknown> | null {
   if (!raw) return null;
-  const sp = raw["avtc-pi-feature-flow"];
+  const sp = raw["avtc-pi-featyard"];
   if (!sp || typeof sp !== "object") return null;
   return sp as Record<string, unknown>;
 }
@@ -102,7 +102,7 @@ function readJsonFile(filePath: string): Record<string, unknown> | null {
 // Config loading
 // ---------------------------------------------------------------------------
 
-function emptyConfig(): Required<FeatureFlowConfig> {
+function emptyConfig(): Required<FeatyardConfig> {
   return {
     "stage-models": {},
     "default-model": null,
@@ -111,7 +111,7 @@ function emptyConfig(): Required<FeatureFlowConfig> {
   };
 }
 
-let _config: Required<FeatureFlowConfig> = emptyConfig();
+let _config: Required<FeatyardConfig> = emptyConfig();
 let _configLoaded = false;
 /** Serialized snapshot of the last loaded config, used to detect changes. */
 let _configSnapshot: string | null = null;
@@ -120,7 +120,7 @@ function getDefaultGlobalDir(): string {
   return join(homedir(), ".pi");
 }
 
-/** Read feature-flow sections from global and project config files. */
+/** Read featyard sections from global and project config files. */
 function readConfigSections(
   globalDir: string | null,
   cwd: string | null,
@@ -129,12 +129,12 @@ function readConfigSections(
   projectSection: Record<string, unknown> | null;
 } {
   const globalPath = join(globalDir ?? getDefaultGlobalDir(), "agent", "settings.json");
-  const globalSection = extractFeatureFlowSection(readJsonFile(globalPath));
+  const globalSection = extractFeatyardSection(readJsonFile(globalPath));
 
   let projectSection: Record<string, unknown> | null = null;
   if (cwd) {
     const projectPath = join(cwd, ".pi", "settings.json");
-    projectSection = extractFeatureFlowSection(readJsonFile(projectPath));
+    projectSection = extractFeatyardSection(readJsonFile(projectPath));
   }
 
   return { globalSection, projectSection };
@@ -150,7 +150,7 @@ export const NO_CWD: string | null = null;
 /** Sentinel: use the default global directory (the shared ~/.pi/agent/settings.json). */
 export const DEFAULT_GLOBAL_DIR: string | null = null;
 
-export function loadFeatureFlowConfig(globalDir: string | null, cwd: string | null): Required<FeatureFlowConfig> {
+export function loadFeatyardConfig(globalDir: string | null, cwd: string | null): Required<FeatyardConfig> {
   if (_configLoaded) return _config;
 
   const { globalSection, projectSection } = readConfigSections(globalDir, cwd);
@@ -181,18 +181,18 @@ export function loadFeatureFlowConfig(globalDir: string | null, cwd: string | nu
   _configLoaded = true;
   _configSnapshot = JSON.stringify({ global: globalSection, project: projectSection });
   log.info(
-    `FeatureFlow config loaded: ${Object.keys(_config["stage-models"] ?? {}).length} stage-models, default-model=${_config["default-model"] ?? "<none>"}, kanban-port=${_config["kanban-port"] ?? "random"}, source-extensions=${_config["source-extensions"] ? "custom" : "default"}`,
+    `Featyard config loaded: ${Object.keys(_config["stage-models"] ?? {}).length} stage-models, default-model=${_config["default-model"] ?? "<none>"}, kanban-port=${_config["kanban-port"] ?? "random"}, source-extensions=${_config["source-extensions"] ? "custom" : "default"}`,
   );
   return _config;
 }
 
-export function resetFeatureFlowConfig(): void {
+export function resetFeatyardConfig(): void {
   _config = emptyConfig();
   _configLoaded = false;
   _configSnapshot = null;
 }
 
-export function setFeatureFlowConfig(config: Required<FeatureFlowConfig>): void {
+export function setFeatyardConfig(config: Required<FeatyardConfig>): void {
   _config = config;
   _configLoaded = true;
 }
@@ -229,11 +229,7 @@ function resolveOverride(override: ModelOverride, loopIndex: number): string | n
   return override;
 }
 
-export function resolveModelOverride(
-  stage: string | null,
-  loopIndex: number,
-  config: FeatureFlowConfig,
-): string | null {
+export function resolveModelOverride(stage: string | null, loopIndex: number, config: FeatyardConfig): string | null {
   // Workflow callers (phase-transitions, review-context): stage-models -> default-model.
   // If a stage-models entry EXISTS for the active stage, return its resolution
   // (even if it resolves to null, e.g. an empty array) — do NOT fall through to
@@ -253,11 +249,7 @@ export function resolveModelOverride(
  * Stage-models only, NO default-model fallthrough. Used by the subagent hook so it
  * yields to pi-subagent's Phase 3 default instead of shadowing it.
  */
-export function resolveStageModelOnly(
-  stage: string | null,
-  loopIndex: number,
-  config: FeatureFlowConfig,
-): string | null {
+export function resolveStageModelOnly(stage: string | null, loopIndex: number, config: FeatyardConfig): string | null {
   const entry = stage ? config["stage-models"]?.[stage] : undefined;
   if (entry) return resolveOverride(entry, loopIndex);
   return null;
@@ -265,7 +257,7 @@ export function resolveStageModelOnly(
 
 export function resolveReviewSkill(settings: { maxFeatureReviewRounds: number }): string | null {
   if (settings.maxFeatureReviewRounds === 0) return null;
-  return "ff-review";
+  return "fy-review";
 }
 
 // ---------------------------------------------------------------------------

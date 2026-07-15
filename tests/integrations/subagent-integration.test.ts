@@ -4,7 +4,7 @@
 /**
  * Integration tests for subagent-integration.ts
  *
- * Tests the hooks connecting feature-flow-specific dependencies
+ * Tests the hooks connecting featyard-specific dependencies
  * to the generic pi-subagent extension via initSubagentIntegration.
  */
 
@@ -83,8 +83,8 @@ describe("subagent-integration", () => {
     });
     afterEach(() => {
       vi.restoreAllMocks();
-      delete process.env.PI_FF_FEATURE;
-      delete process.env.PI_FF_STAGE;
+      delete process.env.PI_FY_FEATURE;
+      delete process.env.PI_FY_STAGE;
     });
 
     function getTransformPrompt() {
@@ -104,9 +104,9 @@ describe("subagent-integration", () => {
       expect(result).toBe("Hello world");
     });
 
-    test("substitutes {{PI_FF_*}} placeholders via substitutePlaceholders", async () => {
+    test("substitutes {{PI_FY_*}} placeholders via substitutePlaceholders", async () => {
       const transformPrompt = getTransformPrompt();
-      const result = await (transformPrompt as SubagentPromptTransformer)("Feature slug: {{PI_FF_FEATURE_SLUG}}", {
+      const result = await (transformPrompt as SubagentPromptTransformer)("Feature slug: {{PI_FY_FEATURE_SLUG}}", {
         agentName: "test-agent",
         task: undefined,
         isFork: false,
@@ -125,15 +125,15 @@ describe("subagent-integration", () => {
       expect(result).toBe("No placeholders here");
     });
 
-    // --- {{PI_FF_FORK_CONTEXT_INJECTION}} resolution ---
+    // --- {{PI_FY_FORK_CONTEXT_INJECTION}} resolution ---
 
     test("resolves FORK_CONTEXT_INJECTION to design-reviewer bullets when isFork=true", async () => {
       const transformPrompt = getTransformPrompt();
       const result = await (transformPrompt as SubagentPromptTransformer)(
-        "Intro.\n{{PI_FF_FORK_CONTEXT_INJECTION}}\nOutro.",
-        { agentName: "ff-design-reviewer", task: undefined, isFork: true },
+        "Intro.\n{{PI_FY_FORK_CONTEXT_INJECTION}}\nOutro.",
+        { agentName: "fy-design-reviewer", task: undefined, isFork: true },
       );
-      expect(result).not.toContain("{{PI_FF_FORK_CONTEXT_INJECTION}}");
+      expect(result).not.toContain("{{PI_FY_FORK_CONTEXT_INJECTION}}");
       expect(result).toContain("Decisions discussed but not captured in the final document");
       expect(result).toContain("Intro.");
       expect(result).toContain("Outro.");
@@ -141,19 +141,19 @@ describe("subagent-integration", () => {
 
     test("resolves FORK_CONTEXT_INJECTION to plan-reviewer bullets when isFork=true", async () => {
       const transformPrompt = getTransformPrompt();
-      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FF_FORK_CONTEXT_INJECTION}}", {
-        agentName: "ff-plan-reviewer",
+      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FY_FORK_CONTEXT_INJECTION}}", {
+        agentName: "fy-plan-reviewer",
         task: undefined,
         isFork: true,
       });
       expect(result).toContain("Context gaps");
-      expect(result).not.toContain("{{PI_FF_");
+      expect(result).not.toContain("{{PI_FY_");
     });
 
     test("strips -fork suffix when looking up agent-specific fork context", async () => {
       const transformPrompt = getTransformPrompt();
-      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FF_FORK_CONTEXT_INJECTION}}", {
-        agentName: "ff-design-reviewer-fork",
+      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FY_FORK_CONTEXT_INJECTION}}", {
+        agentName: "fy-design-reviewer-fork",
         task: undefined,
         isFork: true,
       });
@@ -162,22 +162,22 @@ describe("subagent-integration", () => {
 
     test("falls back to generic fork context for unknown agent when isFork=true", async () => {
       const transformPrompt = getTransformPrompt();
-      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FF_FORK_CONTEXT_INJECTION}}", {
+      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FY_FORK_CONTEXT_INJECTION}}", {
         agentName: "custom-reviewer",
         task: undefined,
         isFork: true,
       });
       expect(result).toContain("Decisions discussed but not captured in the written documents");
-      expect(result).not.toContain("{{PI_FF_");
+      expect(result).not.toContain("{{PI_FY_");
     });
 
     test("resolves FORK_CONTEXT_INJECTION to empty string when isFork=false (fresh mode)", async () => {
       const transformPrompt = getTransformPrompt();
       const result = await (transformPrompt as SubagentPromptTransformer)(
-        "Intro.\n{{PI_FF_FORK_CONTEXT_INJECTION}}\nOutro.",
-        { agentName: "ff-design-reviewer", task: undefined, isFork: false },
+        "Intro.\n{{PI_FY_FORK_CONTEXT_INJECTION}}\nOutro.",
+        { agentName: "fy-design-reviewer", task: undefined, isFork: false },
       );
-      expect(result).not.toContain("{{PI_FF_FORK_CONTEXT_INJECTION}}");
+      expect(result).not.toContain("{{PI_FY_FORK_CONTEXT_INJECTION}}");
       expect(result).not.toContain("Pay special attention");
       expect(result).toContain("Intro.");
       expect(result).toContain("Outro.");
@@ -185,8 +185,8 @@ describe("subagent-integration", () => {
 
     test("does NOT inject the redundant 'forked mode' preamble (handled by buildForkInstruction)", async () => {
       const transformPrompt = getTransformPrompt();
-      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FF_FORK_CONTEXT_INJECTION}}", {
-        agentName: "ff-design-reviewer",
+      const result = await (transformPrompt as SubagentPromptTransformer)("{{PI_FY_FORK_CONTEXT_INJECTION}}", {
+        agentName: "fy-design-reviewer",
         task: undefined,
         isFork: true,
       });
@@ -201,8 +201,8 @@ describe("subagent-integration", () => {
     });
     afterEach(() => {
       vi.restoreAllMocks();
-      delete process.env.PI_FF_STAGE;
-      delete process.env.PI_FF_REVIEW_LOOP;
+      delete process.env.PI_FY_STAGE;
+      delete process.env.PI_FY_REVIEW_LOOP;
     });
 
     function getResolveModel() {
@@ -213,14 +213,14 @@ describe("subagent-integration", () => {
     }
 
     test("does NOT consult explicitModel (deferred to pi-subagent Phase 0)", () => {
-      // The feature-flow hook is a Phase 2 stage-model provider only. An explicit
+      // The featyard hook is a Phase 2 stage-model provider only. An explicit
       // --model param is short-circuited by pi-subagent's Phase 0 BEFORE any hook
       // runs, so this hook is never reached with a defined explicitModel in
       // production. Asserting the hook ignores explicitModel guards the layering:
       // it must not echo the param back (which would re-implement Phase 0's job).
       const resolveModel = getResolveModel();
       const result = resolveModel?.({ agentName: "test-agent", explicitModel: "gpt-4" });
-      // No stage active (PI_FF_STAGE unset) → hook yields undefined so
+      // No stage active (PI_FY_STAGE unset) → hook yields undefined so
       // pi-subagent's Phase 3 default-model applies. It must NOT return "gpt-4".
       expect(result).not.toBe("gpt-4");
       expect(result).toBeUndefined();
@@ -237,8 +237,8 @@ describe("subagent-integration", () => {
   describe("_resolveReviewLoopIndex (per-task counter — pure read)", () => {
     // The per-task verify/review counter is incremented ONLY by task_ready_advance's gate
     // (Task 4). resolveReviewLoopIndex is a PURE READ: it returns the current round value
-    // for the active task, with NO +1 and NO write-back. Broadened from ff-general-reviewer
-    // alone to also cover ff-task-verifier (so verifier reports are numbered, not unsuffixed).
+    // for the active task, with NO +1 and NO write-back. Broadened from fy-general-reviewer
+    // alone to also cover fy-task-verifier (so verifier reports are numbered, not unsuffixed).
 
     /** Build a fake handler whose active feature-state carries the given taskReviewRounds map. */
     function makeHandler(taskReviewRounds: Record<string, number>) {
@@ -255,30 +255,30 @@ describe("subagent-integration", () => {
       setHandlerRef(null);
     });
 
-    test("ff-task-verifier reads the current round (no +1)", () => {
+    test("fy-task-verifier reads the current round (no +1)", () => {
       setHandlerRef(makeHandler({ "1-implement-login": 2 }) as unknown as FeatureSession);
-      const idx = _resolveReviewLoopIndex("ff-task-verifier", "my-feature", "1. Implement login");
+      const idx = _resolveReviewLoopIndex("fy-task-verifier", "my-feature", "1. Implement login");
       expect(idx).toBe(2);
     });
 
-    test("ff-general-reviewer reads the current round (no +1)", () => {
+    test("fy-general-reviewer reads the current round (no +1)", () => {
       setHandlerRef(makeHandler({ "1-implement-login": 2 }) as unknown as FeatureSession);
-      const idx = _resolveReviewLoopIndex("ff-general-reviewer", "my-feature", "1. Implement login");
+      const idx = _resolveReviewLoopIndex("fy-general-reviewer", "my-feature", "1. Implement login");
       expect(idx).toBe(2);
     });
 
     test("reading does not mutate taskReviewRounds (no write-back)", () => {
       const rounds: Record<string, number> = { "1-implement-login": 2 };
       setHandlerRef(makeHandler(rounds) as unknown as FeatureSession);
-      _resolveReviewLoopIndex("ff-task-verifier", "my-feature", "1. Implement login");
-      _resolveReviewLoopIndex("ff-general-reviewer", "my-feature", "1. Implement login");
+      _resolveReviewLoopIndex("fy-task-verifier", "my-feature", "1. Implement login");
+      _resolveReviewLoopIndex("fy-general-reviewer", "my-feature", "1. Implement login");
       // The counter is untouched after a read (the tool is the sole incrementer).
       expect(rounds["1-implement-login"]).toBe(2);
     });
 
     test("missing entry coerces to 0 (resume coercion)", () => {
       setHandlerRef(makeHandler({}) as unknown as FeatureSession);
-      const idx = _resolveReviewLoopIndex("ff-task-verifier", "my-feature", "2. Add tests");
+      const idx = _resolveReviewLoopIndex("fy-task-verifier", "my-feature", "2. Add tests");
       expect(idx).toBe(0);
     });
 
@@ -287,7 +287,7 @@ describe("subagent-integration", () => {
       // No migration: it is read as-is (the gate's round logic tolerates the off-by-one for
       // the single in-flight task; subsequent tasks START from 0).
       setHandlerRef(makeHandler({ "3-wire-api": 1 }) as unknown as FeatureSession);
-      expect(_resolveReviewLoopIndex("ff-general-reviewer", "my-feature", "3. Wire API")).toBe(1);
+      expect(_resolveReviewLoopIndex("fy-general-reviewer", "my-feature", "3. Wire API")).toBe(1);
     });
 
     test("returns undefined outside the implement phase", () => {
@@ -296,30 +296,30 @@ describe("subagent-integration", () => {
         getWorkflowState: () => ({ currentPhase: "review" }),
       };
       setHandlerRef(handler as unknown as FeatureSession);
-      expect(_resolveReviewLoopIndex("ff-task-verifier", "my-feature", "1. T")).toBeUndefined();
+      expect(_resolveReviewLoopIndex("fy-task-verifier", "my-feature", "1. T")).toBeUndefined();
     });
 
     test("returns undefined for an agent that is neither per-task verifier nor reviewer", () => {
       setHandlerRef(makeHandler({ "1-t": 5 }) as unknown as FeatureSession);
-      expect(_resolveReviewLoopIndex("ff-implementer", "my-feature", "1. T")).toBeUndefined();
+      expect(_resolveReviewLoopIndex("fy-implementer", "my-feature", "1. T")).toBeUndefined();
     });
 
     test("returns undefined when no handler is wired", () => {
       setHandlerRef(null);
-      expect(_resolveReviewLoopIndex("ff-task-verifier", "my-feature", "1. T")).toBeUndefined();
+      expect(_resolveReviewLoopIndex("fy-task-verifier", "my-feature", "1. T")).toBeUndefined();
     });
 
     test("a verifier loopIndex feeds a numbered report path (no more unsuffixed overwrite-prone path)", () => {
-      // Before broadening, ff-task-verifier returned undefined → buildReportFilePath produced
-      // an unsuffixed {slug}-task-{task}-ff-task-verifier.md (overwrite-prone across rounds).
+      // Before broadening, fy-task-verifier returned undefined → buildReportFilePath produced
+      // an unsuffixed {slug}-task-{task}-fy-task-verifier.md (overwrite-prone across rounds).
       // Now the resolver returns a number → the report path is suffixed per round.
       setHandlerRef(makeHandler({ "1-implement-login": 2 }) as unknown as FeatureSession);
-      const loopIndex = _resolveReviewLoopIndex("ff-task-verifier", "my-feature", "1. Implement login");
-      const path = buildReportFilePath("my-feature", "task-1-implement-login-ff-task-verifier", loopIndex ?? null, {
+      const loopIndex = _resolveReviewLoopIndex("fy-task-verifier", "my-feature", "1. Implement login");
+      const path = buildReportFilePath("my-feature", "task-1-implement-login-fy-task-verifier", loopIndex ?? null, {
         existsSync: () => false,
         readdirSync: () => [],
       } as unknown as typeof import("node:fs"));
-      expect(path).toBe(".ff/reviews/my-feature/my-feature-task-1-implement-login-ff-task-verifier-2.md");
+      expect(path).toBe(".featyard/reviews/my-feature/my-feature-task-1-implement-login-fy-task-verifier-2.md");
     });
   });
 
@@ -336,7 +336,7 @@ describe("subagent-integration", () => {
       const captured = fireReady();
       expect(captured.mockApi?.addAgentsPaths).toHaveBeenCalledWith(
         expect.arrayContaining([expect.any(String)]),
-        "avtc-pi-feature-flow",
+        "avtc-pi-featyard",
       );
     });
 

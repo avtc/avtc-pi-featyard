@@ -140,7 +140,7 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     const { currentPhase } = state;
     // In the pointer model the current phase is always in-progress; bail out
     // only when the feature is already completed.
-    const slug = process.env.PI_FF_FEATURE;
+    const slug = process.env.PI_FY_FEATURE;
     const featureState = handler.getActiveFeatureState();
     if (featureState?.completedAt) return null;
 
@@ -151,15 +151,15 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
         (featureState?.design.reviewLoopCount ?? 0) > 0 &&
         featureState?.design.reviewActive
       ) {
-        return "ff-design-review";
+        return "fy-design-review";
       }
       if (currentPhase === "plan" && (featureState?.plan.reviewLoopCount ?? 0) > 0 && featureState?.plan.reviewActive) {
-        return "ff-plan-review";
+        return "fy-plan-review";
       }
     }
 
     if (currentPhase === "implement") {
-      return "ff-implement";
+      return "fy-implement";
     }
     if (currentPhase === "review") {
       return resolveReviewSkill(getSettings());
@@ -171,10 +171,10 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
 
   /**
    * Read skills from a local agent definition file.
-   * Agents are defined in the feature-flow `agents/` directory — no external dependency needed.
+   * Agents are defined in the featyard `agents/` directory — no external dependency needed.
    */
   function getAgentSkills(agentName: string): string[] {
-    // Resolve agents/ relative to the feature-flow package root
+    // Resolve agents/ relative to the featyard package root
     // (this file is at src/compaction/compact-handler.ts)
     const thisFile = fileURLToPath(import.meta.url);
     const packageRoot = path.resolve(path.dirname(thisFile), "../..");
@@ -235,7 +235,7 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
   // --- session_compact handler ---
 
   /**
-   * Deliver the stored feature-flow follow-up — shared by session_compact (compact
+   * Deliver the stored featyard follow-up — shared by session_compact (compact
    * succeeded) and the failed-compact recovery (onError). A failed compact still
    * interrupted the agent's turn (ctx.compact aborts it up front), so the agent must
    * be resumed with the SAME full follow-up as a success: a phase-transition compact
@@ -246,7 +246,7 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
    * message, routes editor-vs-inject, and runs onAfterFollowUp (which clears the guard).
    */
   async function deliverStoredFollowUp(reason: "manual" | "threshold" | "overflow" | undefined): Promise<void> {
-    // --- Stored pending-follow-up from a feature-flow caller (inter-task compact, review loop). ---
+    // --- Stored pending-follow-up from a featyard caller (inter-task compact, review loop). ---
     // Caller provides { skillName?, message, onAfterFollowUp? } — message is the specific note only
     // (no /skill: prefix, no generic framing); this handler owns the skill + framing line.
     const storedFollowUp = globalThis.__piCompactFollowUp;

@@ -20,7 +20,7 @@ import {
   DEFAULT_DIR,
   DESIGN_DOC_DIRS,
   type FeatureState,
-  FF_TASK_PLANS_DIR,
+  FY_TASK_PLANS_DIR,
   stateFilePath as featureStateFilePath,
   loadFeatureState,
   saveFeatureState,
@@ -211,7 +211,7 @@ export function recoverArtifactsFromDisk(handler: FeatureSession): void {
   // Design docs may live in either recognized dir (committed or local); recovery scans BOTH
   // so a doc written under either mode is found regardless of the current designDocStorage mode.
   const designDirs = DESIGN_DOC_DIRS.map((d) => path.join(process.cwd(), d));
-  const taskPlansDir = path.join(process.cwd(), FF_TASK_PLANS_DIR);
+  const taskPlansDir = path.join(process.cwd(), FY_TASK_PLANS_DIR);
   const view = { currentPhase: ws.currentPhase, completedAt: active.completedAt };
   const workflowPatch: { designDoc?: string; planDoc?: string } = {};
 

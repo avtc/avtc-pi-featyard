@@ -2,20 +2,20 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * The dispatched per-task gate mini-skill (`ff-task-gate`).
+ * The dispatched per-task gate mini-skill (`fy-task-gate`).
  *
  * In the dispatch model, `task_ready_advance` decides after each call whether to
  * dispatch another gate round or advance. When it dispatches, it sends a fresh
- * `<skill name="ff-task-gate">` block via `sendUserMessage({ deliverAs: "steer" })`
+ * `<skill name="fy-task-gate">` block via `sendUserMessage({ deliverAs: "steer" })`
  * — authoritative (survives compaction), arrives after turn-end or the next tool
  * call (robust to the model not ending its turn).
  *
  * This is a CODE CONSTANT, NOT a registered `skills/` file: it is never
  * `/skill`-invoked by the user. The non-empty `location=" "` makes the TUI
- * collapse the block into one `ff-task-gate` item.
+ * collapse the block into one `fy-task-gate` item.
  *
  * `buildTaskGateSkill` assembles only the gates the caller selected to run
- * (the caller decides which gates to run per the asymmetric respawn rule). It leaves `{{PI_FF_*}}` markers INTACT — the context
+ * (the caller decides which gates to run per the asymmetric respawn rule). It leaves `{{PI_FY_*}}` markers INTACT — the context
  * handler substitutes them inside `<skill>` blocks at the next LLM call, with the
  * real feature slug/phase; pre-substituting here (no slug/phase in scope) would
  * lock in a wrong date-based path the context handler cannot fix.
@@ -28,9 +28,9 @@ export interface TaskGateSkillInput {
   task: string;
   /** The next task to advance to, or undefined when on the last task (nextTask omitted in the example call). */
   next: string | undefined;
-  /** Dispatch the #### Verify section (ff-task-verifier). */
+  /** Dispatch the #### Verify section (fy-task-verifier). */
   runVerifier: boolean;
-  /** Dispatch the #### Review section (ff-general-reviewer). */
+  /** Dispatch the #### Review section (fy-general-reviewer). */
   runReviewer: boolean;
 }
 
@@ -52,7 +52,7 @@ export function buildTaskGateSkill({ round, task, next, runVerifier, runReviewer
   const verifySection = runVerifier
     ? `
 #### Verify
-Spawn ff-task-verifier — \`subagent({ agent: "ff-task-verifier", task: "..." })\`.
+Spawn fy-task-verifier — \`subagent({ agent: "fy-task-verifier", task: "..." })\`.
 Task prompt: diff base (the commit before this task's first commit — fixed across all verify rounds; if unknown, find it with \`git log\`), diff head (current HEAD).
 Treat \`⏭️ deferred\` like \`❌ missing\`: the work is not done.
 `
@@ -61,7 +61,7 @@ Treat \`⏭️ deferred\` like \`❌ missing\`: the work is not done.
   const reviewSection = runReviewer
     ? `
 #### Review
-Spawn ff-general-reviewer — \`subagent({ agent: "ff-general-reviewer", task: "..." })\`.
+Spawn fy-general-reviewer — \`subagent({ agent: "fy-general-reviewer", task: "..." })\`.
 Task prompt: implementer's report, diff base (the commit before this task's first commit — fixed across all review rounds; if unknown, find it with \`git log\`), diff head (current HEAD).
 `
     : "";
@@ -72,12 +72,12 @@ Task "${safeTask}" is not ready to advance. Run the gates below, triage, then ca
 ${verifySection}${reviewSection}
 #### Triage
 - **Fixable** → fix it; count it (verifierIssuesFixed / reviewerIssuesFixed).
-- **False-positive** → append to {{PI_FF_KNOWN_ISSUES_PATH}}.
+- **False-positive** → append to {{PI_FY_KNOWN_ISSUES_PATH}}.
 - **Cannot-fix** (external blocker / missing dependency / breaking API contract) → escalate to the user.
 
 Then call \`task_ready_advance({ verifierIssuesFixed: <count>, reviewerIssuesFixed: <count>${nextParam} })\` and follow its result — end your turn if it asks.
 `;
 
-  return `<skill name="ff-task-gate" location=" ">
+  return `<skill name="fy-task-gate" location=" ">
 ${body}</skill>`;
 }

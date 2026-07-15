@@ -27,7 +27,7 @@ import {
  * the expandSkillCommand result via buildReviewContextPrefix when the loop gate
  * sends a review iteration skill as a followUp.
  *
- * The old tool_result regex injection for designing/ff-plan was removed.
+ * The old tool_result regex injection for designing/fy-plan was removed.
  */
 describe("design/plan review context prefix", () => {
   beforeEach(() => {
@@ -37,7 +37,7 @@ describe("design/plan review context prefix", () => {
 
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
   });
@@ -70,11 +70,11 @@ describe("design/plan review context prefix", () => {
     expect((followUp.options as { deliverAs?: string } | undefined)?.deliverAs).toBe("followUp");
 
     // Context prefix should contain loop info
-    expect(followUp.message).toContain("ff-design-review");
+    expect(followUp.message).toContain("fy-design-review");
     expect(followUp.message).toContain("**Feature:** `ctx-prefix-feature`");
     expect(followUp.message).toContain("**Review loop:** `1`"); // loopNumber = rawLoopCount (1 completed after increment)
-    expect(followUp.message).toContain("ff-design-review");
-    expect(followUp.message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FF_REVIEW_METHOD}}
+    expect(followUp.message).toContain("fy-design-review");
+    expect(followUp.message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FY_REVIEW_METHOD}}
   });
 
   test("plan loop gate includes context prefix with loop number, slug, report file", async () => {
@@ -103,10 +103,10 @@ describe("design/plan review context prefix", () => {
     const followUp = fake.sentMessages[fake.sentMessages.length - 1];
     expect((followUp.options as { deliverAs?: string } | undefined)?.deliverAs).toBe("followUp");
 
-    expect(followUp.message).toContain("ff-plan-review");
+    expect(followUp.message).toContain("fy-plan-review");
     expect(followUp.message).toContain("**Feature:** `plan-ctx-feature`");
-    expect(followUp.message).toContain("ff-plan-review");
-    expect(followUp.message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FF_REVIEW_METHOD}}
+    expect(followUp.message).toContain("fy-plan-review");
+    expect(followUp.message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FY_REVIEW_METHOD}}
   });
 
   test("design interceptor (no stage) sets loopCount=1 and sends skill with context", async () => {
@@ -120,12 +120,16 @@ describe("design/plan review context prefix", () => {
     // (known production gap — see test-migration-notes.md "recovery wipes currentPhase").
     writeFeatureStateFile("intercept-ctx-feature", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/intercept-ctx-feature-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/intercept-ctx-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/intercept-ctx-feature-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/intercept-ctx-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
     });
 
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/intercept-ctx-feature-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/intercept-ctx-feature-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -152,7 +156,7 @@ describe("design/plan review context prefix", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const followUp = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(followUp.message).toContain("ff-design-review");
+    expect(followUp.message).toContain("fy-design-review");
     expect(followUp.message).toContain("**Feature:** `intercept-ctx-feature`");
     expect(followUp.message).toContain("**Review loop:** `0`"); // first iteration, 0 completed
   });
@@ -181,7 +185,7 @@ describe("design/plan review context prefix", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const followUp = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(followUp.message).toContain("ff-design-review");
+    expect(followUp.message).toContain("fy-design-review");
     expect(followUp.message).toContain("**Review loop:** `2`"); // incremented to 2
     expect(followUp.message).toContain("loop-incr-feature");
   });
@@ -194,8 +198,8 @@ describe("design/plan review context prefix", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("off-ctx-feature", BRAINSTORM_ACTIVE_STATE);
 
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/off-ctx-feature-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/off-ctx-feature-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -214,7 +218,7 @@ describe("design/plan review context prefix", () => {
     await phaseReady.execute("tc-off-ctx", {}, undefined, undefined, rootCtx);
 
     // Should NOT have sent design-review
-    const reviewMessages = fake.sentMessages.filter((m: { message: string }) => m.message.includes("ff-design-review"));
+    const reviewMessages = fake.sentMessages.filter((m: { message: string }) => m.message.includes("fy-design-review"));
     expect(reviewMessages).toHaveLength(0);
   });
 

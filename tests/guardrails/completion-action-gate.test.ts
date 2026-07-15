@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 function createWorkflowState(currentPhase: Phase | null): PhaseProgressionState {
-  return { currentPhase, designDoc: "docs/ff/designs/d.md", planDoc: ".ff/task-plans/p.md" };
+  return { currentPhase, designDoc: "docs/featyard/designs/d.md", planDoc: ".featyard/task-plans/p.md" };
 }
 
 function createCtx(hasUI: boolean) {

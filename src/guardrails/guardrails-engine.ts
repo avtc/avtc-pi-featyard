@@ -10,7 +10,7 @@
  * routers dispatch to.
  *
  * Handles TDD enforcement, publish gating, phase write restrictions, pre-commit
- * discipline, `.ff/` force-add blocking, and review loop tracking.
+ * discipline, `.featyard/` force-add blocking, and review loop tracking.
  *
  * All factory-coupled dependencies are injected via GuardrailsDeps.
  */
@@ -37,9 +37,9 @@ import {
   DESIGN_DOC_DIRS,
   type ExpandSkillCommandFn,
   type FeatureState,
-  FF_RESEARCH_DIR,
-  FF_REVIEWS_DIR,
-  FF_TASK_PLANS_DIR,
+  FY_RESEARCH_DIR,
+  FY_REVIEWS_DIR,
+  FY_TASK_PLANS_DIR,
   featureSlugFromDesignDoc,
   featureSlugFromPlanDoc,
   recordReviewHistory,
@@ -47,7 +47,7 @@ import {
 import { isSubagentSession } from "../state/state-persistence.js";
 import { isPublishAction, PUBLISH_BEFORE_FINISH_REASON, promptPublishGate } from "./completion-gating.js";
 import { changeSetCoversSource, isSourceFile } from "./file-classifier.js";
-import { checkFfForceAdd, DEFAULT_FS } from "./force-add-guard.js";
+import { checkFeatyardForceAdd, DEFAULT_FS } from "./force-add-guard.js";
 import { GuardrailTracker } from "./guardrail-tracker.js";
 import { applyDisciplineGate, formatViolationWarning } from "./guardrail-violations.js";
 import { decompose } from "./shell-decompose.js";
@@ -118,7 +118,7 @@ export interface GuardrailsDeps
  * Parse review reports to track which dispatched reviewers found zero issues.
  *
  * Maps reviewer agent names to report categories using the convention:
- * - `ff-quality-reviewer` → category `quality` (strip `ff-` prefix + `-reviewer` suffix)
+ * - `fy-quality-reviewer` → category `quality` (strip `fy-` prefix + `-reviewer` suffix)
  * - Legacy `reviewer-quality` → category `quality` (strip `reviewer-` prefix; backward-compat)
  * - Bare names like `quality` → used as-is
  *
@@ -128,7 +128,7 @@ export interface GuardrailsDeps
  * nothing for consecutive loops.
  *
  * This name-to-category mapping is a contract between:
- * 1. The ff-review skill's SKILL.md (defines reviewer agent names)
+ * 1. The fy-review skill's SKILL.md (defines reviewer agent names)
  * 2. The review report format (uses `**Category:** <category>` per issue)
  * 3. This function (maps agent name → category to detect empty loops)
  */
@@ -181,16 +181,16 @@ function classifyReviewerEmptyLoop(
     compaction.incrementEmptyLoop(slug, reviewer);
     return;
   }
-  // Derive the review category from the reviewer name. After the ff-* rename, reviewer
-  // names are `ff-<category>-reviewer` (e.g. ff-quality-reviewer); the report's `**Category:**`
-  // line uses the bare category (e.g. `quality`). Strip BOTH the `ff-` prefix and the `-reviewer`
-  // suffix — stripping only `-reviewer` would yield `ff-quality` ≠ `quality` and silently break
+  // Derive the review category from the reviewer name. After the fy-* rename, reviewer
+  // names are `fy-<category>-reviewer` (e.g. fy-quality-reviewer); the report's `**Category:**`
+  // line uses the bare category (e.g. `quality`). Strip BOTH the `fy-` prefix and the `-reviewer`
+  // suffix — stripping only `-reviewer` would yield `fy-quality` ≠ `quality` and silently break
   // empty-loop tracking.
   const category = reviewer.startsWith("reviewer-")
     ? reviewer.slice("reviewer-".length)
     : reviewer.endsWith("-reviewer")
-      ? reviewer.slice(0, -"-reviewer".length).replace(/^ff-/, "")
-      : reviewer.replace(/^ff-/, "");
+      ? reviewer.slice(0, -"-reviewer".length).replace(/^fy-/, "")
+      : reviewer.replace(/^fy-/, "");
   const foundIssues = reportContent.includes(`**Category:** ${category}`);
   if (foundIssues) {
     compaction.resetEmptyLoop(slug, reviewer);
@@ -322,17 +322,17 @@ export function createGuardrails(deps: GuardrailsDeps): IGuardrails {
    *  create a new one, register it in the kanban (target lane), and activate it.
    * - A DIFFERENT feature is active: treat as a sub-feature write. */
   // --- tool_call handler ---
-  /** bash tool_call: ff-force-add block, publish gate, pre-commit discipline. */
+  /** bash tool_call: fy-force-add block, publish gate, pre-commit discipline. */
   async function onBashCall(event: ToolCallEvent, ctx: ExtensionContext): Promise<ToolCallDecision> {
     const command = ((event.input as Record<string, unknown>).command as string | undefined) ?? "";
 
-    // Hard-block any `git add -f` that would pull in the `.ff/` artifact junction
+    // Hard-block any `git add -f` that would pull in the `.featyard/` artifact junction
     // (external storage, auto-gitignored). Always active — runs before any workflow
-    // state check, so it blocks even when no feature-flow workflow is active. `.ff/`
-    // must never enter the repo history. See ff-guardrail.ts for path/sweep detection.
-    const ffBlock = checkFfForceAdd(command, PROCESS_CWD, DEFAULT_FS);
-    if (ffBlock) {
-      return { block: ffBlock.reason };
+    // state check, so it blocks even when no featyard workflow is active. `.featyard/`
+    // must never enter the repo history. See fy-guardrail.ts for path/sweep detection.
+    const featyardBlock = checkFeatyardForceAdd(command, PROCESS_CWD, DEFAULT_FS);
+    if (featyardBlock) {
+      return { block: featyardBlock.reason };
     }
 
     const state = handler.getWorkflowState();
@@ -417,12 +417,12 @@ export function createGuardrails(deps: GuardrailsDeps): IGuardrails {
     let normalizedForCheck = filePath;
     if (normalizedForCheck.startsWith("./")) normalizedForCheck = normalizedForCheck.slice(2);
     const resolved = path.resolve(process.cwd(), normalizedForCheck);
-    // Design docs may live in either recognized dir (committed docs/ff/designs OR local .ff/designs);
+    // Design docs may live in either recognized dir (committed docs/featyard/designs OR local .featyard/designs);
     // detection/guarding recognize BOTH so docs from either mode count as design-doc writes.
     const designRoots = DESIGN_DOC_DIRS.map((d) => path.join(process.cwd(), d) + path.sep);
-    const taskPlansRoot = path.join(process.cwd(), FF_TASK_PLANS_DIR) + path.sep;
-    const reviewsRoot = path.join(process.cwd(), FF_REVIEWS_DIR) + path.sep;
-    const researchRoot = path.join(process.cwd(), FF_RESEARCH_DIR) + path.sep;
+    const taskPlansRoot = path.join(process.cwd(), FY_TASK_PLANS_DIR) + path.sep;
+    const reviewsRoot = path.join(process.cwd(), FY_REVIEWS_DIR) + path.sep;
+    const researchRoot = path.join(process.cwd(), FY_RESEARCH_DIR) + path.sep;
     const isDesignWrite = designRoots.some((root) => resolved.startsWith(root));
     const isTaskPlanWrite = resolved.startsWith(taskPlansRoot);
     const isReviewsWrite = resolved.startsWith(reviewsRoot);
@@ -433,14 +433,14 @@ export function createGuardrails(deps: GuardrailsDeps): IGuardrails {
       const escalation = await maybeEscalate("phase-write-restriction", ctx, `${event.toolName}: ${filePath}`);
       if (escalation === "block") {
         return {
-          block: `Phase write restriction: during ${phase} phase, only write to docs/ff/designs/ (or .ff/designs/), ${FF_TASK_PLANS_DIR}/, ${FF_REVIEWS_DIR}/, or ${FF_RESEARCH_DIR}/.`,
+          block: `Phase write restriction: during ${phase} phase, only write to docs/featyard/designs/ (or .featyard/designs/), ${FY_TASK_PLANS_DIR}/, ${FY_REVIEWS_DIR}/, or ${FY_RESEARCH_DIR}/.`,
         };
       }
 
       pendingProcessWarnings.set(
         toolCallId,
         `⚠️ PROCESS VIOLATION: Wrote ${filePath} during ${phase} phase.\n` +
-          `During designing/planning you may only write to docs/ff/designs/ (or .ff/designs/), ${FF_TASK_PLANS_DIR}/, ${FF_REVIEWS_DIR}/, or ${FF_RESEARCH_DIR}/. Stop and return or advance workflow phases intentionally.`,
+          `During designing/planning you may only write to docs/featyard/designs/ (or .featyard/designs/), ${FY_TASK_PLANS_DIR}/, ${FY_REVIEWS_DIR}/, or ${FY_RESEARCH_DIR}/. Stop and return or advance workflow phases intentionally.`,
       );
     }
 
@@ -590,7 +590,7 @@ export function createGuardrails(deps: GuardrailsDeps): IGuardrails {
 
   /**
    * Complete a code-review loop from a phase_ready({issuesFound, cannotFix}) call.
-   * The issue counts come directly from the ff-review skill. Records review
+   * The issue counts come directly from the fy-review skill. Records review
    * history, tracks reviewer empty loops,
    * then drives the loop decision + (UAT/finish) transition via handleReviewLoopEnd.
    */

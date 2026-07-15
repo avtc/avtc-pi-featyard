@@ -15,14 +15,14 @@ describe("workflow-monitor session_compact — todo re-injection", () => {
   afterEach(() => {
     vi.useRealTimers();
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   function setupReviewFeature(slug: string) {
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
     writeFeatureStateFile(slug, {
       featureSlug: slug,
-      designDoc: "docs/ff/designs/test-design.md",
+      designDoc: "docs/featyard/designs/test-design.md",
       branch: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -38,7 +38,7 @@ describe("workflow-monitor session_compact — todo re-injection", () => {
           finish: "pending",
         },
         currentPhase: "review",
-        artifacts: { design: "docs/ff/designs/test-design.md" },
+        artifacts: { design: "docs/featyard/designs/test-design.md" },
       },
     });
   }

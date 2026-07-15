@@ -4,9 +4,9 @@
 /**
  * Archive engine for stale feature artifacts + state.
  *
- * Design (docs/ff/designs/2026-06-29-done-feature-artifact-lifecycle-design.md):
- * feature-flow writes process artifacts (task-plans, research, reviews, feature-state) OUT of the
- * git repo under a `.ff` junction → `~/.pi/feature-flow/artifacts/<key>/`. Over time, completed and
+ * Design (docs/featyard/designs/2026-06-29-done-feature-artifact-lifecycle-design.md):
+ * featyard writes process artifacts (task-plans, research, reviews, feature-state) OUT of the
+ * git repo under a `.featyard` junction → `~/.pi/featyard/artifacts/<key>/`. Over time, completed and
  * abandoned features leave stale artifact dirs behind. This module relocates them to a sibling
  * `artifacts-archive/<key>/` tree, preserving them (move-not-delete) so the operation is reversible.
  *
@@ -15,13 +15,13 @@
  *  subagent-skipped, defers to the next microtask). Threshold comes from the caller (the activation/timer read
  *  the setting) — this module does NOT import the settings layer (dependency inversion), keeping
  *  it a pure, unit-testable leaf.
- *  - `archiveArtifactsOlderThan` — the manual `/ff:archive-artifacts <days>` command (on demand,
+ *  - `archiveArtifactsOlderThan` — the manual `/fy:archive-artifacts <days>` command (on demand,
  *  not subagent-skipped, supports `excludeSlug` to protect the active in-session feature).
  *
  * Routing (where a candidate lands in the archive — MIRRORS the live tree so the archive is a
- * tree-copy of `.ff/`):
+ * tree-copy of `.featyard/`):
  *  - a feature's artifacts archive as ONE logical unit (all-or-nothing, by the newest mtime across
- *  the whole group — so a slug's old reviews/ and fresh research/ never split across `.ff/` and
+ *  the whole group — so a slug's old reviews/ and fresh research/ never split across `.featyard/` and
  *  the archive), but each member lands at its tree-mirror path: `archiveBase/<area>/<slug>/` (dirs)
  *  or `archiveBase/<area>/<file>` (flat files). So `reviews/<slug>/` → `archiveBase/reviews/<slug>/`,
  *  `task-plans/<slug>-task-plan.md` → `archiveBase/task-plans/<slug>-task-plan.md`, etc.
@@ -34,7 +34,7 @@
  * models sometimes write. The folder name only decides date-fallback-vs-slug routing.
  *
  * Failure mode: best-effort log+continue — per-item errors are collected in `errors[]`; a failure
- * never aborts the remaining items and never touches the `.ff` junction (all paths are absolute and
+ * never aborts the remaining items and never touches the `.featyard` junction (all paths are absolute and
  * derived from `externalDir`/`archiveBase`, which are siblings under the external store, not the
  * junction itself). Move primitive is idempotent + atomic (renameSync) with a copy+remove fallback
  * for cross-volume (EXDEV) and dest-already-exists (merge) cases.
@@ -490,7 +490,7 @@ export async function archiveArtifactsOlderThan(opts: {
 
 // ── Design docs (two-source sweep) ───────────────────────────────────────
 // Design docs are flat `*-design.md` files that may live in EITHER recognized dir — the
-// in-repo `docs/ff/designs/` (committed) or the out-of-repo `.ff/designs/` (local, via the
+// in-repo `docs/featyard/designs/` (committed) or the out-of-repo `.featyard/designs/` (local, via the
 // junction). Unlike the slug-grouped artifact set above, each design doc archives independently
 // (no cross-area grouping). Reuses `moveArtifact` so the move is the same atomic/EXDEV-safe
 // primitive as the rest of the engine.
@@ -517,7 +517,7 @@ function designDocSlug(name: string): string {
 
 /**
  * Enumerate design docs older than `maxAgeDays` across one or more roots (typically BOTH
- * `.ff/designs` and `docs/ff/designs`). Each `*-design.md` file is its own archive unit, keyed by
+ * `.featyard/designs` and `docs/featyard/designs`). Each `*-design.md` file is its own archive unit, keyed by
  * the slug derived from its name, and routes to `archiveBase/designs/<file>` — mirroring the live
  * `designs/` layout so all archived designs stay browsable together. The active feature's doc
  * (`<excludeSlug>-design.md`) is skipped, not archived. A missing/unreadable dir is a no-op

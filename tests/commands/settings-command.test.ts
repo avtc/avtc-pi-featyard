@@ -5,7 +5,7 @@ import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-c
 import { describe, expect, test, vi } from "vitest";
 import settingsExtension, { getSettings } from "../../src/settings/settings-ui.js";
 
-describe("ff:settings command", () => {
+describe("fy:settings command", () => {
   test("command is registered with correct name and description", async () => {
     const commands = new Map<
       string,
@@ -30,8 +30,8 @@ describe("ff:settings command", () => {
 
     settingsExtension(fakePi);
 
-    expect(commands.has("ff:settings")).toBe(true);
-    expect(commands.get("ff:settings")?.description).toMatch(/settings/i);
+    expect(commands.has("fy:settings")).toBe(true);
+    expect(commands.get("fy:settings")?.description).toMatch(/settings/i);
   });
 
   test("command requires UI — notifies error without UI", async () => {
@@ -64,7 +64,7 @@ describe("ff:settings command", () => {
       ui: { notify },
     } as unknown as ExtensionCommandContext;
 
-    const handler = commands.get("ff:settings")?.handler;
+    const handler = commands.get("fy:settings")?.handler;
     await handler?.("", ctx);
     expect(notify).toHaveBeenCalledWith(expect.stringMatching(/interactive/i), "warning");
   });
@@ -104,7 +104,7 @@ describe("ff:settings command", () => {
       },
     } as unknown as ExtensionCommandContext;
 
-    const handler = commands.get("ff:settings")?.handler;
+    const handler = commands.get("fy:settings")?.handler;
     await handler?.("", ctx);
     expect(customCalls.length).toBe(1);
     expect(customCalls[0]?.opts?.overlay).toBe(true);

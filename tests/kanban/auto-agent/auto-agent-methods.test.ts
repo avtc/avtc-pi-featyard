@@ -71,7 +71,7 @@ describe("AutoAgentStateMachine methods", () => {
         const result = sm.pickNextFeature(tools, projectId, "session-1");
         expect(result).not.toBeNull();
         expect((result as NonNullable<typeof result>).feature.slug).toBe("feat-1");
-        expect((result as NonNullable<typeof result>).skill).toBe("ff-plan");
+        expect((result as NonNullable<typeof result>).skill).toBe("fy-plan");
         expect(sm.getState()).toBe("working");
       } finally {
         db.close();
@@ -96,7 +96,7 @@ describe("AutoAgentStateMachine methods", () => {
         const result = sm.pickNextFeature(tools, projectId, "session-1");
         expect(result).not.toBeNull();
         expect((result as NonNullable<typeof result>).feature.slug).toBe("feat-2");
-        expect((result as NonNullable<typeof result>).skill).toBe("ff-design");
+        expect((result as NonNullable<typeof result>).skill).toBe("fy-design");
       } finally {
         db.close();
       }
@@ -142,7 +142,7 @@ describe("AutoAgentStateMachine methods", () => {
         expect(result).not.toBeNull();
         // Design lane should be picked first despite lower priority
         expect((result as NonNullable<typeof result>).feature.slug).toBe("design-low");
-        expect((result as NonNullable<typeof result>).skill).toBe("ff-design");
+        expect((result as NonNullable<typeof result>).skill).toBe("fy-design");
       } finally {
         db.close();
       }

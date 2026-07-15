@@ -4,7 +4,7 @@
 /**
  * Focused unit tests for createExecutionModeApplier's worktree-failure halt:
  * when branchPolicy is "worktree" and ensureWorktreeForExecution returns no
- * worktreePath (setup failed), the ff-implement skill must NOT be dispatched.
+ * worktreePath (setup failed), the fy-implement skill must NOT be dispatched.
  */
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -60,7 +60,7 @@ describe("applyExecutionMode worktree-failure halt", () => {
     cleanupAfterTest();
   });
 
-  test("worktree mode + setup failed → does NOT dispatch ff-implement skill", async () => {
+  test("worktree mode + setup failed → does NOT dispatch fy-implement skill", async () => {
     setSetting("branchPolicy", "worktree");
 
     const { pi, sendUserMessage } = makePi();
@@ -69,7 +69,7 @@ describe("applyExecutionMode worktree-failure halt", () => {
     const apply = createExecutionModeApplier({
       pi,
       handler: makeHandler(null),
-      expandSkillCommand: vi.fn().mockReturnValue("/skill:ff-implement"),
+      expandSkillCommand: vi.fn().mockReturnValue("/skill:fy-implement"),
       applyModelOverrideForPhase: vi.fn().mockResolvedValue(undefined),
       resolveBaseBranch: vi.fn().mockResolvedValue("main"),
       ensureWorktreeForExecution,
@@ -77,12 +77,12 @@ describe("applyExecutionMode worktree-failure halt", () => {
 
     await apply({ hasUI: false } as ExtensionContext);
 
-    // Halt: the ff-implement skill was never dispatched.
+    // Halt: the fy-implement skill was never dispatched.
     expect(sendUserMessage).not.toHaveBeenCalled();
     expect(ensureWorktreeForExecution).toHaveBeenCalled();
   });
 
-  test("worktree mode + setup succeeded → dispatches ff-implement skill", async () => {
+  test("worktree mode + setup succeeded → dispatches fy-implement skill", async () => {
     setSetting("branchPolicy", "worktree");
 
     const { pi, sendUserMessage } = makePi();
@@ -91,7 +91,7 @@ describe("applyExecutionMode worktree-failure halt", () => {
     const apply = createExecutionModeApplier({
       pi,
       handler: makeHandler(".worktrees/test-feature"),
-      expandSkillCommand: vi.fn().mockReturnValue("/skill:ff-implement"),
+      expandSkillCommand: vi.fn().mockReturnValue("/skill:fy-implement"),
       applyModelOverrideForPhase: vi.fn().mockResolvedValue(undefined),
       resolveBaseBranch: vi.fn().mockResolvedValue("main"),
       ensureWorktreeForExecution,
@@ -99,7 +99,7 @@ describe("applyExecutionMode worktree-failure halt", () => {
 
     await apply({ hasUI: false } as ExtensionContext);
 
-    // ff-implement is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
+    // fy-implement is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
     vi.useFakeTimers();
     schedulePostTurnDrain(pi);
     vi.advanceTimersByTime(500);
@@ -107,7 +107,7 @@ describe("applyExecutionMode worktree-failure halt", () => {
     expect(sendUserMessage).toHaveBeenCalledTimes(1);
   });
 
-  test("current-branch mode + no worktreePath → STILL dispatches ff-implement skill (inverse of the halt guard)", async () => {
+  test("current-branch mode + no worktreePath → STILL dispatches fy-implement skill (inverse of the halt guard)", async () => {
     // : locks the `else if (worktreeMode)` guard against regressing to a bare `else`.
     // In current-branch mode a missing worktreePath is expected — dispatch must proceed.
     setSetting("branchPolicy", "current-branch");
@@ -118,7 +118,7 @@ describe("applyExecutionMode worktree-failure halt", () => {
     const apply = createExecutionModeApplier({
       pi,
       handler: makeHandler(null),
-      expandSkillCommand: vi.fn().mockReturnValue("/skill:ff-implement"),
+      expandSkillCommand: vi.fn().mockReturnValue("/skill:fy-implement"),
       applyModelOverrideForPhase: vi.fn().mockResolvedValue(undefined),
       resolveBaseBranch: vi.fn().mockResolvedValue("main"),
       ensureWorktreeForExecution,
@@ -127,7 +127,7 @@ describe("applyExecutionMode worktree-failure halt", () => {
     await apply({ hasUI: false } as ExtensionContext);
 
     expect(ensureWorktreeForExecution).toHaveBeenCalled();
-    // ff-implement is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
+    // fy-implement is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
     vi.useFakeTimers();
     schedulePostTurnDrain(pi);
     vi.advanceTimersByTime(500);

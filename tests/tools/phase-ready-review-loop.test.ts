@@ -36,7 +36,7 @@ describe("phase_ready review loop — design phase", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -158,7 +158,7 @@ describe("phase_ready review loop — design phase", () => {
     setSetting("minReviewLoops", 0);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-noloop-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-noloop-design.md";
     writeFeatureStateFile("2026-05-20-design-noloop", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -166,7 +166,7 @@ describe("phase_ready review loop — design phase", () => {
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -231,7 +231,7 @@ describe("phase_ready review loop — design phase", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain("ff-plan");
+    expect((lastMessage as { message?: string }).message).toContain("fy-plan");
   });
 
   test("design: without issuesFound defaults to 0, falls through to existing logic", async () => {
@@ -239,7 +239,7 @@ describe("phase_ready review loop — design phase", () => {
     setSetting("minReviewLoops", 0);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-undef-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-undef-design.md";
     writeFeatureStateFile("2026-05-20-design-undef", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -247,7 +247,7 @@ describe("phase_ready review loop — design phase", () => {
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -302,7 +302,7 @@ describe("phase_ready review loop — design phase", () => {
     setSetting("minReviewLoops", 0);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-off-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-off-design.md";
     writeFeatureStateFile("2026-05-20-design-off", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -310,7 +310,7 @@ describe("phase_ready review loop — design phase", () => {
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -375,7 +375,7 @@ describe("phase_ready review loop — design phase", () => {
     setSetting("minReviewLoops", 0);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-nullstate-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-nullstate-design.md";
     writeFeatureStateFile("2026-05-20-design-nullstate", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -383,7 +383,7 @@ describe("phase_ready review loop — design phase", () => {
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -429,7 +429,7 @@ describe("phase_ready review loop — plan phase", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -466,7 +466,7 @@ describe("phase_ready review loop — plan phase", () => {
     expect(state?.review.reviewHistory?.[0]).toMatchObject({ phase: "plan", loopNumber: 0, issuesFound: 2 });
 
     // Verify persisted state on disk (raw JSON, independent of loadFeatureState backward-compat logic)
-    const statePath = path.join(".ff", "feature-state", "2026-05-20-plan-loop.json");
+    const statePath = path.join(".featyard", "feature-state", "2026-05-20-plan-loop.json");
     const persisted = JSON.parse(fs.readFileSync(statePath, "utf-8"));
     expect(persisted.plan.reviewLoopCount).toBe(2);
 
@@ -506,14 +506,14 @@ describe("phase_ready review loop — plan phase", () => {
     expect(state?.review.reviewHistory).toHaveLength(1);
     expect(state?.review.reviewHistory?.[0]).toMatchObject({ phase: "plan", loopNumber: 0, issuesFound: 0 });
 
-    // Should have advanced plan → implement and dispatched the ff-implement skill
+    // Should have advanced plan → implement and dispatched the fy-implement skill
     const state2 = loadFeatureState("2026-05-20-plan-noloop", null);
     expect(state2?.workflow.currentPhase).toBe("implement");
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain('<skill name="ff-implement"');
+    expect((lastMessage as { message?: string }).message).toContain('<skill name="fy-implement"');
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -539,12 +539,12 @@ describe("phase_ready review loop — plan phase", () => {
     // Should return empty success (not looping)
     expect((result.content[0] as { text: string }).text).toBe("");
 
-    // Should have advanced plan → implement and dispatched the ff-implement skill
+    // Should have advanced plan → implement and dispatched the fy-implement skill
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain('<skill name="ff-implement"');
+    expect((lastMessage as { message?: string }).message).toContain('<skill name="fy-implement"');
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -568,7 +568,7 @@ describe("phase_ready review loop — plan phase", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain("ff-plan-review");
+    expect((lastMessage as { message?: string }).message).toContain("fy-plan-review");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -586,13 +586,13 @@ describe("phase_ready review loop — plan phase", () => {
 
     const result = await phaseReady.execute("tc-plan-off-1", { issuesFound: 5 }, undefined, undefined, NO_UI_CTX);
 
-    // Should fall through — plan phase, not looping, dispatches ff-implement
+    // Should fall through — plan phase, not looping, dispatches fy-implement
     expect((result.content[0] as { text: string }).text).toBe("");
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain('<skill name="ff-implement"');
+    expect((lastMessage as { message?: string }).message).toContain('<skill name="fy-implement"');
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -630,7 +630,7 @@ describe("phase_ready review loop — plan phase", () => {
     setSetting("minReviewLoops", 0);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-limit-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-limit-design.md";
     writeFeatureStateFile("2026-05-20-design-limit", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -638,7 +638,7 @@ describe("phase_ready review loop — plan phase", () => {
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -710,13 +710,13 @@ describe("phase_ready review loop — plan phase", () => {
     // Even with issuesFound=5, should NOT loop because loopsCompleted=3 >= max=3
     const result = await phaseReady.execute("tc-plan-limit-1", { issuesFound: 5 }, undefined, undefined, NO_UI_CTX);
 
-    // Should return no-op (not looping), dispatches ff-implement
+    // Should return no-op (not looping), dispatches fy-implement
     expect((result.content[0] as { text: string }).text).toBe("");
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain('<skill name="ff-implement"');
+    expect((lastMessage as { message?: string }).message).toContain('<skill name="fy-implement"');
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -755,7 +755,7 @@ describe("phase_ready — unsupported phases", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxPlanReviewRounds", 0);
   });
@@ -779,7 +779,7 @@ describe("phase_ready — unsupported phases", () => {
           },
           currentPhase: phase,
           artifacts: {
-            design: "docs/ff/designs/test-design.md",
+            design: "docs/featyard/designs/test-design.md",
             plan: "docs/plans/test-plan.md",
             implement: null,
             verify: null,
@@ -828,7 +828,7 @@ describe("phase_ready — unsupported phases", () => {
           },
           currentPhase: phase,
           artifacts: {
-            design: "docs/ff/designs/test-design.md",
+            design: "docs/featyard/designs/test-design.md",
             plan: "docs/plans/test-plan.md",
             implement: null,
             verify: null,
@@ -860,7 +860,7 @@ describe("phase_ready — design/plan loop count independence", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -930,8 +930,8 @@ describe("phase_ready — loop count is durable in feature state after increment
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_REVIEW_LOOP;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -1029,7 +1029,7 @@ describe("phase_ready interceptors — design phase", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -1039,7 +1039,7 @@ describe("phase_ready interceptors — design phase", () => {
     setSetting("maxPlanReviewRounds", 3);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-intercept-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-intercept-design.md";
     writeFeatureStateFile("2026-05-20-design-intercept", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -1047,7 +1047,7 @@ describe("phase_ready interceptors — design phase", () => {
     });
 
     // Create design doc for artifact
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -1073,7 +1073,7 @@ describe("phase_ready interceptors — design phase", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain("ff-design-review");
+    expect((lastMessage as { message?: string }).message).toContain("fy-design-review");
     expect((lastMessage as { message?: string }).message).toContain("**Feature:** `2026-05-20-design-intercept`");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
 
@@ -1089,7 +1089,7 @@ describe("phase_ready interceptors — design phase", () => {
     setSetting("maxPlanReviewRounds", 3);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-reentry-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-reentry-design.md";
     writeFeatureStateFile("2026-05-20-design-reentry", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -1097,7 +1097,7 @@ describe("phase_ready interceptors — design phase", () => {
     });
 
     // Create design doc for artifact
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -1122,7 +1122,7 @@ describe("phase_ready interceptors — design phase", () => {
     const skillMessages = fake.sentMessages.filter(
       (m) =>
         typeof (m as { message?: string }).message === "string" &&
-        (m as { message: string }).message.includes("ff-design-review"),
+        (m as { message: string }).message.includes("fy-design-review"),
     );
     expect(skillMessages).toHaveLength(0);
 
@@ -1157,7 +1157,7 @@ describe("phase_ready interceptors — design phase", () => {
     setSetting("maxPlanReviewRounds", 3);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    const docPath = "docs/ff/designs/2026-05-20-design-null-state-design.md";
+    const docPath = "docs/featyard/designs/2026-05-20-design-null-state-design.md";
     writeFeatureStateFile("2026-05-20-design-null-state", {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
@@ -1165,7 +1165,7 @@ describe("phase_ready interceptors — design phase", () => {
     });
 
     // Create design doc for artifact
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync(docPath, "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -1221,9 +1221,9 @@ describe("phase_ready interceptors — design phase", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain("ff-design-review");
+    expect((lastMessage as { message?: string }).message).toContain("fy-design-review");
     expect((lastMessage as { message?: string }).message).toContain("**Feature:** `2026-05-20-design-loopgate`");
-    expect((lastMessage as { message?: string }).message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FF_REVIEW_METHOD}}
+    expect((lastMessage as { message?: string }).message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FY_REVIEW_METHOD}}
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -1278,7 +1278,7 @@ describe("phase_ready interceptors — design phase", () => {
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
     expect((lastMessage as { message?: string }).message).toContain("subagent");
-    expect((lastMessage as { message?: string }).message).toContain("ff-design-reviewer");
+    expect((lastMessage as { message?: string }).message).toContain("fy-design-reviewer");
     expect((lastMessage as { message?: string }).message).toContain("2026-05-20-design-subagent-design.md");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
@@ -1306,9 +1306,9 @@ describe("phase_ready interceptors — design phase", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain("ff-design-review");
+    expect((lastMessage as { message?: string }).message).toContain("fy-design-review");
     expect((lastMessage as { message?: string }).message).not.toContain("Dispatch reviewer: subagent");
-    expect((lastMessage as { message?: string }).message).not.toContain("ff-design-reviewer");
+    expect((lastMessage as { message?: string }).message).not.toContain("fy-design-reviewer");
     expect((lastMessage as { message?: string }).message).toContain("**Feature:** `2026-05-20-design-insession`");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
@@ -1322,7 +1322,7 @@ describe("phase_ready interceptors — plan phase", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -1347,7 +1347,7 @@ describe("phase_ready interceptors — plan phase", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain("ff-plan-review");
+    expect((lastMessage as { message?: string }).message).toContain("fy-plan-review");
     expect((lastMessage as { message?: string }).message).toContain("**Feature:** `2026-05-20-plan-intercept`");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
 
@@ -1380,17 +1380,17 @@ describe("phase_ready interceptors — plan phase", () => {
     const skillMessages = fake.sentMessages.filter(
       (m) =>
         typeof (m as { message?: string }).message === "string" &&
-        (m as { message: string }).message.includes("ff-plan-review"),
+        (m as { message: string }).message.includes("fy-plan-review"),
     );
     expect(skillMessages).toHaveLength(0);
 
-    // Should have fallen through to execution: advanced plan → implement + dispatched ff-implement
+    // Should have fallen through to execution: advanced plan → implement + dispatched fy-implement
     const state = loadFeatureState("2026-05-20-plan-reentry", null);
     expect(state?.workflow.currentPhase).toBe("implement");
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain('<skill name="ff-implement"');
+    expect((lastMessage as { message?: string }).message).toContain('<skill name="fy-implement"');
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
 
@@ -1417,9 +1417,9 @@ describe("phase_ready interceptors — plan phase", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect((lastMessage as { message?: string }).message).toContain("ff-plan-reviewer");
+    expect((lastMessage as { message?: string }).message).toContain("fy-plan-reviewer");
     expect((lastMessage as { message?: string }).message).toContain("Dispatch reviewer");
-    expect((lastMessage as { message?: string }).message).toContain("ff-plan-review");
+    expect((lastMessage as { message?: string }).message).toContain("fy-plan-review");
     expect((lastMessage as { message?: string }).message).toContain("**Feature:** `2026-05-20-plan-subagent`");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
@@ -1449,7 +1449,7 @@ describe("phase_ready interceptors — plan phase", () => {
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
     expect((lastMessage as { message?: string }).message).toContain("Review the plan against the design");
     expect((lastMessage as { message?: string }).message).not.toContain("Dispatch reviewer: subagent");
-    expect((lastMessage as { message?: string }).message).not.toContain("ff-plan-reviewer");
+    expect((lastMessage as { message?: string }).message).not.toContain("fy-plan-reviewer");
     expect((lastMessage as { message?: string }).message).toContain("**Feature:** `2026-05-20-plan-insession`");
     expect((lastMessage.options as { deliverAs?: string })?.deliverAs).toBe("followUp");
   });
@@ -1488,7 +1488,7 @@ describe("phase_ready — implement branch is a no-op (machinery relocated to ta
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setSetting("maxFeatureReviewRounds", 0);
   });
 
@@ -1506,8 +1506,8 @@ describe("phase_ready — implement branch is a no-op (machinery relocated to ta
         },
         currentPhase: "implement",
         artifacts: {
-          design: `docs/ff/designs/${slug}-design.md`,
-          plan: `.ff/task-plans/${slug}-task-plan.md`,
+          design: `docs/featyard/designs/${slug}-design.md`,
+          plan: `.featyard/task-plans/${slug}-task-plan.md`,
           implement: null,
           verify: null,
           review: null,
@@ -1539,7 +1539,7 @@ describe("phase_ready — code review loop deduplication within same turn", () =
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxFeatureReviewRounds", 3);
     setSetting("minReviewLoops", 0);
@@ -1558,8 +1558,8 @@ describe("phase_ready — code review loop deduplication within same turn", () =
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "review",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
       review: { reviewLoopCount: 1, reviewActive: false },
     });
@@ -1612,7 +1612,7 @@ describe("phase_ready — code review loop deduplication within same turn", () =
   test("review: repeated calls across LLM turns within ONE agent turn dispatch one follow-up (turn_end does NOT reset)", async () => {
     // Regression for the real-world bug: agent calls phase_ready(10) twice in the
     // review phase with Thinking between the calls = two pi turns, ONE agent turn.
-    // A turn_end-scoped guard reset between the calls → TWO ff-review follow-ups.
+    // A turn_end-scoped guard reset between the calls → TWO fy-review follow-ups.
     // The agent-scoped guard (reset on agent_end) keeps the second call a no-op.
     setSetting("maxFeatureReviewRounds", 3);
     setSetting("minReviewLoops", 0);
@@ -1622,8 +1622,8 @@ describe("phase_ready — code review loop deduplication within same turn", () =
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "review",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
       review: { reviewLoopCount: 1, reviewActive: false },
     });
@@ -1633,7 +1633,7 @@ describe("phase_ready — code review loop deduplication within same turn", () =
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
-    // Call 1 (turn 1): processes the review iteration, STAGES the ff-review followUp
+    // Call 1 (turn 1): processes the review iteration, STAGES the fy-review followUp
     // (delivered at agent_end, not inline). Nothing sent yet.
     await phaseReady.execute("tc-rct-1", { issuesFound: 10 }, undefined, undefined, NO_UI_CTX);
     const followUpsAfter1 = fake.sentMessages.filter(
@@ -1672,8 +1672,8 @@ describe("phase_ready — code review loop deduplication within same turn", () =
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "review",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
       review: { reviewLoopCount: 1, reviewActive: false },
     });
@@ -1713,8 +1713,8 @@ describe("phase_ready — code review loop deduplication within same turn", () =
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "review",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
       review: { reviewLoopCount: 1, reviewActive: false },
     });
@@ -1751,7 +1751,7 @@ describe("phase_ready — design/plan review loop deduplication within same turn
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
@@ -1936,7 +1936,7 @@ describe("phase_ready — verify transition deduplication within same turn", () 
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
 
     setSetting("maxFeatureReviewRounds", 3);
@@ -1958,8 +1958,8 @@ describe("phase_ready — verify transition deduplication within same turn", () 
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "verify",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
     });
 
@@ -2024,8 +2024,8 @@ describe("phase_ready — verify transition deduplication within same turn", () 
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "verify",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
     });
 
@@ -2063,8 +2063,8 @@ describe("phase_ready — verify transition deduplication within same turn", () 
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "verify",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
     });
 
@@ -2107,7 +2107,7 @@ describe("phase_ready — finish transition deduplication within same turn", () 
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
 
     setSetting("uatMode", "after-review");
@@ -2125,8 +2125,8 @@ describe("phase_ready — finish transition deduplication within same turn", () 
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "finish",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
     });
 
@@ -2176,8 +2176,8 @@ describe("phase_ready — finish transition deduplication within same turn", () 
     writeFeatureStateFile(slug, {
       workflow: {
         currentPhase: "finish",
-        designDoc: `docs/ff/designs/${slug}-design.md`,
-        planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
       },
     });
 

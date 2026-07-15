@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension from "../src/index.js";
 import { cleanupAfterTest, createFakePi, type FakePi } from "./helpers/workflow-monitor-test-helpers.js";
 
-const WIRED_FLAG = "__avtcPiFeatureFlowWired";
+const WIRED_FLAG = "__avtcPiFeatyardWired";
 
-// Idempotency guard tests. feature-flow can be bundled into the avtc-pi umbrella AND installed
+// Idempotency guard tests. featyard can be bundled into the avtc-pi umbrella AND installed
 // standalone — whichever copy loads first wires, the rest must no-op. We assert the
 // globalThis sentinel is set on first load and a second load returns without re-wiring.
 

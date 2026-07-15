@@ -43,7 +43,7 @@ describe("UAT auto-skip for off mode", () => {
     return {
       workflow: {
         currentPhase: "review",
-        designDoc: "docs/ff/designs/test-design.md",
+        designDoc: "docs/featyard/designs/test-design.md",
         planDoc: "docs/plans/test-impl.md",
       },
       review: { reviewLoopCount: 0, reviewHistory: [] },

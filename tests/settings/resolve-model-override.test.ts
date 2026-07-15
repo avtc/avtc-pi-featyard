@@ -3,20 +3,20 @@
 
 import { beforeEach, describe, expect, test } from "vitest";
 import {
-  type FeatureFlowConfig,
+  type FeatyardConfig,
   type ModelOverride,
-  resetFeatureFlowConfig,
+  resetFeatyardConfig,
   resolveModelOverride,
   resolveStageModelOnly,
 } from "../../src/settings/settings-ui.js";
 
-/** Build a minimal FeatureFlowConfig (stage-models + default-model) for tests.
+/** Build a minimal FeatyardConfig (stage-models + default-model) for tests.
  *  Mirrors pi-subagent's makeSubagentConfig so the two halves of the split feature
  *  share a consistent test-config shape. */
 const NO_STAGE_MODELS: Record<string, ModelOverride> | null = null;
 const NO_DEFAULT_MODEL: string | null = null;
 
-const cfg = (stageModels: Record<string, ModelOverride> | null, defaultModel: string | null): FeatureFlowConfig => ({
+const cfg = (stageModels: Record<string, ModelOverride> | null, defaultModel: string | null): FeatyardConfig => ({
   "stage-models": stageModels ?? {},
   "default-model": defaultModel,
 });
@@ -24,7 +24,7 @@ const cfg = (stageModels: Record<string, ModelOverride> | null, defaultModel: st
 describe("resolveModelOverride", () => {
   beforeEach(() => {
     // Clear any cached config from other test files
-    resetFeatureFlowConfig();
+    resetFeatyardConfig();
   });
 
   test("returns null when no overrides configured", async () => {
@@ -68,7 +68,7 @@ describe("resolveModelOverride", () => {
   test("returns null for empty config with undefined optional fields", async () => {
     // Deliberately passes `{}` (fields ABSENT, not null) to verify the
     // undefined-field path — do NOT convert to cfg() (which sets default-model=null).
-    const result = resolveModelOverride("review", 0, {} as unknown as FeatureFlowConfig);
+    const result = resolveModelOverride("review", 0, {} as unknown as FeatyardConfig);
     expect(result).toBeNull();
   });
 
@@ -158,16 +158,16 @@ describe("resolveModelOverride default-model fallback", () => {
 });
 
 /**
- * resolveStageModelOnly is the function feature-flow registers as the pi-subagent
+ * resolveStageModelOnly is the function featyard registers as the pi-subagent
  * model-resolution hook (Phase 2). It is STAGE-ONLY — it returns a stage-model when
  * a stage is active, and yields `null` (→ undefined at the hook boundary) when no
- * stage is active, so feature-flow's `default-model` does NOT reach subagents and
+ * stage is active, so featyard's `default-model` does NOT reach subagents and
  * pi-subagent's own Phase 3 `default-model` applies. This is distinct from
  * resolveModelOverride (above), which DOES fall back to default-model for the
  * workflow orchestrator.
  */
 describe("resolveStageModelOnly (subagent hook — decision #9)", () => {
-  beforeEach(() => resetFeatureFlowConfig());
+  beforeEach(() => resetFeatyardConfig());
 
   test("returns the stage-model when the active stage matches", () => {
     const result = resolveStageModelOnly(
@@ -180,7 +180,7 @@ describe("resolveStageModelOnly (subagent hook — decision #9)", () => {
 
   test("decision #9: returns null (NOT default-model) when no stage is active", () => {
     // No stage active → the hook must yield so pi-subagent's Phase 3 applies.
-    // It must NOT return the feature-flow default-model (which is orchestrator-only).
+    // It must NOT return the featyard default-model (which is orchestrator-only).
     const result = resolveStageModelOnly(
       null,
       0,

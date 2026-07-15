@@ -54,13 +54,13 @@ afterEach(() => {
 
 describe("featureSlugFromDesignDoc", () => {
   test("extracts slug from design doc path", () => {
-    expect(featureSlugFromDesignDoc("docs/ff/designs/2026-05-08-permission-modal-design.md")).toBe(
+    expect(featureSlugFromDesignDoc("docs/featyard/designs/2026-05-08-permission-modal-design.md")).toBe(
       "2026-05-08-permission-modal",
     );
   });
 
   test("extracts slug from another design doc", () => {
-    expect(featureSlugFromDesignDoc("docs/ff/designs/2026-02-08-login-throttle-design.md")).toBe(
+    expect(featureSlugFromDesignDoc("docs/featyard/designs/2026-02-08-login-throttle-design.md")).toBe(
       "2026-02-08-login-throttle",
     );
   });
@@ -70,7 +70,7 @@ describe("featureSlugFromDesignDoc", () => {
   });
 
   test("returns null for implementation doc", () => {
-    expect(featureSlugFromDesignDoc(".ff/task-plans/2026-05-08-permission-modal-task-plan.md")).toBeNull();
+    expect(featureSlugFromDesignDoc(".featyard/task-plans/2026-05-08-permission-modal-task-plan.md")).toBeNull();
   });
 
   test("returns null for random markdown file", () => {
@@ -82,13 +82,13 @@ describe("featureSlugFromDesignDoc", () => {
 
 describe("featureSlugFromPlanDoc", () => {
   test("extracts slug from implementation plan doc", () => {
-    expect(featureSlugFromPlanDoc(".ff/task-plans/2026-05-08-permission-modal-task-plan.md")).toBe(
+    expect(featureSlugFromPlanDoc(".featyard/task-plans/2026-05-08-permission-modal-task-plan.md")).toBe(
       "2026-05-08-permission-modal",
     );
   });
 
   test("returns null for design doc", () => {
-    expect(featureSlugFromPlanDoc("docs/ff/designs/2026-05-08-permission-modal-design.md")).toBeNull();
+    expect(featureSlugFromPlanDoc("docs/featyard/designs/2026-05-08-permission-modal-design.md")).toBeNull();
   });
 
   test("returns null for non-plan doc", () => {
@@ -101,7 +101,7 @@ describe("featureSlugFromPlanDoc", () => {
 describe("stateFilePath", () => {
   test("returns correct path for a slug", () => {
     expect(stateFilePath("2026-05-08-permission-modal", null)).toBe(
-      path.join(process.cwd(), ".ff", "feature-state", "2026-05-08-permission-modal.json"),
+      path.join(process.cwd(), ".featyard", "feature-state", "2026-05-08-permission-modal.json"),
     );
   });
 });
@@ -109,8 +109,8 @@ describe("stateFilePath", () => {
 // --- stateDir ---
 
 describe("stateDir", () => {
-  test("returns.ff/feature-state directory", () => {
-    expect(stateDir()).toBe(path.join(process.cwd(), ".ff", "feature-state"));
+  test("returns.featyard/feature-state directory", () => {
+    expect(stateDir()).toBe(path.join(process.cwd(), ".featyard", "feature-state"));
   });
 });
 
@@ -118,11 +118,14 @@ describe("stateDir", () => {
 
 describe("createFeatureState", () => {
   test("creates state with active status and correct fields", () => {
-    const state = createFeatureState("2026-05-08-test-feature", "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(
+      "2026-05-08-test-feature",
+      "docs/featyard/designs/2026-05-08-test-feature-design.md",
+    );
 
     expect(state.completedAt).toBeNull();
     expect(state.featureSlug).toBe("2026-05-08-test-feature");
-    expect(state.design.doc).toBe("docs/ff/designs/2026-05-08-test-feature-design.md");
+    expect(state.design.doc).toBe("docs/featyard/designs/2026-05-08-test-feature-design.md");
     expect(state.git.branch).toBeNull();
     expect(state.git.baseBranch).toBeNull();
     expect(state.completedAt).toBeNull();
@@ -131,7 +134,7 @@ describe("createFeatureState", () => {
     // design is the active pointer phase (in-progress); nothing is derived-done yet
     expect(isPhaseDone(view(state), "design")).toBe(false);
     expect(state.workflow.currentPhase).toBe("design");
-    expect(state.design.doc).toBe("docs/ff/designs/2026-05-08-test-feature-design.md");
+    expect(state.design.doc).toBe("docs/featyard/designs/2026-05-08-test-feature-design.md");
   });
 });
 
@@ -139,7 +142,10 @@ describe("createFeatureState", () => {
 
 describe("markFeatureDone", () => {
   test("sets status to done and sets completedAt", () => {
-    const state = createFeatureState("2026-05-08-test-feature", "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(
+      "2026-05-08-test-feature",
+      "docs/featyard/designs/2026-05-08-test-feature-design.md",
+    );
     const done = markFeatureDone(state);
 
     expect(done.completedAt).not.toBeNull();
@@ -148,7 +154,10 @@ describe("markFeatureDone", () => {
   });
 
   test("does not mutate the original state", () => {
-    const state = createFeatureState("2026-05-08-test-feature", "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(
+      "2026-05-08-test-feature",
+      "docs/featyard/designs/2026-05-08-test-feature-design.md",
+    );
     const originalCompletedAt = state.completedAt;
     markFeatureDone(state);
 
@@ -162,7 +171,7 @@ describe("saveFeatureState / loadFeatureState", () => {
   test("saves and loads feature state round-trip", () => {
     withTempCwd();
     const slug = "2026-05-08-test-feature";
-    const state = createFeatureState(slug, "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(slug, "docs/featyard/designs/2026-05-08-test-feature-design.md");
 
     saveFeatureState(state, null);
 
@@ -170,7 +179,7 @@ describe("saveFeatureState / loadFeatureState", () => {
     expect(loaded).not.toBeNull();
     expect(loaded?.featureSlug).toBe(slug);
     expect(loaded?.completedAt).toBeNull();
-    expect(loaded?.design.doc).toBe("docs/ff/designs/2026-05-08-test-feature-design.md");
+    expect(loaded?.design.doc).toBe("docs/featyard/designs/2026-05-08-test-feature-design.md");
     expect(loaded?.workflow.currentPhase).toBe("design");
     expect(isPhaseDone(view(loaded as unknown as NonNullable<typeof loaded>), "design")).toBe(false);
   });
@@ -180,21 +189,21 @@ describe("saveFeatureState / loadFeatureState", () => {
     expect(loadFeatureState("nonexistent-slug", null)).toBeNull();
   });
 
-  test("saveFeatureState creates.ff/feature-state directory if needed", () => {
+  test("saveFeatureState creates.featyard/feature-state directory if needed", () => {
     withTempCwd();
     const slug = "2026-05-08-test-feature";
-    const state = createFeatureState(slug, "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(slug, "docs/featyard/designs/2026-05-08-test-feature-design.md");
 
     saveFeatureState(state, null);
 
-    expect(fs.existsSync(path.join(process.cwd(), ".ff", "feature-state"))).toBe(true);
+    expect(fs.existsSync(path.join(process.cwd(), ".featyard", "feature-state"))).toBe(true);
   });
 
   test("saveFeatureState accepts custom dir", () => {
     const tempDir = withTempCwd();
     const customDir = path.join(tempDir, "custom-pi");
     const slug = "2026-05-08-test-feature";
-    const state = createFeatureState(slug, "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(slug, "docs/featyard/designs/2026-05-08-test-feature-design.md");
 
     saveFeatureState(state, customDir);
 
@@ -205,7 +214,7 @@ describe("saveFeatureState / loadFeatureState", () => {
     const tempDir = withTempCwd();
     const customDir = path.join(tempDir, "custom-pi");
     const slug = "2026-05-08-test-feature";
-    const state = createFeatureState(slug, "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(slug, "docs/featyard/designs/2026-05-08-test-feature-design.md");
 
     saveFeatureState(state, customDir);
     const loaded = loadFeatureState(slug, customDir);
@@ -220,14 +229,17 @@ describe("saveFeatureState / loadFeatureState", () => {
 describe("scanActiveFeatures", () => {
   test("returns only active features, sorted by updatedAt desc", () => {
     // withTempCwd changes cwd into a temp dir so state files never leak; scanActiveFeatures
-    // reads from stateDir() = <cwd>/.ff/feature-state (created on save).
+    // reads from stateDir() = <cwd>/.featyard/feature-state (created on save).
     withTempCwd();
 
     // Create two active features with different timestamps
-    const state1 = createFeatureState("2026-01-01-first-feature", "docs/ff/designs/2026-01-01-first-feature-design.md");
+    const state1 = createFeatureState(
+      "2026-01-01-first-feature",
+      "docs/featyard/designs/2026-01-01-first-feature-design.md",
+    );
     const state2 = createFeatureState(
       "2026-02-01-second-feature",
-      "docs/ff/designs/2026-02-01-second-feature-design.md",
+      "docs/featyard/designs/2026-02-01-second-feature-design.md",
     );
 
     // Make state1 older
@@ -238,7 +250,10 @@ describe("scanActiveFeatures", () => {
     saveFeatureState(state2, null);
 
     // Also create a done feature (should not appear)
-    const state3 = createFeatureState("2026-03-01-done-feature", "docs/ff/designs/2026-03-01-done-feature-design.md");
+    const state3 = createFeatureState(
+      "2026-03-01-done-feature",
+      "docs/featyard/designs/2026-03-01-done-feature-design.md",
+    );
     const done3 = markFeatureDone(state3);
     saveFeatureState(done3, null);
 
@@ -257,7 +272,10 @@ describe("scanActiveFeatures", () => {
     // A non-feature JSON file in the state dir (e.g. a config/manifest dump) must not be parsed
     // as an active feature. The structural guard (featureSlug present) rejects it.
     withTempCwd();
-    const real = createFeatureState("2026-04-01-real-feature", "docs/ff/designs/2026-04-01-real-feature-design.md");
+    const real = createFeatureState(
+      "2026-04-01-real-feature",
+      "docs/featyard/designs/2026-04-01-real-feature-design.md",
+    );
     saveFeatureState(real, null);
     // A stray valid-JSON file with no featureSlug + no completedAt — would otherwise be included.
     const strayPath = path.join(stateDir(), "not-a-feature.json");
@@ -276,7 +294,7 @@ describe("deleteStateFile", () => {
   test("deletes the state file for a slug", () => {
     withTempCwd();
     const slug = "2026-05-08-test-feature";
-    const state = createFeatureState(slug, "docs/ff/designs/2026-05-08-test-feature-design.md");
+    const state = createFeatureState(slug, "docs/featyard/designs/2026-05-08-test-feature-design.md");
     saveFeatureState(state, null);
 
     expect(loadFeatureState(slug, null)).not.toBeNull();
@@ -295,14 +313,14 @@ describe("deleteStateFile", () => {
 describe("worktreePath and sessionFiles fields", () => {
   test("createFeatureState includes worktreePath: null and sessionFiles: []", () => {
     withTempCwd();
-    const state = createFeatureState("test-slug", "docs/ff/designs/test-slug-design.md");
+    const state = createFeatureState("test-slug", "docs/featyard/designs/test-slug-design.md");
     expect(state.git.worktreePath).toBeNull();
     expect(state.sessionFiles).toEqual([]);
   });
 
   test("createFeatureStateFromPlan includes worktreePath: null and sessionFiles: []", () => {
     withTempCwd();
-    const state = createFeatureStateFromPlan("test-slug", ".ff/task-plans/test-slug-task-plan.md");
+    const state = createFeatureStateFromPlan("test-slug", ".featyard/task-plans/test-slug-task-plan.md");
     expect(state.git.worktreePath).toBeNull();
     expect(state.sessionFiles).toEqual([]);
   });
@@ -311,13 +329,13 @@ describe("worktreePath and sessionFiles fields", () => {
 describe("baseBranch field backward compat", () => {
   test("createFeatureState includes baseBranch: null", () => {
     withTempCwd();
-    const state = createFeatureState("test-slug", "docs/ff/designs/test-slug-design.md");
+    const state = createFeatureState("test-slug", "docs/featyard/designs/test-slug-design.md");
     expect(state.git.baseBranch).toBeNull();
   });
 
   test("createFeatureStateFromPlan includes baseBranch: null", () => {
     withTempCwd();
-    const state = createFeatureStateFromPlan("test-slug", ".ff/task-plans/test-slug-task-plan.md");
+    const state = createFeatureStateFromPlan("test-slug", ".featyard/task-plans/test-slug-task-plan.md");
     expect(state.git.baseBranch).toBeNull();
   });
 });
@@ -325,13 +343,13 @@ describe("baseBranch field backward compat", () => {
 describe("baseCommitSha field", () => {
   test("is null in createFeatureState", () => {
     withTempCwd();
-    const state = createFeatureState("2026-06-06-test", "docs/ff/designs/2026-06-06-test-design.md");
+    const state = createFeatureState("2026-06-06-test", "docs/featyard/designs/2026-06-06-test-design.md");
     expect(state.git.baseCommitSha).toBeNull();
   });
 
   test("is null in createFeatureStateFromPlan", () => {
     withTempCwd();
-    const state = createFeatureStateFromPlan("2026-06-06-test", ".ff/task-plans/2026-06-06-test-task-plan.md");
+    const state = createFeatureStateFromPlan("2026-06-06-test", ".featyard/task-plans/2026-06-06-test-task-plan.md");
     expect(state.git.baseCommitSha).toBeNull();
   });
 });
@@ -340,7 +358,7 @@ describe("createFeatureStateForSubFeature", () => {
   test("creates state with design pending (not complete)", () => {
     const state = createFeatureStateForSubFeature(
       "2026-05-22-sub-feature",
-      "docs/ff/designs/2026-05-22-sub-feature-design.md",
+      "docs/featyard/designs/2026-05-22-sub-feature-design.md",
     );
 
     expect(state.completedAt).toBeNull();
@@ -348,7 +366,7 @@ describe("createFeatureStateForSubFeature", () => {
     expect(isPhasePending(view(state), "design")).toBe(true);
     expect(state.workflow.currentPhase).toBeNull();
     // Design doc is stored as design doc but design is NOT complete
-    expect(state.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
+    expect(state.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
   });
 
   test("sets all other phases to pending", () => {
@@ -377,7 +395,7 @@ describe("createFeatureStateForSubFeature", () => {
 
     const original = createFeatureStateForSubFeature("2026-05-22-roundtrip-sub", "");
     original.featureId = 42;
-    original.plan.doc = ".ff/task-plans/2026-05-22-roundtrip-sub-task-plan.md";
+    original.plan.doc = ".featyard/task-plans/2026-05-22-roundtrip-sub-task-plan.md";
     saveFeatureState(original, null);
 
     const loaded = loadFeatureState("2026-05-22-roundtrip-sub", null);
@@ -389,7 +407,7 @@ describe("createFeatureStateForSubFeature", () => {
     expect(isPhasePending(view(loaded as unknown as NonNullable<typeof loaded>), "design")).toBe(true);
     expect(isPhasePending(view(loaded as unknown as NonNullable<typeof loaded>), "plan")).toBe(true);
     expect(loaded?.design.doc).toBeNull();
-    expect(loaded?.plan.doc).toBe(".ff/task-plans/2026-05-22-roundtrip-sub-task-plan.md");
+    expect(loaded?.plan.doc).toBe(".featyard/task-plans/2026-05-22-roundtrip-sub-task-plan.md");
     // tdd/verification are session-only (GuardrailsState), no longer persisted to file.
     expect(loaded?.review.reviewLoopCount).toBe(0);
 

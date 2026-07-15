@@ -22,7 +22,7 @@ describe("designApprovalEnabled runtime behavior", () => {
       const projectId = db.createProject({ name: "Test", repoPath: "/test" });
       const featureId = db.createFeature({
         projectId,
-        slug: "ff-design",
+        slug: "fy-design",
         title: "Design Feature",
         lane: "design",
         description: "A feature in design lane",
@@ -50,7 +50,7 @@ describe("designApprovalEnabled runtime behavior", () => {
       const projectId = db.createProject({ name: "Test", repoPath: "/test" });
       db.createFeature({
         projectId,
-        slug: "ff-design",
+        slug: "fy-design",
         title: "Design Feature",
         lane: "design",
         description: "A feature in design lane",

@@ -6,7 +6,7 @@
  *
  * Coordinates two shutdown concerns: clear any pending deferred compaction
  * follow-up (compaction domain object, so a deferred inject never fires into a
- * dead session) and stop the feature-flow artifact archive timer (best-effort).
+ * dead session) and stop the featyard artifact archive timer (best-effort).
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

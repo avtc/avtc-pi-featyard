@@ -65,7 +65,7 @@ const _agentJustFinishedRef: MutableRef<boolean> = { value: false };
 
 /** Guardrails instance ref */
 let _guardrailsRef: IGuardrails | null = null;
-/** PhaseReady instance ref — for resetTracking access (test cleanup / ff:reset) */
+/** PhaseReady instance ref — for resetTracking access (test cleanup / fy:reset) */
 let _phaseReadyRef: import("../shared/workflow-types.js").IPhaseReady | null = null;
 let _getAutoAgentCallbackRef:
   | (() => import("../kanban/auto-agent/auto-agent-state-machine.js").AutoAgentCallback | null)

@@ -51,7 +51,11 @@ describe("phase_ready finish — UAT guard", () => {
     slug: string,
   ): Promise<ToolDefinition> {
     writeFeatureStateFile(slug, {
-      workflow: { currentPhase: "finish", designDoc: "docs/ff/designs/d.md", planDoc: ".ff/task-plans/p.md" },
+      workflow: {
+        currentPhase: "finish",
+        designDoc: "docs/featyard/designs/d.md",
+        planDoc: ".featyard/task-plans/p.md",
+      },
     });
     enableSubagentMode();
     await fireAllHandlers(fake.handlers as Map<string, Handler[]>, "session_start", { reason: "new" }, noUICtx);

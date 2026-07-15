@@ -5,7 +5,7 @@
  * Phase-ready module — phase_ready tool handler.
  *
  * Handles design → plan, plan → implement, verify → review, and finish → done transitions.
- * Also handles the code-review loop (ff-review calls phase_ready with issuesFound).
+ * Also handles the code-review loop (fy-review calls phase_ready with issuesFound).
  * During the implement phase, phase_ready is blocked by the guardrails interceptor
  * (the implement→verify transition is owned by task_ready_advance).
  * Includes design/plan review loop logic, compact-triggered review iteration compacts,
@@ -46,7 +46,7 @@ import {
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
 import { isSubagentSession, persistState } from "../state/state-persistence.js";
 import { notifyFeatureCompleted, worthNotesPointerFor } from "../state/worth-notes.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 import { textResult } from "./text-result.js";
 
 const MSG_NO_SLUG = "phase_ready failed — no active feature slug.";
@@ -100,7 +100,7 @@ export interface PhaseReadyDeps extends WorkflowTransitionDeps {
 /**
  * Build and return the full review follow-up message for a review iteration.
  *
- * Expands the review skill via `expandSkillCommand`. All PI_FF_* placeholders
+ * Expands the review skill via `expandSkillCommand`. All PI_FY_* placeholders
  * (REVIEW_LOOP_CONTEXT, REVIEW_METHOD, report file, etc) are
  * resolved by the main substitution pipeline inside `expandSkillCommand` — this
  * function does not perform any substitution or read feature state itself.
@@ -112,7 +112,7 @@ export interface PhaseReadyDeps extends WorkflowTransitionDeps {
 function buildReviewFollowUp(
   deps: PhaseReadyDeps,
   opts: {
-    /** e.g. "ff-plan-review" or "ff-design-review" */
+    /** e.g. "fy-plan-review" or "fy-design-review" */
     skillName: string;
     /** e.g. "plan review" or "design review" — human-readable label for the followUp message */
     label: string;
@@ -141,7 +141,7 @@ const NO_COMPACT_MESSAGE = "";
 interface ReviewLoopOpts {
   /** Phase name for getLoopCountForPhase */
   phaseName: "plan" | "design";
-  /** Skill name, e.g. "ff-plan-review" or "ff-design-review" */
+  /** Skill name, e.g. "fy-plan-review" or "fy-design-review" */
   skillName: string;
   /** Human-readable label for messages, e.g. "plan review" or "design review" */
   label: string;
@@ -176,7 +176,7 @@ async function handleReviewLoop(
 
   // First iteration — send initial review follow-up.
   // Always sync env + widget: startReviewIteration just changed reviewLoopCount
-  // (0→1) and reviewActive. syncEnvVarsFromState re-syncs PI_FF_STAGE (fork-mode
+  // (0→1) and reviewActive. syncEnvVarsFromState re-syncs PI_FY_STAGE (fork-mode
   // derivation). The shouldLoop branch below always syncs too; this keeps both
   // branches consistent.
   if (loopCount === 0) {
@@ -341,7 +341,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
       }
 
       // --- Code review phase: drive the review loop from issuesFound/cannotFix ---
-      // The ff-review skill calls phase_ready({issuesFound, cannotFix}) at the
+      // The fy-review skill calls phase_ready({issuesFound, cannotFix}) at the
       // end of each iteration; guardrails records history, tracks empty loops, and
       // decides whether to loop again or transition to UAT/finish.
       if (isReview) {
@@ -389,15 +389,15 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
             phaseReadyPassed = true;
             return textResult("");
           }
-          // loops-done: apply execution mode (advance plan → implement + dispatch ff-implement).
-          // ff-implement seeds its todo list from the plan doc on start, so no separate
+          // loops-done: apply execution mode (advance plan → implement + dispatch fy-implement).
+          // fy-implement seeds its todo list from the plan doc on start, so no separate
           // handoff/coverage-verification message is needed here.
           if (
             await triggerContextCompact(
               ctx,
               {
                 settingValue: settings.reviewIterationCompact,
-                skillName: "ff-implement",
+                skillName: "fy-implement",
                 message: "Plan review complete. Continuing to implementation.",
                 logLabel: "plan shouldLoop=false",
               },
@@ -405,7 +405,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
               recoverCompactFailure,
             )
           ) {
-            // Compact initiated (re-injects ff-implement) — phase_ready honored.
+            // Compact initiated (re-injects fy-implement) — phase_ready honored.
             phaseReadyPassed = true;
             return textResult("");
           }
@@ -413,7 +413,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
           phaseReadyPassed = true;
           return textResult("");
         }
-        // plan review off: apply execution mode directly (advance plan → implement + dispatch ff-implement).
+        // plan review off: apply execution mode directly (advance plan → implement + dispatch fy-implement).
         await applyExecutionMode(ctx);
         phaseReadyPassed = true;
         return textResult("");
@@ -683,7 +683,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
                 ctx,
                 {
                   settingValue: settings.reviewIterationCompact,
-                  skillName: "ff-plan",
+                  skillName: "fy-plan",
                   message: NO_COMPACT_MESSAGE,
                   logLabel: "design shouldLoop=false non-auto",
                 },
@@ -694,7 +694,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
               return textResult("");
             }
           }
-          schedulePostTurnFollowUp(expandSkillCommand("/skill:ff-plan", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
+          schedulePostTurnFollowUp(expandSkillCommand("/skill:fy-plan", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
         }
 
         return textResult("");
@@ -729,7 +729,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
   // phase-transition followUp is drained (deferred) by the agent_settled handler
   // (post-turn-dispatch.ts), which starts a fresh agent run. So agent_end fires
   // between every run, the guard is cleared, and the next run's phase_ready (e.g.
-  // the ff-review skill ending its iteration) processes instead of being deduped.
+  // the fy-review skill ending its iteration) processes instead of being deduped.
   // NOTE: intentionally NOT reset on turn_end — a pi "turn" is one LLM response,
   // and a confused model's repeated phase_ready calls span multiple turns within
   // one agent turn (those repeats must stay collapsed until the turn truly ends).

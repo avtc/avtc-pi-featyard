@@ -16,7 +16,7 @@
  */
 
 import { log } from "../log.js";
-import type { FeatureFlowSettings } from "../settings/settings-ui.js";
+import type { FeatyardSettings } from "../settings/settings-ui.js";
 import type { Phase, PhaseProgression } from "./phase-progression.js";
 
 export type UatMode = "after-review" | "after-finish" | "off";
@@ -24,7 +24,7 @@ export type UatMode = "after-review" | "after-finish" | "off";
 /** Whether/how many feature-review rounds run; 0 skips the review phase entirely. */
 export type MaxFeatureReviewRounds = number;
 
-/** Routing configuration derived from feature-flow settings. The machine routes one
+/** Routing configuration derived from featyard settings. The machine routes one
  *  step per extension advance, honoring both the UAT position and whether the review
  *  phase is enabled. */
 export interface RouteConfig {
@@ -32,9 +32,9 @@ export interface RouteConfig {
   maxFeatureReviewRounds: MaxFeatureReviewRounds;
 }
 
-/** Build the routing config from feature-flow settings. Centralizes the field selection so
+/** Build the routing config from featyard settings. Centralizes the field selection so
  *  every phase-advance call site stays in sync with the settings rename. */
-export function toRouteConfig(settings: FeatureFlowSettings): RouteConfig {
+export function toRouteConfig(settings: FeatyardSettings): RouteConfig {
   return {
     uatMode: settings.uatMode,
     maxFeatureReviewRounds: settings.maxFeatureReviewRounds,

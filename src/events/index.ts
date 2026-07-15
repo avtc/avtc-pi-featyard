@@ -8,14 +8,14 @@
  * (registerAllEvents), replacing the register calls that were inline in src/index.ts.
  * Registration order is preserved (handlers fire in registration order).
  *
- * The three homes for feature-flow entry points:
+ * The three homes for featyard entry points:
  *   tools/  = native tool registrations (the agent calls these — pull model)
  *   events/ = reactive pi.on handlers (pi emits these — push model) ← THIS FOLDER
  *   domain/ = the actual logic (state, gating, phases, kanban, ...)
  *
  * All pi.on handlers are now registered via this manifest EXCEPT a small number
  * of deliberate domain co-handlers that register their own pi.on because the
- * event IS their domain concern (not feature-flow core routing):
+ * event IS their domain concern (not featyard core routing):
  *   - worktrees/worktree-interception.ts: tool_call (path-rewrite) + before_agent_start (CWD)
  *   - kanban/kanban-events.ts: tool_result (auto-agent heartbeat)
  * These are called from events/index.ts (registerWorktreeInterception) or from
@@ -41,7 +41,7 @@ import { registerToolCall } from "./tool/tool-call.js";
 import { registerToolResult } from "./tool/tool-result.js";
 
 /**
- * Register all feature-flow pi.on event handlers. Called once from the composition root
+ * Register all featyard pi.on event handlers. Called once from the composition root
  * (src/index.ts) after the domain singletons are constructed. Handlers fire in
  * registration order.
  */
@@ -58,7 +58,7 @@ export function registerAllEvents(deps: EventDeps): void {
   registerToolCall(pi, guardrails, handler);
   registerToolResult(pi, guardrails, handler);
 
-  // context → {{PI_FF_*}} substitution in <skill> blocks — events/session/
+  // context → {{PI_FY_*}} substitution in <skill> blocks — events/session/
   registerContext(pi);
 
   // model_select → capture active model for kanban title/topic generation — events/session/
@@ -76,7 +76,7 @@ export function registerAllEvents(deps: EventDeps): void {
   // session_shutdown (clear pending follow-up + stop archive timer) — events/session/
   registerSessionShutdown(pi, compaction);
 
-  // ff:reset command + globalThis workflow-monitor bridge are wired separately from
+  // fy:reset command + globalThis workflow-monitor bridge are wired separately from
   // index.ts (registerSessionLifecycleCommands + wireSessionLifecycleBridge); the
   // session_start/session_tree pi.on registrations live here.
 

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { isPhaseActive, isPhaseDone, PhaseProgression } from "../../src/phases/phase-progression.js";
 import type { RouteConfig } from "../../src/phases/workflow-router.js";
 import { routeNext, toRouteConfig, WorkflowRouter } from "../../src/phases/workflow-router.js";
-import type { FeatureFlowSettings } from "../../src/settings/settings-ui.js";
+import type { FeatyardSettings } from "../../src/settings/settings-ui.js";
 
 // Helper: build a minimal PhaseProgressionView from state for the status predicates.
 function view(state: { currentPhase: import("../../src/phases/phase-progression.js").Phase | null }) {
@@ -62,7 +62,7 @@ describe("routeNext (pure routing decision)", () => {
 
 describe("toRouteConfig (settings → config)", () => {
   test("maps uatMode + maxFeatureReviewRounds from settings", () => {
-    const settings = { uatMode: "after-review", maxFeatureReviewRounds: 3 } as FeatureFlowSettings;
+    const settings = { uatMode: "after-review", maxFeatureReviewRounds: 3 } as FeatyardSettings;
     expect(toRouteConfig(settings)).toEqual({ uatMode: "after-review", maxFeatureReviewRounds: 3 });
   });
 });

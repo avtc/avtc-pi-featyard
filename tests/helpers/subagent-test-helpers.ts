@@ -3,7 +3,7 @@
 
 /** Shared test helpers for subagent extension tests. */
 
-import type { FeatureFlowSettings } from "../../src/settings/settings-types.js";
+import type { FeatyardSettings } from "../../src/settings/settings-types.js";
 import { _setGetSettings } from "../../src/settings/settings-ui.js";
 import { defaultSettings } from "./settings-test-helpers.js";
 
@@ -41,7 +41,7 @@ export const ZERO_USAGE = {
 /**
  * Set subagent-related settings for testing.
  * Injects a mock settings source (schema defaults + subagent overrides) via the DI hook, then
- * mirrors the subagent-relevant overrides into the PI_FF_SETTINGS env var (pi-subagent reads
+ * mirrors the subagent-relevant overrides into the PI_FY_SETTINGS env var (pi-subagent reads
  * those from its own settings-ui handle, which loads from the env var).
  */
 export function setSubagentTestSettings(overrides: Record<string, unknown> | null) {
@@ -52,15 +52,15 @@ export function setSubagentTestSettings(overrides: Record<string, unknown> | nul
     maxSubagentDepth: 3,
     ...(overrides ?? {}),
   };
-  // Inject feature-flow settings via the mock-DI hook (defaults + subagent overrides).
-  const ff = defaultSettings(settings as Partial<FeatureFlowSettings> | null);
-  _setGetSettings(() => ff);
+  // Inject featyard settings via the mock-DI hook (defaults + subagent overrides).
+  const featyard = defaultSettings(settings as Partial<FeatyardSettings> | null);
+  _setGetSettings(() => featyard);
   // Mirror into the env var for pi-subagent's own settings-ui handle.
-  process.env.PI_FF_SETTINGS = JSON.stringify(ff);
+  process.env.PI_FY_SETTINGS = JSON.stringify(featyard);
 }
 
 /** Reset settings set by setSubagentTestSettings. */
 export function resetSubagentTestSettings() {
   _setGetSettings(null);
-  delete process.env.PI_FF_SETTINGS;
+  delete process.env.PI_FY_SETTINGS;
 }

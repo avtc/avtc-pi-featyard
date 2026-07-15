@@ -32,17 +32,17 @@ describe("onPhaseChange captures baseCommitSha on execute phase entry", () => {
     setTestSettings(null);
     withTempCwd();
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setGitRunner(fakeRunner("deadbeef1234567890abcdef1234567890abcdef", "main"));
   });
 
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setGitRunner(defaultGitRunner);
   });
 
-  test("captures baseCommitSha when entering execute phase via /skill:ff-implement", async () => {
+  test("captures baseCommitSha when entering execute phase via /skill:fy-implement", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -59,7 +59,9 @@ describe("onPhaseChange captures baseCommitSha on execute phase entry", () => {
     // Trigger execute phase via input gating
     const onInput = getSingleHandler(fake.handlers, "input");
     onInput(
-      { text: "/skill:ff-implement .ff/task-plans/2026-05-10-my-feature-task-plan.md" } as unknown as ExtensionEvent,
+      {
+        text: "/skill:fy-implement .featyard/task-plans/2026-05-10-my-feature-task-plan.md",
+      } as unknown as ExtensionEvent,
       {} as unknown as ExtensionContext,
     );
 
@@ -85,7 +87,9 @@ describe("onPhaseChange captures baseCommitSha on execute phase entry", () => {
 
     const onInput = getSingleHandler(fake.handlers, "input");
     onInput(
-      { text: "/skill:ff-implement .ff/task-plans/2026-05-10-my-feature-task-plan.md" } as unknown as ExtensionEvent,
+      {
+        text: "/skill:fy-implement .featyard/task-plans/2026-05-10-my-feature-task-plan.md",
+      } as unknown as ExtensionEvent,
       {} as unknown as ExtensionContext,
     );
 
@@ -98,7 +102,9 @@ describe("onPhaseChange captures baseCommitSha on execute phase entry", () => {
 
     // Trigger execute phase again (e.g., session reload)
     onInput(
-      { text: "/skill:ff-implement .ff/task-plans/2026-05-10-my-feature-task-plan.md" } as unknown as ExtensionEvent,
+      {
+        text: "/skill:fy-implement .featyard/task-plans/2026-05-10-my-feature-task-plan.md",
+      } as unknown as ExtensionEvent,
       {} as unknown as ExtensionContext,
     );
 
@@ -138,7 +144,7 @@ describe("onPhaseChange callback directly triggers baseCommitSha capture", () =>
   test("captures baseCommitSha when setCurrentPhaseDirect('execute') fires onPhaseChange", () => {
     const slug = "2026-06-06-direct-test";
 
-    const state = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const state = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     saveFeatureState(state, null);
 
     const handler = createHandlerWithCallback();
@@ -155,7 +161,7 @@ describe("onPhaseChange callback directly triggers baseCommitSha capture", () =>
   test("does not capture baseCommitSha when phase changes to non-execute phase", () => {
     const slug = "2026-06-06-non-execute-test";
 
-    const state = createFeatureState(slug, `docs/ff/designs/${slug}-design.md`);
+    const state = createFeatureState(slug, `docs/featyard/designs/${slug}-design.md`);
     saveFeatureState(state, null);
 
     const handler = createHandlerWithCallback();

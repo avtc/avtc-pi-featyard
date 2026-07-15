@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Phase progression — pure pointer math over the ordered feature-flow phases.
+ * Phase progression — pure pointer math over the ordered featyard phases.
  *
  * Models the agent's position in a fixed phase sequence
  * (design → plan → implement → verify → review → uat → finish) as a single
@@ -26,9 +26,9 @@
 
 import type { CustomEntry, SessionEntry } from "@earendil-works/pi-coding-agent";
 import { log } from "../log.js";
-import { DESIGN_DOC_DIRS, FF_TASK_PLANS_DIR } from "../state/artifact-paths.js";
+import { DESIGN_DOC_DIRS, FY_TASK_PLANS_DIR } from "../state/artifact-paths.js";
 
-/** The ordered feature-flow phases. */
+/** The ordered featyard phases. */
 export const WORKFLOW_PHASES = ["design", "plan", "implement", "verify", "review", "uat", "finish"] as const;
 
 /** A single phase in the sequence. */
@@ -42,25 +42,25 @@ export const FRESH_START_BLOCKED: ReadonlySet<Phase> = new Set(["verify", "revie
 
 /** Skill name → phase. A skill invocation drives progression to its phase. */
 export const SKILL_TO_PHASE: Record<string, Phase> = {
-  "ff-design": "design",
-  "ff-plan": "plan",
-  "ff-implement": "implement",
-  "ff-verify": "verify",
-  "ff-review": "review",
-  "ff-design-review": "design",
-  "ff-plan-review": "plan",
-  "ff-finish": "finish",
+  "fy-design": "design",
+  "fy-plan": "plan",
+  "fy-implement": "implement",
+  "fy-verify": "verify",
+  "fy-review": "review",
+  "fy-design-review": "design",
+  "fy-plan-review": "plan",
+  "fy-finish": "finish",
 };
 
 /** Phase → canonical skill name (inverse of the driver subset). */
 export const PHASE_TO_SKILL: Record<Phase, string> = {
-  design: "ff-design",
-  plan: "ff-plan",
-  implement: "ff-implement",
-  verify: "ff-verify",
-  review: "ff-review",
-  uat: "ff-review",
-  finish: "ff-finish",
+  design: "fy-design",
+  plan: "fy-plan",
+  implement: "fy-implement",
+  verify: "fy-verify",
+  review: "fy-review",
+  uat: "fy-review",
+  finish: "fy-finish",
 };
 
 /** Resolve a skill name for a phase, falling back to the phase name. */
@@ -181,7 +181,7 @@ export class PhaseProgression {
 
   /**
    * Atomically move the pointer to a target. NO guards — used by user moves
-   * (skill / ff:next) and by WorkflowRouter.completeCurrent. Forward jumps
+   * (skill / fy:next) and by WorkflowRouter.completeCurrent. Forward jumps
    * implicitly complete the jumped phases (derived); backward moves implicitly
    * reset the target-onward phases (derived). Same-phase re-entry is a no-op.
    * Returns true when the pointer changed.
@@ -221,15 +221,15 @@ export class PhaseProgression {
   }
 
   /**
-   * Detect artifact writes. A design doc (`-design.md` under the design-doc dir — docs/ff/designs/
-   * when committed, .ff/designs/ when local) or a task-plan (`-task-plan.md` under .ff/task-plans/)
+   * Detect artifact writes. A design doc (`-design.md` under the design-doc dir — docs/featyard/designs/
+   * when committed, .featyard/designs/ when local) or a task-plan (`-task-plan.md` under .featyard/task-plans/)
    * is recorded into the machine's doc slots. Never moves the pointer. Returns true if recorded.
    */
   onFileWritten(filePath: string): boolean {
     if (DESIGN_DOC.test(filePath) && DESIGN_DOC_DIRS.some((d) => isInsideDir(filePath, d))) {
       return this.recordDoc("design", filePath);
     }
-    if (TASK_PLAN_DOC.test(filePath) && isInsideDir(filePath, FF_TASK_PLANS_DIR)) {
+    if (TASK_PLAN_DOC.test(filePath) && isInsideDir(filePath, FY_TASK_PLANS_DIR)) {
       return this.recordDoc("plan", filePath);
     }
     return false;

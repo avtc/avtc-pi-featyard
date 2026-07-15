@@ -8,8 +8,8 @@
  * Three entry points share a common bootstrap skeleton (load-or-create +
  * optional kanban-link + activate + track + setPhase):
  *  - {@link activateFromDocWrite}   — design/plan doc WRITE (tool_call path)
- *  - {@link activateFromPlanSkill}  — ff-implement skill invocation (plan-doc source)
- *  - {@link activateFromDesignSkill} — ff-plan / ff-design skill invocation (design-doc source)
+ *  - {@link activateFromPlanSkill}  — fy-implement skill invocation (plan-doc source)
+ *  - {@link activateFromDesignSkill} — fy-plan / fy-design skill invocation (design-doc source)
  *
  * The guardrails engine and the events/input router call these; the activation
  * logic itself has no knowledge of pi.on events.
@@ -177,9 +177,9 @@ export async function activateFromDocWrite(
 }
 
 /**
- * Activate a feature from an ff-implement skill invocation (plan-doc source).
+ * Activate a feature from an fy-implement skill invocation (plan-doc source).
  * Creates from the plan-doc path if no state exists; sets phase to "plan".
- * No kanban linking (the plan-doc write path or a later ff-plan handles that).
+ * No kanban linking (the plan-doc write path or a later fy-plan handles that).
  */
 export function activateFromPlanSkill(
   ctx: ExtensionContext,
@@ -202,9 +202,9 @@ export function activateFromPlanSkill(
 }
 
 /**
- * Activate a feature from an ff-plan / ff-design skill invocation (design-doc
+ * Activate a feature from an fy-plan / fy-design skill invocation (design-doc
  * source). Activates an existing feature or creates + kanban-links a new one,
- * then advances to the target phase (plan for ff-plan, design for ff-design).
+ * then advances to the target phase (plan for fy-plan, design for fy-design).
  * Uses the SYNC main-repo resolver (no git exec / ActivationDeps needed).
  */
 export async function activateFromDesignSkill(
@@ -231,7 +231,7 @@ export async function activateFromDesignSkill(
   await linkToKanbanSync(featureState, slug, lane);
   activateInHandler(ctx, handler, featureState, slug);
   // createFeatureState starts at "design"; advance to plan when invoked via
-  // ff-plan (the design doc already exists → design effectively complete).
+  // fy-plan (the design doc already exists → design effectively complete).
   if (targetPhase === "plan") {
     handler.setCurrentPhase("plan");
   }

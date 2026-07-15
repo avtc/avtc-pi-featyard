@@ -19,7 +19,7 @@ describe("startReviewIteration", () => {
 
   afterEach(() => {
     clearFeatureStateCache();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     vi.restoreAllMocks();
   });
 
@@ -30,7 +30,7 @@ describe("startReviewIteration", () => {
     return {
       setReviewActiveFlag: (phase: string, value: boolean) => reviewActiveCalls.push({ phase, value }),
       getActiveFeatureState: () => {
-        const slug = process.env.PI_FF_FEATURE;
+        const slug = process.env.PI_FY_FEATURE;
         return slug ? loadFeatureState(slug, null) : null;
       },
     } as unknown as FeatureSession;

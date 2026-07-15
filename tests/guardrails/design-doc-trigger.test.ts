@@ -30,7 +30,7 @@ describe("design doc creates feature state file", () => {
         type: "tool_call",
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-08-test-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-08-test-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -43,7 +43,7 @@ describe("design doc creates feature state file", () => {
     expect(getActiveFeatureSlug()).toBe("2026-05-08-test-feature");
 
     // Verify the state file was created
-    const statePath = path.join(tempDir, ".ff", "feature-state", "2026-05-08-test-feature.json");
+    const statePath = path.join(tempDir, ".featyard", "feature-state", "2026-05-08-test-feature.json");
     expect(fs.existsSync(statePath)).toBe(true);
 
     // Verify the state file contents
@@ -51,15 +51,15 @@ describe("design doc creates feature state file", () => {
     expect(state).not.toBeNull();
     expect(state?.completedAt).toBeNull();
     expect(state?.featureSlug).toBe("2026-05-08-test-feature");
-    expect(state?.workflow.designDoc).toBe("docs/ff/designs/2026-05-08-test-feature-design.md");
+    expect(state?.workflow.designDoc).toBe("docs/featyard/designs/2026-05-08-test-feature-design.md");
   });
 
-  test("writing a design doc sets PI_FF_FEATURE env var", async () => {
+  test("writing a design doc sets PI_FY_FEATURE env var", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     // Clean env
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
 
@@ -68,7 +68,7 @@ describe("design doc creates feature state file", () => {
         type: "tool_call",
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-08-another-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-08-another-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -77,7 +77,7 @@ describe("design doc creates feature state file", () => {
       } as unknown as ExtensionContext,
     );
 
-    expect(process.env.PI_FF_FEATURE).toBe("2026-05-08-another-feature");
+    expect(process.env.PI_FY_FEATURE).toBe("2026-05-08-another-feature");
   });
 
   test("writing a non-design doc does not create feature state", async () => {
@@ -116,11 +116,11 @@ describe("design doc re-activates an existing feature with no active handler (re
     const slug = writeFeatureStateFile("2026-06-24-rpc-subagent-mode", {
       workflow: {
         currentPhase: "design",
-        designDoc: "docs/ff/designs/2026-06-24-rpc-subagent-mode-design.md",
+        designDoc: "docs/featyard/designs/2026-06-24-rpc-subagent-mode-design.md",
         planDoc: null,
       },
       design: {
-        doc: "docs/ff/designs/2026-06-24-rpc-subagent-mode-design.md",
+        doc: "docs/featyard/designs/2026-06-24-rpc-subagent-mode-design.md",
         reviewActive: false,
         reviewLoopCount: 0,
       },
@@ -139,7 +139,7 @@ describe("design doc re-activates an existing feature with no active handler (re
         type: "tool_call",
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: `docs/ff/designs/${slug}-design.md` },
+        input: { path: `docs/featyard/designs/${slug}-design.md` },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -150,7 +150,7 @@ describe("design doc re-activates an existing feature with no active handler (re
 
     // The existing feature must be re-activated.
     expect(getActiveFeatureSlug()).toBe(slug);
-    expect(process.env.PI_FF_FEATURE).toBe(slug);
+    expect(process.env.PI_FY_FEATURE).toBe(slug);
 
     // Re-activation reuses the existing durable record (featureId preserved).
     const state = loadFeatureState(slug, null);
@@ -179,7 +179,7 @@ describe("design doc create links kanban featureId on the active + persisted sta
         type: "tool_call",
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-06-24-rpc-probe-design.md" },
+        input: { path: "docs/featyard/designs/2026-06-24-rpc-probe-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -208,7 +208,7 @@ describe("design doc create links kanban featureId on the active + persisted sta
       expect(loadFeatureState(slug, null)?.featureId).toBe(card?.id);
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 });
@@ -246,7 +246,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-0",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -264,7 +264,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-sub-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-sub-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -283,17 +283,17 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           "design",
         ),
       ).toBe(true);
-      expect(subState?.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
+      expect(subState?.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
       expect(subState?.featureId).toBe(subFeatureId);
       // Verify active feature is unchanged — agent stays on main feature
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
       // Verify kanban feature columns were updated
       const updatedFeature = db.getFeature(subFeatureId);
       expect(updatedFeature?.state_file).toContain("2026-05-22-sub-feature");
-      expect(updatedFeature?.design_doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
+      expect(updatedFeature?.design_doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -323,7 +323,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-0",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -347,7 +347,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-sub-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-sub-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -359,13 +359,13 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       // Verify existing state was updated (not replaced)
       const subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
-      expect(subState?.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
+      expect(subState?.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
       expect(subState?.featureId).toBe(subFeatureId);
       // Active feature still main
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -379,7 +379,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       {
         toolCallId: "call-0",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -398,7 +398,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-hallucinated-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-hallucinated-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -413,7 +413,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       // Active feature should still be main
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -430,7 +430,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         type: "tool_call",
         toolCallId: "call-0",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -447,7 +447,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-other-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-other-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -461,7 +461,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       expect(otherState).toBeNull();
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -490,7 +490,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         type: "tool_call",
         toolCallId: "call-0",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -507,7 +507,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-sub-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-sub-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -521,7 +521,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -557,7 +557,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         type: "tool_call",
         toolCallId: "call-0",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -574,7 +574,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-sub-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-sub-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -585,7 +585,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
 
       let subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
-      expect(subState?.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
+      expect(subState?.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
       expect(subState?.plan.doc).toBeNull();
       expect(subState?.featureId).toBe(subFeatureId);
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
@@ -595,7 +595,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-2",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-sub-feature-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-sub-feature-task-plan.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -607,14 +607,14 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
       // Both artifacts preserved
-      expect(subState?.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
-      expect(subState?.plan.doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(subState?.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
+      expect(subState?.plan.doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
       expect(subState?.featureId).toBe(subFeatureId);
       // Main feature still active
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -638,7 +638,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         type: "tool_call",
         toolCallId: "call-0",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -655,7 +655,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-sub-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-sub-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -666,7 +666,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
 
       let subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
-      expect(subState?.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
+      expect(subState?.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
 
       // Second write: design doc again with a different path — should NOT overwrite
       await onToolCall(
@@ -686,11 +686,11 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
       // Should still be the first path — guard prevented overwrite
-      expect(subState?.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
+      expect(subState?.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 
@@ -714,7 +714,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         type: "tool_call",
         toolCallId: "call-0",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-05-22-main-feature-design.md" },
+        input: { path: "docs/featyard/designs/2026-05-22-main-feature-design.md" },
       } as unknown as ExtensionEvent,
       {
         hasUI: false,
@@ -731,7 +731,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
           type: "tool_call",
           toolCallId: "call-1",
           toolName: "write",
-          input: { path: ".ff/task-plans/2026-05-22-sub-feature-task-plan.md" },
+          input: { path: ".featyard/task-plans/2026-05-22-sub-feature-task-plan.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -742,7 +742,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
 
       let subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
-      expect(subState?.plan.doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(subState?.plan.doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
       expect(subState?.design.doc).toBeNull();
 
       // Step 2: Write design doc for same sub-feature → updates existing state with design artifact
@@ -750,7 +750,7 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
         {
           toolCallId: "call-2",
           toolName: "write",
-          input: { path: "docs/ff/designs/2026-05-22-sub-feature-design.md" },
+          input: { path: "docs/featyard/designs/2026-05-22-sub-feature-design.md" },
         } as unknown as ExtensionEvent,
         {
           hasUI: false,
@@ -762,12 +762,12 @@ describe("design doc isAlreadyActive — kanban sub-feature check", () => {
       subState = loadFeatureState("2026-05-22-sub-feature", null);
       expect(subState).not.toBeNull();
       // Both artifacts preserved
-      expect(subState?.design.doc).toBe("docs/ff/designs/2026-05-22-sub-feature-design.md");
-      expect(subState?.plan.doc).toBe(".ff/task-plans/2026-05-22-sub-feature-task-plan.md");
+      expect(subState?.design.doc).toBe("docs/featyard/designs/2026-05-22-sub-feature-design.md");
+      expect(subState?.plan.doc).toBe(".featyard/task-plans/2026-05-22-sub-feature-task-plan.md");
       expect(getActiveFeatureSlug()).toBe("2026-05-22-main-feature");
     } finally {
       resetInstances();
-      delete process.env.PI_FF_FEATURE;
+      delete process.env.PI_FY_FEATURE;
     }
   });
 });

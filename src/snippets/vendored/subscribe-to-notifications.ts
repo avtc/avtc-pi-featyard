@@ -23,7 +23,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
  * and one active session (so one lastMessage), observed identically by every
  * subscriber. Listener unsubs are NOT shared: each subscribeToNotificationApi() call
  * owns its own local closure unsubs, so multiple subscribers (ui-components,
- * ask-user-question, feature-flow) don't clobber each other's cleanup.
+ * ask-user-question, featyard) don't clobber each other's cleanup.
  */
 interface NotificationForwardingState {
   requestAttention: ((source: string, detail?: string) => (() => void) | undefined) | null;

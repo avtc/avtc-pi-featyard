@@ -44,7 +44,7 @@ describe("design review loop — full lifecycle integration", () => {
   afterEach(async () => {
     _resetFeatureState();
     delete globalThis.__piCtx;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setSetting("maxPlanReviewRounds", 0);
     setSetting("minReviewLoops", 0);
   });
@@ -59,15 +59,19 @@ describe("design review loop — full lifecycle integration", () => {
       ...BRAINSTORM_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
-        designDoc: "docs/ff/designs/integration-test-feature-design.md",
+        designDoc: "docs/featyard/designs/integration-test-feature-design.md",
         planDoc: null,
       },
-      design: { doc: "docs/ff/designs/integration-test-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
+      design: {
+        doc: "docs/featyard/designs/integration-test-feature-design.md",
+        reviewActive: false,
+        reviewLoopCount: 0,
+      },
     });
 
     // Create design doc for artifact recovery
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/integration-test-feature-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/integration-test-feature-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -95,10 +99,10 @@ describe("design review loop — full lifecycle integration", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const followUp0 = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(followUp0.message).toContain("ff-design-review");
+    expect(followUp0.message).toContain("fy-design-review");
     expect(followUp0.message).toContain("**Feature:** `integration-test-feature`");
     expect(followUp0.message).toContain("**Review loop:** `0`");
-    expect(followUp0.message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FF_REVIEW_METHOD}}
+    expect(followUp0.message).toContain("Dispatch reviewer"); // review method substituted into {{PI_FY_REVIEW_METHOD}}
     expect((followUp0?.options as { deliverAs?: string } | undefined)?.deliverAs).toBe("followUp");
 
     // Simulate agent turn ending before the next review iteration
@@ -119,7 +123,7 @@ describe("design review loop — full lifecycle integration", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const followUp1 = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(followUp1.message).toContain("ff-design-review");
+    expect(followUp1.message).toContain("fy-design-review");
     expect(followUp1.message).toContain("**Review loop:** `1`");
     expect(followUp1.message).toContain("integration-test-feature");
     expect((followUp1?.options as { deliverAs?: string } | undefined)?.deliverAs).toBe("followUp");
@@ -183,7 +187,7 @@ describe("design review loop — full lifecycle integration", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain("ff-plan");
+    expect(lastMessage.message).toContain("fy-plan");
   });
 
   test("full lifecycle: plan review loop — interceptor → phase_ready loop → phase_ready no-loop", async () => {
@@ -211,7 +215,7 @@ describe("design review loop — full lifecycle integration", () => {
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     const followUp0 = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(followUp0.message).toContain("ff-plan-review");
+    expect(followUp0.message).toContain("fy-plan-review");
     expect(followUp0.message).toContain("**Feature:** `plan-integration-feature`");
     expect(followUp0.message).toContain("**Review loop:** `0`");
     expect((followUp0?.options as { deliverAs?: string } | undefined)?.deliverAs).toBe("followUp");
@@ -265,12 +269,16 @@ describe("design review loop — full lifecycle integration", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("min-loop-feature", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/min-loop-feature-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/min-loop-feature-design.md", reviewActive: false, reviewLoopCount: 1 },
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/min-loop-feature-design.md",
+        planDoc: null,
+      },
+      design: { doc: "docs/featyard/designs/min-loop-feature-design.md", reviewActive: false, reviewLoopCount: 1 },
     });
 
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/min-loop-feature-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/min-loop-feature-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -347,12 +355,12 @@ describe("design review loop — full lifecycle integration", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("off-feature", {
       ...BRAINSTORM_ACTIVE_STATE,
-      workflow: { currentPhase: "design", designDoc: "docs/ff/designs/off-feature-design.md", planDoc: null },
-      design: { doc: "docs/ff/designs/off-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
+      workflow: { currentPhase: "design", designDoc: "docs/featyard/designs/off-feature-design.md", planDoc: null },
+      design: { doc: "docs/featyard/designs/off-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
     });
 
-    fs.mkdirSync("docs/ff/designs", { recursive: true });
-    fs.writeFileSync("docs/ff/designs/off-feature-design.md", "# Design");
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/off-feature-design.md", "# Design");
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -392,8 +400,8 @@ describe("design review loop — full lifecycle integration", () => {
     // No review skill followUp sent
     const reviewMessages = fake.sentMessages.filter(
       (m: unknown) =>
-        (m as { message: string }).message.includes("ff-design-review") ||
-        (m as { message: string }).message.includes("ff-plan-review"),
+        (m as { message: string }).message.includes("fy-design-review") ||
+        (m as { message: string }).message.includes("fy-plan-review"),
     );
     expect(reviewMessages).toHaveLength(0);
   });

@@ -6,7 +6,7 @@
  * when the plan phase completes.
  *
  * Reads `implementMode` from settings and advances to the implement
- * phase: creates a worktree if needed, then dispatches the ff-implement
+ * phase: creates a worktree if needed, then dispatches the fy-implement
  * skill in the current session (checkpoint / subagent / subagent-fork modes).
  *
  * No interactive dialog — the mode always comes from settings.
@@ -21,7 +21,7 @@ import type { FeatureSession } from "../state/feature-session.js";
 import { DEFAULT_DIR, type ExpandSkillCommandFn, type FeatureState, saveFeatureState } from "../state/feature-state.js";
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
 import { persistState } from "../state/state-persistence.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 
 export interface ExecutionModeDeps {
   pi: ExtensionAPI;
@@ -39,7 +39,7 @@ export function createExecutionModeApplier(deps: ExecutionModeDeps) {
   /**
    * Apply the settings-configured execution mode and advance plan → implement.
    * Advances to implement, ensures a worktree when needed, and dispatches the
-   * ff-implement skill in the current session.
+   * fy-implement skill in the current session.
    */
   async function applyExecutionMode(ctx: ExtensionContext): Promise<void> {
     const ws = handler.getWorkflowState();
@@ -66,13 +66,13 @@ export function createExecutionModeApplier(deps: ExecutionModeDeps) {
           // Worktree setup failed in worktree mode. Execution cannot fall back to the main
           // repo here (the implementer is dispatched into the worktree with path-rewriting
           // interception), and the failure was already notified + logged inside
-          // ensureWorktreeForExecution. Halt: do NOT dispatch the ff-implement skill.
+          // ensureWorktreeForExecution. Halt: do NOT dispatch the fy-implement skill.
           return;
         }
       }
     }
 
-    schedulePostTurnFollowUp(expandSkillCommand("/skill:ff-implement", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
+    schedulePostTurnFollowUp(expandSkillCommand("/skill:fy-implement", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
   }
 
   return applyExecutionMode;

@@ -31,7 +31,7 @@ describe("session_compact skill injection", () => {
     withTempCwd();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     enableSubagentMode();
   });
 
@@ -40,16 +40,16 @@ describe("session_compact skill injection", () => {
     vi.useRealTimers();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("injects skill message after compaction when execute phase is active", async () => {
     const slug = "test-checkpoint";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -61,14 +61,14 @@ describe("session_compact skill injection", () => {
         completedAt: null,
         workflow: {
           currentPhase: "implement",
-          designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-          planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+          planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
         },
         tdd: { stage: "none", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         verification: { passed: false, waived: false },
-        design: { doc: "docs/ff/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+        design: { doc: "docs/featyard/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
         plan: {
-          doc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          doc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
           verifyLoopCount: 0,
           reviewActive: false,
           reviewLoopCount: 0,
@@ -111,7 +111,7 @@ describe("session_compact skill injection", () => {
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
 
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
     expect(sendUserMessageCalls[0]).toContain("compacted");
   });
 
@@ -239,7 +239,7 @@ describe("session_compact skill injection", () => {
     // Advance to execute phase
     const onInput = getSingleHandler(fake.handlers, "input");
     onInput(
-      { type: "input", text: "/skill:ff-implement" } as unknown as ExtensionEvent,
+      { type: "input", text: "/skill:fy-implement" } as unknown as ExtensionEvent,
       { hasUI: false } as unknown as ExtensionContext,
     );
 
@@ -260,7 +260,7 @@ describe("session_compact skill injection", () => {
 
     // Should inject skill + stored message
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
     expect(sendUserMessageCalls[0]).toContain("Custom followUp from task-tracker");
 
     // Stored message should be deleted
@@ -276,17 +276,17 @@ describe("session_compact skill injection", () => {
     );
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
     expect(sendUserMessageCalls.length).toBe(2);
-    expect(sendUserMessageCalls[1]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[1]).toMatch(/^<skill name="fy-implement"/);
     expect(sendUserMessageCalls[1]).not.toContain("Custom followUp");
   });
 
   test("skips injection when agent just finished (human's turn)", async () => {
     const slug = "test-checkpoint";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -298,14 +298,14 @@ describe("session_compact skill injection", () => {
         completedAt: null,
         workflow: {
           currentPhase: "implement",
-          designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-          planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+          planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
         },
         tdd: { stage: "none", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         verification: { passed: false, waived: false },
-        design: { doc: "docs/ff/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+        design: { doc: "docs/featyard/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
         plan: {
-          doc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          doc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
           verifyLoopCount: 0,
           reviewActive: false,
           reviewLoopCount: 0,
@@ -355,11 +355,11 @@ describe("session_compact skill injection", () => {
 
   test("injects after compaction when agent_start reset the flag (LLM's turn)", async () => {
     const slug = "test-checkpoint";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -371,14 +371,14 @@ describe("session_compact skill injection", () => {
         completedAt: null,
         workflow: {
           currentPhase: "implement",
-          designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-          planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+          planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
         },
         tdd: { stage: "none", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         verification: { passed: false, waived: false },
-        design: { doc: "docs/ff/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+        design: { doc: "docs/featyard/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
         plan: {
-          doc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          doc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
           verifyLoopCount: 0,
           reviewActive: false,
           reviewLoopCount: 0,
@@ -428,14 +428,14 @@ describe("session_compact skill injection", () => {
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
 
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
   });
 });
 
 describe("session_compact review skill injection", () => {
   function createReviewPhaseState(slug: string) {
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -447,14 +447,14 @@ describe("session_compact review skill injection", () => {
         completedAt: null,
         workflow: {
           currentPhase: "review",
-          designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-          planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+          planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
         },
         tdd: { stage: "none", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         verification: { passed: true, waived: false },
-        design: { doc: "docs/ff/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+        design: { doc: "docs/featyard/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
         plan: {
-          doc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          doc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
           verifyLoopCount: 0,
           reviewActive: false,
           reviewLoopCount: 0,
@@ -474,7 +474,7 @@ describe("session_compact review skill injection", () => {
     vi.useFakeTimers();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   afterEach(() => {
@@ -482,12 +482,12 @@ describe("session_compact review skill injection", () => {
     vi.useRealTimers();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
-  test("injects ff-review when featureReviewMode is comprehensive and maxFeatureReviewRounds is on", async () => {
+  test("injects fy-review when featureReviewMode is comprehensive and maxFeatureReviewRounds is on", async () => {
     const slug = "test-review-compact";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const sendUserMessageCalls: string[] = [];
     const fake = createFakePi();
@@ -522,13 +522,13 @@ describe("session_compact review skill injection", () => {
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
 
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-review"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-review"/);
     expect(sendUserMessageCalls[0]).toContain("review");
   });
 
-  test("injects ff-review when featureReviewMode is general and maxFeatureReviewRounds is on", async () => {
+  test("injects fy-review when featureReviewMode is general and maxFeatureReviewRounds is on", async () => {
     const slug = "test-review-compact";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const sendUserMessageCalls: string[] = [];
     const fake = createFakePi();
@@ -563,12 +563,12 @@ describe("session_compact review skill injection", () => {
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
 
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-review"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-review"/);
   });
 
   test("injects no skill when maxFeatureReviewRounds is off (review skipped)", async () => {
     const slug = "test-review-compact";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const sendUserMessageCalls: string[] = [];
     const fake = createFakePi();
@@ -614,7 +614,7 @@ describe("session_compact iteration skill injection", () => {
     withTempCwd();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   afterEach(() => {
@@ -622,16 +622,16 @@ describe("session_compact iteration skill injection", () => {
     vi.useRealTimers();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("injects design-review with context during design review", async () => {
     const slug = "test-design-compact-iter";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -683,21 +683,23 @@ describe("session_compact iteration skill injection", () => {
 
     expect(sendUserMessageCalls.length).toBe(1);
     const message = sendUserMessageCalls[0];
-    expect(message).toMatch(/^<skill name="ff-design-review"/);
+    expect(message).toMatch(/^<skill name="fy-design-review"/);
     expect(message).toContain(`**Feature:** \`${slug}\``);
     expect(message).toContain("**Review loop:** `0`");
-    expect(message).toContain(".ff/reviews/test-design-compact-iter/test-design-compact-iter-design-known-issues.md");
+    expect(message).toContain(
+      ".featyard/reviews/test-design-compact-iter/test-design-compact-iter-design-known-issues.md",
+    );
     expect(message).toContain("compacted");
-    expect(message).not.toContain("{{PI_FF_");
+    expect(message).not.toContain("{{PI_FY_");
   });
 
   test("injects plan-review with context during plan review", async () => {
     const slug = "test-plan-compact-iter";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -709,12 +711,12 @@ describe("session_compact iteration skill injection", () => {
         completedAt: null,
         workflow: {
           currentPhase: "plan",
-          designDoc: "docs/ff/designs/2026-05-10-test-design.md",
+          designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
           planDoc: null,
         },
         tdd: { stage: "none", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         verification: { passed: false, waived: false },
-        design: { doc: "docs/ff/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+        design: { doc: "docs/featyard/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
         plan: { doc: null, verifyLoopCount: 0, reviewActive: true, reviewLoopCount: 2 }, // plan-review in progress (1 iteration completed)
         implement: { tasks: [] },
         verify: { verifyLoopCount: 0 },
@@ -753,21 +755,21 @@ describe("session_compact iteration skill injection", () => {
 
     expect(sendUserMessageCalls.length).toBe(1);
     const message = sendUserMessageCalls[0];
-    expect(message).toMatch(/^<skill name="ff-plan-review"/);
+    expect(message).toMatch(/^<skill name="fy-plan-review"/);
     expect(message).toContain(`**Feature:** \`${slug}\``);
     expect(message).toContain("**Review loop:** `1`");
-    expect(message).toContain(".ff/reviews/test-plan-compact-iter/test-plan-compact-iter-plan-known-issues.md");
+    expect(message).toContain(".featyard/reviews/test-plan-compact-iter/test-plan-compact-iter-plan-known-issues.md");
     expect(message).toContain("compacted");
-    expect(message).not.toContain("{{PI_FF_");
+    expect(message).not.toContain("{{PI_FY_");
   });
 
   test("injects base skill when review loop count is 0 (no review active)", async () => {
     const slug = "test-design-no-review-compact";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -820,15 +822,15 @@ describe("session_compact iteration skill injection", () => {
     expect(sendUserMessageCalls.length).toBe(1);
     const message = sendUserMessageCalls[0];
     // Should inject designing (base skill), not design-review
-    expect(message).toMatch(/^<skill name="ff-design"/);
+    expect(message).toMatch(/^<skill name="fy-design"/);
     expect(message).toContain("compacted");
   });
 });
 
 describe("session_compact routing by reason (regression: manual user-initiated)", () => {
   function writeExecuteState(slug: string): void {
-    fs.mkdirSync(path.join(".ff", "feature-state"), { recursive: true });
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    fs.mkdirSync(path.join(".featyard", "feature-state"), { recursive: true });
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     fs.writeFileSync(
       statePath,
       JSON.stringify({
@@ -840,14 +842,14 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
         completedAt: null,
         workflow: {
           currentPhase: "implement",
-          designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-          planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+          planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
         },
         tdd: { stage: "none", testFiles: [], sourceFiles: [], redAwaitingConfirmation: false },
         verification: { passed: false, waived: false },
-        design: { doc: "docs/ff/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
+        design: { doc: "docs/featyard/designs/2026-05-10-test-design.md", reviewActive: false, reviewLoopCount: 0 },
         plan: {
-          doc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+          doc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
           verifyLoopCount: 0,
           reviewActive: false,
           reviewLoopCount: 0,
@@ -868,7 +870,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     withTempCwd();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     enableSubagentMode();
   });
 
@@ -877,12 +879,12 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     vi.useRealTimers();
     _resetFeatureState();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("user-initiated manual compact (reason=manual, no triggers) routes to editor, NOT sendUserMessage", async () => {
     const slug = "test-manual-compact";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
     writeExecuteState(slug);
@@ -932,12 +934,12 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     expect(sendUserMessageCalls.length).toBe(0);
     // Routes the content to the editor instead (user is in control)
     expect(editorText.length).toBe(1);
-    expect(editorText[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(editorText[0]).toMatch(/^<skill name="fy-implement"/);
   });
 
   test("extension-triggered compact (reason=manual + storedFollowUp) still injects via sendUserMessage", async () => {
     const slug = "test-extension-compact";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
     writeExecuteState(slug);
@@ -962,7 +964,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
 
     // Extension sets __piCompactFollowUp before calling ctx.compact() (review loop / inter-task compact)
     globalThis.__piCompactFollowUp = {
-      skillName: "ff-implement",
+      skillName: "fy-implement",
       message: 'Context was reset between tasks — next task: "X".',
     };
 
@@ -988,7 +990,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     // Extension-triggered compaction still auto-resumes via sendUserMessage
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
     expect(sendUserMessageCalls[0]).toContain('next task: "X"');
     expect(editorText.length).toBe(0);
     expect(globalThis.__piCompactFollowUp).toBeUndefined();
@@ -996,7 +998,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
 
   test("auto compact (reason=threshold) mid-turn injects via sendUserMessage", async () => {
     const slug = "test-auto-compact";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
     writeExecuteState(slug);
@@ -1041,7 +1043,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
 
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
     expect(editorText.length).toBe(0);
   });
 
@@ -1051,7 +1053,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     // it). It must fire only after the defer window, by which point a steer prompt would already be
     // streaming and sendUserMessage enqueues as a followUp instead of starting a competing turn.
     const slug = "test-deferred-inject";
-    process.env.PI_FF_FEATURE = slug;
+    process.env.PI_FY_FEATURE = slug;
 
     const fake = createFakePi();
     writeExecuteState(slug);
@@ -1090,6 +1092,6 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     // After the defer window: inject fires.
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
     expect(sendUserMessageCalls.length).toBe(1);
-    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="ff-implement"/);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
   });
 });

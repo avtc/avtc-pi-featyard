@@ -1,15 +1,15 @@
 # Configuration Reference
 
-avtc-pi-feature-flow has two configuration mechanisms:
+avtc-pi-featyard has two configuration mechanisms:
 
-1. **Settings Dialog** — simple scalar settings edited via the `/ff:settings` command
+1. **Settings Dialog** — simple scalar settings edited via the `/fy:settings` command
 2. **Model Overrides** — per-stage model selection (per-subagent selection is in avtc-pi-subagent) configured in pi's `settings.json`
 
 ---
 
 ## Settings Dialog
 
-Open with `/ff:settings` in your pi session. Settings are organized into tabs: Workflow, Review, Kanban & Auto-Agent, Limits & Concurrency, Artifacts, Guardrails. Changes apply immediately. Press `Ctrl+S` to save to project settings, `Ctrl+D` to save as global defaults. Use left/right arrow keys to switch tabs.
+Open with `/fy:settings` in your pi session. Settings are organized into tabs: Workflow, Review, Kanban & Auto-Agent, Limits & Concurrency, Artifacts, Guardrails. Changes apply immediately. Press `Ctrl+S` to save to project settings, `Ctrl+D` to save as global defaults. Use left/right arrow keys to switch tabs.
 
 ### Workflow
 
@@ -70,16 +70,16 @@ Open with `/ff:settings` in your pi session. Settings are organized into tabs: W
 
 | Setting | Values | Default | Description |
 |---------|--------|---------|-------------|
-| `designDocStorage` | `local`, `committed` | `local` | `local` (`.ff/designs/`, out-of-repo, gitignored) or `committed` (`docs/ff/designs/`, tracked in git) |
+| `designDocStorage` | `local`, `committed` | `local` | `local` (`.featyard/designs/`, out-of-repo, gitignored) or `committed` (`docs/featyard/designs/`, tracked in git) |
 | `autoArchiveArtifactsOlderThanDays` | `7`, `14`, `30`, `90` | `30` | Background sweep relocates artifact groups (reviews/research/task-plans/feature-state) whose newest file is older than this many days into `artifacts-archive/`. Runs once on start then every 24h. Keep ≥ 1 |
-| `autoArchiveDesignsOlderThanDays` | `Never`, `7`, `30`, `90` | `Never` | Background sweep relocates design docs older than this into the archive, sweeping both `.ff/designs` and `docs/ff/designs`. `Never` = disabled. Manual sweep via `/ff:archive-designs <days>` |
+| `autoArchiveDesignsOlderThanDays` | `Never`, `7`, `30`, `90` | `Never` | Background sweep relocates design docs older than this into the archive, sweeping both `.featyard/designs` and `docs/featyard/designs`. `Never` = disabled. Manual sweep via `/fy:archive-designs <days>` |
 
 ### Settings Files
 
 Settings are stored as JSON with layered project-overrides-global merging:
 
-- **Global:** `~/.pi/agent/avtc-pi-feature-flow-settings.json`
-- **Project:** `<cwd>/.pi/avtc-pi-feature-flow-settings.json`
+- **Global:** `~/.pi/agent/avtc-pi-featyard-settings.json`
+- **Project:** `<cwd>/.pi/avtc-pi-featyard-settings.json`
 
 Project settings override global settings.
 
@@ -91,7 +91,7 @@ Model overrides let you control which LLM model is used for specific workflow st
 
 ### Configuration Location
 
-Model overrides are configured in pi's `settings.json` under the `"avtc-pi-feature-flow"` key:
+Model overrides are configured in pi's `settings.json` under the `"avtc-pi-featyard"` key:
 
 - **Global:** `~/.pi/agent/settings.json`
 - **Project:** `<cwd>/.pi/settings.json` (project overrides global)
@@ -100,7 +100,7 @@ Model overrides are configured in pi's `settings.json` under the `"avtc-pi-featu
 
 ```json
 {
-  "avtc-pi-feature-flow": {
+  "avtc-pi-featyard": {
     "default-model": "anthropic/claude-sonnet-4-5",
     "stage-models": {
       "<stage-name>": "anthropic/claude-sonnet-4-5"
@@ -144,7 +144,7 @@ When multiple overrides could apply, the highest-priority one wins:
 
 **Subagents:**
 
-Per-subagent model routing is handled entirely by [avtc-pi-subagent](https://github.com/avtc/avtc-pi-subagent) — see its configuration docs for the precedence table and matching rules. Within feature-flow, `stage-models` and `default-model` apply only to the **main orchestrating session** (see the Main session list above).
+Per-subagent model routing is handled entirely by [avtc-pi-subagent](https://github.com/avtc/avtc-pi-subagent) — see its configuration docs for the precedence table and matching rules. Within featyard, `stage-models` and `default-model` apply only to the **main orchestrating session** (see the Main session list above).
 
 ### Round-Robin Rotation
 
@@ -162,33 +162,33 @@ For single-iteration stages (design, plan, implement, verify, finish), only `mod
 
 | Stage | Skill | Description |
 |-------|-------|-------------|
-| `design` | `ff-design` | Idea exploration and design |
-| `plan` | `ff-plan` | Implementation plan creation |
-| `implement` | `ff-implement` | TDD implementation of plan tasks |
-| `verify` | `ff-verify` | Run tests and verify before claiming done |
-| `review` | `ff-review` | Code review with loop support (skipped when `maxFeatureReviewRounds: 0`) |
-| `finish` | `ff-finish` | Merge, PR, or cleanup |
+| `design` | `fy-design` | Idea exploration and design |
+| `plan` | `fy-plan` | Implementation plan creation |
+| `implement` | `fy-implement` | TDD implementation of plan tasks |
+| `verify` | `fy-verify` | Run tests and verify before claiming done |
+| `review` | `fy-review` | Code review with loop support (skipped when `maxFeatureReviewRounds: 0`) |
+| `finish` | `fy-finish` | Merge, PR, or cleanup |
 
-> `uat` reuses the `ff-review` skill.
+> `uat` reuses the `fy-review` skill.
 
 ### Subagents
 
 | Agent | Used by |
 |-------|---------|
-| `ff-design-reviewer` | `ff-design-review` skill (design-phase review) |
-| `ff-plan-reviewer` | `ff-plan-review` skill (plan-phase review) |
-| `ff-plan-verifier` | Plan-phase coverage verification (when `verifyPhases` includes `plan`) |
-| `ff-task-verifier` | Per-task verification during implementation |
-| `ff-feature-verifier` | `ff-verify` skill (final feature verification) |
-| `ff-general-reviewer` | `ff-review` skill (general mode — single generalist reviewer); per-task review (`perTaskReviewMode`) |
-| `ff-quality-reviewer` | `ff-review` skill (comprehensive mode) |
-| `ff-testing-reviewer` | `ff-review` skill (comprehensive mode) |
-| `ff-security-reviewer` | `ff-review` skill (comprehensive mode, when I/O/API/auth involved) |
-| `ff-performance-reviewer` | `ff-review` skill (comprehensive mode, when data processing/algorithms involved) |
-| `ff-guidelines-reviewer` | `ff-review` skill (comprehensive mode, when project has linting/conventions) |
-| `ff-requirements-reviewer` | `ff-review` skill (comprehensive mode, when plan/spec exists to check against) |
-| `ff-implementer` | `ff-implement` skill (dispatch modes) |
-| `ff-researcher` | `ff-design` / `ff-plan` skills (research phase); nested researcher delegation |
+| `fy-design-reviewer` | `fy-design-review` skill (design-phase review) |
+| `fy-plan-reviewer` | `fy-plan-review` skill (plan-phase review) |
+| `fy-plan-verifier` | Plan-phase coverage verification (when `verifyPhases` includes `plan`) |
+| `fy-task-verifier` | Per-task verification during implementation |
+| `fy-feature-verifier` | `fy-verify` skill (final feature verification) |
+| `fy-general-reviewer` | `fy-review` skill (general mode — single generalist reviewer); per-task review (`perTaskReviewMode`) |
+| `fy-quality-reviewer` | `fy-review` skill (comprehensive mode) |
+| `fy-testing-reviewer` | `fy-review` skill (comprehensive mode) |
+| `fy-security-reviewer` | `fy-review` skill (comprehensive mode, when I/O/API/auth involved) |
+| `fy-performance-reviewer` | `fy-review` skill (comprehensive mode, when data processing/algorithms involved) |
+| `fy-guidelines-reviewer` | `fy-review` skill (comprehensive mode, when project has linting/conventions) |
+| `fy-requirements-reviewer` | `fy-review` skill (comprehensive mode, when plan/spec exists to check against) |
+| `fy-implementer` | `fy-implement` skill (dispatch modes) |
+| `fy-researcher` | `fy-design` / `fy-plan` skills (research phase); nested researcher delegation |
 
 ### Examples
 
@@ -196,7 +196,7 @@ For single-iteration stages (design, plan, implement, verify, finish), only `mod
 
 ```json
 {
-  "feature-flow": {
+  "featyard": {
     "stage-models": {
       "review": "anthropic/claude-sonnet-4-5"
     }
@@ -208,7 +208,7 @@ For single-iteration stages (design, plan, implement, verify, finish), only `mod
 
 ```json
 {
-  "feature-flow": {
+  "featyard": {
     "stage-models": {
       "review": ["anthropic/claude-sonnet-4-5", "openai/gpt-4o", "deepseek/deepseek-chat"]
     }
@@ -218,31 +218,31 @@ For single-iteration stages (design, plan, implement, verify, finish), only `mod
 
 **Per-subagent override (in the `avtc-pi-subagent` section; takes priority over stage-model within avtc-pi-subagent's resolution):**
 
-Per-subagent model overrides are configured in the `avtc-pi-subagent` section, not under `avtc-pi-feature-flow`. Example (in `settings.json`):
+Per-subagent model overrides are configured in the `avtc-pi-subagent` section, not under `avtc-pi-featyard`. Example (in `settings.json`):
 
 ```json
 {
   "avtc-pi-subagent": {
     "default-model": "anthropic/claude-sonnet-4-5",
     "subagent-models": {
-      "ff-testing-reviewer": "openai/gpt-4o",
-      "ff-security-reviewer": "deepseek/deepseek-chat",
+      "fy-testing-reviewer": "openai/gpt-4o",
+      "fy-security-reviewer": "deepseek/deepseek-chat",
       "*-fork": ["openai/gpt-4o", "deepseek/deepseek-chat"]
     }
   },
-  "avtc-pi-feature-flow": {
+  "avtc-pi-featyard": {
     "stage-models": { "review": "anthropic/claude-sonnet-4-5" }
   }
 }
 ```
 
-Keys are matched against the agent name by specificity (exact > longest glob). `-fork`-suffixed keys apply to forked sessions (e.g. `ff-plan-reviewer-fork`), and array values rotate per-task. See [avtc-pi-subagent](https://github.com/avtc/avtc-pi-subagent) for matching/rotation details.
+Keys are matched against the agent name by specificity (exact > longest glob). `-fork`-suffixed keys apply to forked sessions (e.g. `fy-plan-reviewer-fork`), and array values rotate per-task. See [avtc-pi-subagent](https://github.com/avtc/avtc-pi-subagent) for matching/rotation details.
 
 **Default model with stage override:**
 
 ```json
 {
-  "feature-flow": {
+  "featyard": {
     "default-model": "anthropic/claude-sonnet-4-5",
     "stage-models": {
       "review": "openai/gpt-4o"
@@ -253,7 +253,7 @@ Keys are matched against the agent name by specificity (exact > longest glob). `
 
 All phases without a `stage-models` entry use `default-model`. In this example, design/plan/implement/verify/finish use `anthropic/claude-sonnet-4-5`, while review uses `openai/gpt-4o`.
 
-**Combined with min review loops (in `avtc-pi-feature-flow-settings.json`):**
+**Combined with min review loops (in `avtc-pi-featyard-settings.json`):**
 
 ```json
 {

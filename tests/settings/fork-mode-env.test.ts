@@ -56,30 +56,30 @@ describe("syncForkModeEnv (root-only, phase + settings driven)", () => {
     resetSettingsState();
     delete process.env.PI_SUBAGENT_FORK_MODE;
     delete process.env.PI_SUBAGENT_PARENT_PID;
-    delete process.env.PI_FF_STAGE;
+    delete process.env.PI_FY_STAGE;
   });
   afterEach(() => {
     delete process.env.PI_SUBAGENT_FORK_MODE;
     delete process.env.PI_SUBAGENT_PARENT_PID;
-    delete process.env.PI_FF_STAGE;
+    delete process.env.PI_FY_STAGE;
     resetSettingsState();
   });
 
   it("sets PI_SUBAGENT_FORK_MODE from planReviewSubagentsMode when stage is plan", () => {
-    process.env.PI_FF_STAGE = "plan";
+    process.env.PI_FY_STAGE = "plan";
     syncForkModeEnv();
     expect(process.env.PI_SUBAGENT_FORK_MODE).toBe(getSettings().planReviewSubagentsMode);
   });
 
   it("sets PI_SUBAGENT_FORK_MODE from featureReviewSubagentsMode when stage is review", () => {
-    process.env.PI_FF_STAGE = "review";
+    process.env.PI_FY_STAGE = "review";
     syncForkModeEnv();
     expect(process.env.PI_SUBAGENT_FORK_MODE).toBe(getSettings().featureReviewSubagentsMode);
   });
 
   it("hardcodes 'new' for implement/verify/uat/finish", () => {
     for (const phase of ["implement", "verify", "uat", "finish"]) {
-      process.env.PI_FF_STAGE = phase;
+      process.env.PI_FY_STAGE = phase;
       syncForkModeEnv();
       expect(process.env.PI_SUBAGENT_FORK_MODE).toBe("new");
     }
@@ -91,7 +91,7 @@ describe("syncForkModeEnv (root-only, phase + settings driven)", () => {
   });
 
   it("updateSetting re-derives fork mode for the active phase (mid-turn settings-ui edit)", () => {
-    process.env.PI_FF_STAGE = "plan";
+    process.env.PI_FY_STAGE = "plan";
     // Use production updateSetting (not setSetting) — this test verifies the syncForkModeEnv side
     // effect that updateSetting triggers after a settings-ui edit.
     updateSetting("planReviewSubagentsMode", "new+fork", null);
@@ -103,7 +103,7 @@ describe("syncForkModeEnv (root-only, phase + settings driven)", () => {
 
   it("is a no-op (does NOT set fork mode) inside a subagent session — enforces 'no deeper than 1st level'", () => {
     process.env.PI_SUBAGENT_PARENT_PID = "99999"; // this is a subagent
-    process.env.PI_FF_STAGE = "plan";
+    process.env.PI_FY_STAGE = "plan";
     process.env.PI_SUBAGENT_FORK_MODE = "pre-existing-or-undefined";
     syncForkModeEnv();
     // A subagent must never (re-)arm fork mode on its own env, regardless of phase.

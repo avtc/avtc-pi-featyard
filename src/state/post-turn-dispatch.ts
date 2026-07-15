@@ -93,7 +93,7 @@ export function schedulePostTurnDrain(pi: ExtensionAPI): void {
   }, DRAIN_DELAY_MS);
 }
 
-/** Drop any staged followUp and cancel a pending drain — session teardown / ff:reset. */
+/** Drop any staged followUp and cancel a pending drain — session teardown / fy:reset. */
 export function clearPostTurnFollowUp(): void {
   if (drainTimer !== undefined) {
     clearTimeout(drainTimer);

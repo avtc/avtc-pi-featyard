@@ -2,13 +2,13 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * input event router — detect feature-flow skill invocations and route them to
+ * input event router — detect featyard skill invocations and route them to
  * the right domain action: feature activation, phase pointer advance, or review
  * loop counter increment.
  *
  * Explicit skill invocation is respected: jumping forward sets the phase pointer
  * (jumped phases fold to done via derivation). Recovery from an unintended jump
- * is via ff-reset or invoking another skill. Injected followUp messages
+ * is via fy-reset or invoking another skill. Injected followUp messages
  * (event.source === "extension") are skipped so they don't re-trigger tracking.
  */
 
@@ -30,7 +30,7 @@ import { activateFromDesignSkill, activateFromPlanSkill } from "../../state/feat
 import type { FeatureSession } from "../../state/feature-session.js";
 import { featureSlugFromDesignDoc, featureSlugFromPlanDoc } from "../../state/feature-state.js";
 import { persistState } from "../../state/state-persistence.js";
-import { NO_FEATURE_STATE, updateWidget } from "../../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../../ui/featyard-widget.js";
 
 export function registerInput(pi: ExtensionAPI, handler: FeatureSession): void {
   pi.on("input", async (event, ctx: ExtensionContext) => {
@@ -56,8 +56,8 @@ export function registerInput(pi: ExtensionAPI, handler: FeatureSession): void {
      * Finalize this input: apply tracking side-effects, then take over expansion of
      * our own skills. pi's _expandSkillCommand would otherwise wrap our skills with a
      * generic "References are relative to <skillDir>" line — misleading for our skills,
-     * which reference project-root paths (docs/, .ff/), never skill-relative ones.
-     * Transforming to the already-expanded <skill> block (with {{PI_FF_*}} placeholders
+     * which reference project-root paths (docs/, .featyard/), never skill-relative ones.
+     * Transforming to the already-expanded <skill> block (with {{PI_FY_*}} placeholders
      * substituted) makes pi's _expandSkillCommand and expandPromptTemplate no-ops
      * (the text no longer starts with "/"), so pi processes our block unchanged.
      * Unknown/non-skills return undefined so pi processes them normally.
@@ -80,8 +80,8 @@ export function registerInput(pi: ExtensionAPI, handler: FeatureSession): void {
       log.info(`[workflow] input: tracked skill from input text: ${invokedSkill}`);
     }
 
-    // Update executionMode when user invokes ff-implement
-    if (invokedSkill === "ff-implement") {
+    // Update executionMode when user invokes fy-implement
+    if (invokedSkill === "fy-implement") {
       if (!handler.getActiveFeatureSlug()) {
         const planSlug = featureSlugFromPlanDoc(text);
         if (planSlug) {
@@ -95,19 +95,19 @@ export function registerInput(pi: ExtensionAPI, handler: FeatureSession): void {
       }
     }
 
-    // ff-plan / ff-design invoked with a design-doc path and no active
+    // fy-plan / fy-design invoked with a design-doc path and no active
     // feature: activate an existing feature, or create+kanban-link one from the
-    // design doc. Mirrors the ff-implement path above (plan-doc source),
+    // design doc. Mirrors the fy-implement path above (plan-doc source),
     // generalized to a design-doc slug source. Activating at invocation time (not
     // just on plan-doc write) ensures skill placeholders resolve and the feature
     // is visible/usable for phase_ready.
-    if (invokedSkill === "ff-plan" || invokedSkill === "ff-design") {
+    if (invokedSkill === "fy-plan" || invokedSkill === "fy-design") {
       if (!handler.getActiveFeatureSlug()) {
         const designSlug = featureSlugFromDesignDoc(text);
         if (designSlug) {
           const pathMatch = text.match(/(\S+-design\.md)/);
           const designPath = pathMatch?.[1] ?? "";
-          const targetPhase: Phase = invokedSkill === "ff-plan" ? "plan" : "design";
+          const targetPhase: Phase = invokedSkill === "fy-plan" ? "plan" : "design";
           await activateFromDesignSkill(ctx, handler, designSlug, designPath, targetPhase);
           log.info(`Activated/created feature state for ${designSlug} from ${invokedSkill} skill invocation`);
           persistState(pi, handler);
@@ -121,10 +121,10 @@ export function registerInput(pi: ExtensionAPI, handler: FeatureSession): void {
     // the code-driven path (phase_ready) via the shared startReviewIteration helper.
     // Injected followUp messages are skipped (event.source === "extension"), so this
     // never double-counts with the phase_ready path.
-    if (invokedSkill === "ff-design-review" || invokedSkill === "ff-plan-review") {
+    if (invokedSkill === "fy-design-review" || invokedSkill === "fy-plan-review") {
       const activeSlug = handler.getActiveFeatureSlug();
       if (activeSlug) {
-        const phase = invokedSkill === "ff-design-review" ? "design" : "plan";
+        const phase = invokedSkill === "fy-design-review" ? "design" : "plan";
         // startReviewIteration loads+increments+saves the review counter (side effect).
         startReviewIteration(handler, activeSlug, phase, NO_FEATURE_STATE_OVERRIDE);
         syncEnvVarsFromState(handler);
@@ -137,7 +137,7 @@ export function registerInput(pi: ExtensionAPI, handler: FeatureSession): void {
     // calls PhaseProgression.onInputText() — that advances the pointer to the invoked
     // skill's phase (jumped phases fold to done via derivation) and guards
     // FRESH_START_BLOCKED when no workflow is active. No blocking dialog — recovery
-    // from an unintended jump is via ff-reset or invoking another skill.
+    // from an unintended jump is via fy-reset or invoking another skill.
     return proceed();
   });
 }

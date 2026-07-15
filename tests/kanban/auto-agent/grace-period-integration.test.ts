@@ -110,7 +110,7 @@ describe("Grace period integration", () => {
     };
 
     // Start designer agent
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Verify agent is working (picked the feature)
@@ -174,7 +174,7 @@ describe("Grace period integration", () => {
     };
 
     // Start designer and let it pick feat-1
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Complete feat-1 → enters grace period
@@ -244,7 +244,7 @@ describe("Grace period integration", () => {
     };
 
     // Start designer
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Complete feat-1 → enters grace period
@@ -301,7 +301,7 @@ describe("Grace period integration", () => {
     };
 
     // Start designer
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Complete feat-1 → enters grace period
@@ -367,7 +367,7 @@ describe("Grace period integration", () => {
     };
 
     // Start designer
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Complete feat-1 → enters grace period
@@ -419,7 +419,7 @@ describe("Grace period integration", () => {
     };
 
     // Start designer
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Force currentFeatureLane to null to test the guard
@@ -479,7 +479,7 @@ describe("Grace period integration", () => {
       };
 
       // Start designer agent
-      const startCmd = registeredCommands.get("ff:auto-designer");
+      const startCmd = registeredCommands.get("fy:auto-designer");
       if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
       // Verify agent is working
@@ -548,7 +548,7 @@ describe("Grace period integration", () => {
       };
 
       // Start designer agent
-      const startCmd = registeredCommands.get("ff:auto-designer");
+      const startCmd = registeredCommands.get("fy:auto-designer");
       if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
       // Complete the feature — Point B with no newSession
@@ -603,7 +603,7 @@ describe("Grace period integration", () => {
     };
 
     // Start designer and let it pick feat-1
-    const startCmd = registeredCommands.get("ff:auto-designer");
+    const startCmd = registeredCommands.get("fy:auto-designer");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Complete feat-1 → enters grace period
@@ -614,7 +614,7 @@ describe("Grace period integration", () => {
     const sm = _bridge ? _bridge.autoAgent : null;
     expect(sm?.getState()).toBe("grace-period");
 
-    // Pause the agent (simulates user /ff:auto-pause during grace period)
+    // Pause the agent (simulates user /fy:auto-pause during grace period)
     // This changes state away from grace-period
     sm?.pause();
     expect(sm?.getState()).toBe("paused");

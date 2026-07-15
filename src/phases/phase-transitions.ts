@@ -13,7 +13,7 @@ import {
 } from "../git/worktrees/worktree-helpers.js";
 import { moveFeatureToLane } from "../kanban/data/kanban-move-feature.js";
 import { log, NO_ERROR } from "../log.js";
-import { DEFAULT_GLOBAL_DIR, loadFeatureFlowConfig, resolveModelOverride } from "../settings/settings-ui.js";
+import { DEFAULT_GLOBAL_DIR, loadFeatyardConfig, resolveModelOverride } from "../settings/settings-ui.js";
 import { NO_AGENT_NAME, NO_FEATURE_STATE_OVERRIDE } from "../shared/workflow-refs.js";
 import type { FeatureSession } from "../state/feature-session.js";
 import {
@@ -27,7 +27,7 @@ import {
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
 import { persistState } from "../state/state-persistence.js";
 import { notifyFeatureCompleted } from "../state/worth-notes.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 
 /**
  * Get the appropriate loop count for a given phase from feature state.
@@ -58,7 +58,7 @@ export async function applyModelOverride(
   stage: string,
   loopIndex: number,
 ): Promise<void> {
-  const config = loadFeatureFlowConfig(DEFAULT_GLOBAL_DIR, process.cwd());
+  const config = loadFeatyardConfig(DEFAULT_GLOBAL_DIR, process.cwd());
   const ref = resolveModelOverride(stage, loopIndex, config);
   if (!ref) return;
 
@@ -86,7 +86,7 @@ export interface FinishTransitionDeps {
  * Execute the finish-phase transition sequence shared by the review loop and the workflow commands.
  *
  * Encapsulates: advance to finish, model override, feature state sync, persistence, widget
- * update, and dispatch of the ff-finish skill as a followUp. Does NOT touch UAT — callers
+ * update, and dispatch of the fy-finish skill as a followUp. Does NOT touch UAT — callers
  * handle the UAT decision (skip / hand off) separately, before or instead of this call.
  */
 export async function transitionToFinishPhase(
@@ -102,7 +102,7 @@ export async function transitionToFinishPhase(
   }
   persistState(pi, handler);
   updateWidget(handler, NO_FEATURE_STATE);
-  schedulePostTurnFollowUp(expandSkillCommand("/skill:ff-finish", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
+  schedulePostTurnFollowUp(expandSkillCommand("/skill:fy-finish", NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME));
 }
 
 /** Dependencies for completeFeature. */
@@ -115,7 +115,7 @@ export interface CompleteFeatureDeps {
 
 /**
  * Finalize a completed feature — the completion side-effects shared by every
- * terminal routing path (ff:next from the terminal phase, uat-accept after-finish).
+ * terminal routing path (fy:next from the terminal phase, uat-accept after-finish).
  *
  * Clears the finish-phase guardrail flag, cleans up the worktree, marks the
  * feature done, clears the active-feature pointer + env, notifies the user, and

@@ -10,28 +10,28 @@ import { describe, expect, it } from "vitest";
  *   [skill block] + [framing line] + [caller note] + [✅] + [In progress item]
  *
  * buildCompactSkillBlock expands the `/skill:` reference through expandSkillCommand
- * (resolving all {{PI_FF_*}} placeholders). buildCompactFraming emits the single
+ * (resolving all {{PI_FY_*}} placeholders). buildCompactFraming emits the single
  * compaction framing line (review-specific for iteration skills, phase-specific
  * otherwise, generic when there is no skill).
  */
 describe("buildCompactFraming", () => {
   it("uses the review-specific suffix for design-review", async () => {
     const { buildCompactFraming } = await import("../../src/compaction/compact-message.js");
-    expect(buildCompactFraming("ff-design-review", "design")).toBe(
+    expect(buildCompactFraming("fy-design-review", "design")).toBe(
       "Context was compacted. Reminder of planned work: continue the review from where you left off. Honor the user's most recent instruction first; this is a reminder, not a new directive.",
     );
   });
 
   it("uses the review-specific suffix for plan-review", async () => {
     const { buildCompactFraming } = await import("../../src/compaction/compact-message.js");
-    expect(buildCompactFraming("ff-plan-review", "plan")).toBe(
+    expect(buildCompactFraming("fy-plan-review", "plan")).toBe(
       "Context was compacted. Reminder of planned work: continue the review from where you left off. Honor the user's most recent instruction first; this is a reminder, not a new directive.",
     );
   });
 
   it("uses the phase suffix for a phase skill", async () => {
     const { buildCompactFraming } = await import("../../src/compaction/compact-message.js");
-    expect(buildCompactFraming("ff-implement", "implement")).toBe(
+    expect(buildCompactFraming("fy-implement", "implement")).toBe(
       "Context was compacted. Reminder of planned work: you are in implement phase; continue from where you left off. Honor the user's most recent instruction first; this is a reminder, not a new directive.",
     );
   });
@@ -55,7 +55,7 @@ describe("buildCompactSkillBlock", () => {
   it("expands the skill reference through expandSkillCommand", async () => {
     const { buildCompactSkillBlock } = await import("../../src/compaction/compact-message.js");
     const expand = (text: string) => `[EXPANDED] ${text}`;
-    expect(buildCompactSkillBlock("ff-implement", expand)).toBe("[EXPANDED] /skill:ff-implement");
+    expect(buildCompactSkillBlock("fy-implement", expand)).toBe("[EXPANDED] /skill:fy-implement");
   });
 
   it("returns empty string when there is no skill", async () => {

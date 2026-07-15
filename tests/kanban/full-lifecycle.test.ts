@@ -65,8 +65,8 @@ describe("full feature lifecycle with kanban", () => {
 
   afterEach(() => {
     cleanup();
-    delete process.env.PI_FF_FEATURE;
-    delete process.env.PI_FF_STAGE;
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_STAGE;
   });
 
   test("feature goes from backlog to done with after-review UAT", async () => {

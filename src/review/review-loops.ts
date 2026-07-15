@@ -13,17 +13,17 @@ import { log } from "../log.js";
 import { syncEnvVarsFromState } from "../phases/env-sync.js";
 import { transitionToFinishPhase, transitionToUatPhase } from "../phases/phase-transitions.js";
 import { toRouteConfig } from "../phases/workflow-router.js";
-import { type FeatureFlowSettings, getSettings, resolveReviewSkill } from "../settings/settings-ui.js";
+import { type FeatyardSettings, getSettings, resolveReviewSkill } from "../settings/settings-ui.js";
 import { NO_AGENT_NAME, NO_FEATURE_STATE_OVERRIDE } from "../shared/workflow-refs.js";
 import type { FeatureSession } from "../state/feature-session.js";
 import { DEFAULT_DIR, type ExpandSkillCommandFn, type FeatureState, saveFeatureState } from "../state/feature-state.js";
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
 import { worthNotesPointerFor } from "../state/worth-notes.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 import { generateReviewReport } from "./review-report.js";
 
 /** Sentinel for "no review-report context to merge" at the off/after-finish UAT paths and the
- *  non-loop call sites (manual /ff:next, verify re-entry). Required (no-optional-params convention);
+ *  non-loop call sites (manual /fy:next, verify re-entry). Required (no-optional-params convention);
  *  pass this instead of a bare `null`. */
 export const NO_REVIEW_CONTEXT: {
   report: string | null;
@@ -94,7 +94,7 @@ export function createReviewLoopHandlers(deps: ReviewLoopDeps) {
       log.info(`[workflow] DIAGNOSTICS: resolveReviewSkill returned=${reviewSkill}`);
       if (reviewSkill) {
         // Compact between review loops (reviewIterationCompact). triggerContextCompact
-        // re-injects the phase skill (ff-review) after compaction; if it doesn't
+        // re-injects the phase skill (fy-review) after compaction; if it doesn't
         // compact (none / below threshold), fall back to re-dispatching directly.
         const compacted = await triggerContextCompact(
           ctx,
@@ -153,7 +153,7 @@ export function createReviewLoopHandlers(deps: ReviewLoopDeps) {
   async function handleReviewToUatTransition(
     ctx: ExtensionContext,
     slug: string,
-    settings: FeatureFlowSettings,
+    settings: FeatyardSettings,
     // Optional review-report context. Provided by handleReviewLoopEnd on the
     // after-review path so the report + UAT-handoff + worth-notes pointer MERGE into ONE notify
     // (notifications are exclusive — otherwise the handoff hides the report). null at the
@@ -175,12 +175,12 @@ export function createReviewLoopHandlers(deps: ReviewLoopDeps) {
       handler.setCurrentPhase("finish"); // skip
       await transitionToFinishPhase(featureState, { pi, ctx, handler, applyModelOverrideForPhase, expandSkillCommand });
     } else if (uatMode === "after-review") {
-      // Pause at UAT — user advances via /ff:next (works in place, then advances).
+      // Pause at UAT — user advances via /fy:next (works in place, then advances).
       // MERGE the review report + UAT-handoff + worth-notes pointer into ONE notification (design
       // ): the report notify was already suppressed in handleReviewLoopEnd for this path,
       // so the combined message here is the single boundary notify that carries everything. The
       // report's level (warning if cannot-fix) is preserved via notifyLevel.
-      const handoffMsg = `Feature "${slug}" is ready for UAT. Work in place, then /ff:next to advance.`;
+      const handoffMsg = `Feature "${slug}" is ready for UAT. Work in place, then /fy:next to advance.`;
       const report = reportCtx?.report;
       const pointer = reportCtx?.pointer;
       const notifyMessage =

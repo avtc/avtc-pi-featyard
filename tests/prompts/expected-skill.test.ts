@@ -19,13 +19,13 @@ describe("getExpectedSkill", () => {
     setTestSettings(null);
     withTempCwd();
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     enableSubagentMode();
   });
 
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
   });
 
   test("returns null when no workflow state (handler not initialized)", async () => {
@@ -63,7 +63,7 @@ describe("getExpectedSkill", () => {
     expect(_getExpectedSkill()).toBeNull();
   });
 
-  test("returns ff-implement when execute phase is active", async () => {
+  test("returns fy-implement when execute phase is active", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -77,7 +77,7 @@ describe("getExpectedSkill", () => {
 
     // Advance to plan (sets plan=active)
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-plan" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-plan" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
     // Skip plan phase — sets plan=skipped, currentPhase stays 'plan'
     // Use processSkillInput which routes to skipWorkflowPhases
@@ -85,11 +85,11 @@ describe("getExpectedSkill", () => {
     // then skip plan phase. But that's complex.
     // Instead, advance to execute which leaves plan as pending (not active)
     // and sets execute as active.
-    onInput({ text: "/skill:ff-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
     // Now execute is active, plan is pending (not active)
-    // getExpectedSkill should return ff-implement (for execute active)
-    expect(_getExpectedSkill()).toBe("ff-implement");
+    // getExpectedSkill should return fy-implement (for execute active)
+    expect(_getExpectedSkill()).toBe("fy-implement");
   });
 
   test("returns designing for design active", async () => {
@@ -106,12 +106,12 @@ describe("getExpectedSkill", () => {
 
     // Advance to design via skill read
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-design" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-design" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
-    expect(_getExpectedSkill()).toBe("ff-design");
+    expect(_getExpectedSkill()).toBe("fy-design");
   });
 
-  test("returns ff-plan for plan active", async () => {
+  test("returns fy-plan for plan active", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -125,12 +125,12 @@ describe("getExpectedSkill", () => {
 
     // Advance to plan via skill read
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-plan" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-plan" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
-    expect(_getExpectedSkill()).toBe("ff-plan");
+    expect(_getExpectedSkill()).toBe("fy-plan");
   });
 
-  test("returns ff-implement for execute active with checkpoint mode", async () => {
+  test("returns fy-implement for execute active with checkpoint mode", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     const slug = "test-checkpoint";
@@ -138,8 +138,8 @@ describe("getExpectedSkill", () => {
       executionMode: "checkpoint",
       workflow: {
         currentPhase: "implement",
-        designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-        planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+        planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
       },
     });
 
@@ -152,10 +152,10 @@ describe("getExpectedSkill", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(_getExpectedSkill()).toBe("ff-implement");
+    expect(_getExpectedSkill()).toBe("fy-implement");
   });
 
-  test("returns ff-implement for execute active with subagent mode", async () => {
+  test("returns fy-implement for execute active with subagent mode", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     const slug = "test-subagent";
@@ -163,8 +163,8 @@ describe("getExpectedSkill", () => {
       executionMode: "subagent",
       workflow: {
         currentPhase: "implement",
-        designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-        planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+        planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
       },
     });
 
@@ -177,10 +177,10 @@ describe("getExpectedSkill", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(_getExpectedSkill()).toBe("ff-implement");
+    expect(_getExpectedSkill()).toBe("fy-implement");
   });
 
-  test("returns ff-implement for execute active with subagent-fork mode", async () => {
+  test("returns fy-implement for execute active with subagent-fork mode", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     const slug = "test-subagent-fork";
@@ -188,8 +188,8 @@ describe("getExpectedSkill", () => {
       executionMode: "subagent-fork",
       workflow: {
         currentPhase: "implement",
-        designDoc: "docs/ff/designs/2026-05-10-test-design.md",
-        planDoc: ".ff/task-plans/2026-05-10-test-task-plan.md",
+        designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+        planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
       },
     });
 
@@ -202,11 +202,11 @@ describe("getExpectedSkill", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(_getExpectedSkill()).toBe("ff-implement");
+    expect(_getExpectedSkill()).toBe("fy-implement");
   });
 
-  test("returns ff-implement for execute active with no feature state", async () => {
-    // No PI_FF_FEATURE set, no feature state file
+  test("returns fy-implement for execute active with no feature state", async () => {
+    // No PI_FY_FEATURE set, no feature state file
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -220,13 +220,13 @@ describe("getExpectedSkill", () => {
 
     // Advance to execute via skill reads
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
     // This sets execute=active but no feature state
-    expect(_getExpectedSkill()).toBe("ff-implement");
+    expect(_getExpectedSkill()).toBe("fy-implement");
   });
 
-  test("returns ff-verify for verify active", async () => {
+  test("returns fy-verify for verify active", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -241,13 +241,13 @@ describe("getExpectedSkill", () => {
     // verify/review/finish skills no longer activate a fresh workflow, so advance
     // through earlier phases first, then invoke the verify skill.
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
-    onInput({ text: "/skill:ff-verify" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-verify" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
-    expect(_getExpectedSkill()).toBe("ff-verify");
+    expect(_getExpectedSkill()).toBe("fy-verify");
   });
 
-  test("returns ff-review for review active", async () => {
+  test("returns fy-review for review active", async () => {
     setSetting("maxFeatureReviewRounds", 3);
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -261,13 +261,13 @@ describe("getExpectedSkill", () => {
     // verify/review/finish skills no longer activate a fresh workflow, so advance
     // through earlier phases first, then invoke the review skill.
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
-    onInput({ text: "/skill:ff-review" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-review" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
-    expect(_getExpectedSkill()).toBe("ff-review");
+    expect(_getExpectedSkill()).toBe("fy-review");
   });
 
-  test("returns ff-finish for finish active", async () => {
+  test("returns fy-finish for finish active", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -282,13 +282,13 @@ describe("getExpectedSkill", () => {
     // verify/review/finish skills no longer activate a fresh workflow, so advance
     // through earlier phases first, then invoke the finish skill.
     const onInput = getSingleHandler(fake.handlers, "input");
-    onInput({ text: "/skill:ff-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
-    onInput({ text: "/skill:ff-finish" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-implement" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
+    onInput({ text: "/skill:fy-finish" } as unknown as ExtensionEvent, {} as unknown as ExtensionContext);
 
-    expect(_getExpectedSkill()).toBe("ff-finish");
+    expect(_getExpectedSkill()).toBe("fy-finish");
   });
 
-  test("returns ff-design-review when design active and design.reviewLoopCount > 0", async () => {
+  test("returns fy-design-review when design active and design.reviewLoopCount > 0", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     const slug = "test-design-review-compact";
@@ -306,7 +306,7 @@ describe("getExpectedSkill", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(_getExpectedSkill()).toBe("ff-design-review");
+    expect(_getExpectedSkill()).toBe("fy-design-review");
   });
 
   test("returns designing when design active and design.reviewLoopCount === 0", async () => {
@@ -326,15 +326,15 @@ describe("getExpectedSkill", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(_getExpectedSkill()).toBe("ff-design");
+    expect(_getExpectedSkill()).toBe("fy-design");
   });
 
-  test("returns ff-plan-review when plan active and plan.reviewLoopCount > 0", async () => {
+  test("returns fy-plan-review when plan active and plan.reviewLoopCount > 0", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     const slug = "test-plan-review-compact";
     writeFeatureStateFile(slug, {
-      workflow: { currentPhase: "plan", designDoc: "docs/ff/designs/2026-05-10-test-design.md", planDoc: null },
+      workflow: { currentPhase: "plan", designDoc: "docs/featyard/designs/2026-05-10-test-design.md", planDoc: null },
       plan: { doc: null, verifyLoopCount: 0, reviewActive: true, reviewLoopCount: 2 },
     });
 
@@ -347,15 +347,15 @@ describe("getExpectedSkill", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(_getExpectedSkill()).toBe("ff-plan-review");
+    expect(_getExpectedSkill()).toBe("fy-plan-review");
   });
 
-  test("returns ff-plan when plan active and plan.reviewLoopCount === 0", async () => {
+  test("returns fy-plan when plan active and plan.reviewLoopCount === 0", async () => {
     const fake = createFakePi();
     setTestSettings(null);
     const slug = "test-plan-no-review";
     writeFeatureStateFile(slug, {
-      workflow: { currentPhase: "plan", designDoc: "docs/ff/designs/2026-05-10-test-design.md", planDoc: null },
+      workflow: { currentPhase: "plan", designDoc: "docs/featyard/designs/2026-05-10-test-design.md", planDoc: null },
     });
 
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -367,7 +367,7 @@ describe("getExpectedSkill", () => {
       { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
     );
 
-    expect(_getExpectedSkill()).toBe("ff-plan");
+    expect(_getExpectedSkill()).toBe("fy-plan");
   });
 
   test("returns designing when slug set but feature state file missing", async () => {
@@ -396,6 +396,6 @@ describe("getExpectedSkill", () => {
     globalThis.__piWorkflowMonitor?.handler?.setActiveFeatureState(null);
 
     // Should fall through to PHASE_TO_SKILL map, returning base skill
-    expect(_getExpectedSkill()).toBe("ff-design");
+    expect(_getExpectedSkill()).toBe("fy-design");
   });
 });

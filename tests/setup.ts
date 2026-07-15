@@ -15,28 +15,28 @@ const BRIDGE_KEYS = [
   "__piSettings", // PiSettingsBridge (4 props)
   "__piCtx", // PiCtx instance
   "__piCompactFollowUp", // CompactFollowUp stored message (transient)
-  "__avtcPiFeatureFlowWired", // Idempotent wiring sentinel (extension entry guard)
+  "__avtcPiFeatyardWired", // Idempotent wiring sentinel (extension entry guard)
 ] as const;
 
 // Suppress flag removed (bug fix) — no longer in cleanup
 
 // All known process.env keys used by the extensions
 const ENV_KEYS = [
-  "PI_FF_AUTO_AGENT",
-  "PI_FF_EXECUTION_MODE",
-  "PI_FF_FEATURE",
-  "PI_FF_REVIEW_LOOP",
-  "PI_FF_SETTINGS",
-  "PI_FF_STAGE",
+  "PI_FY_AUTO_AGENT",
+  "PI_FY_EXECUTION_MODE",
+  "PI_FY_FEATURE",
+  "PI_FY_REVIEW_LOOP",
+  "PI_FY_SETTINGS",
+  "PI_FY_STAGE",
   // Subagent env vars — may be set when running inside a subagent worker
   "PI_SUBAGENT_CHILD_AGENT",
   "PI_SUBAGENT_FORK_MODE",
   "PI_SUBAGENT_PARENT_PID",
   "PI_SUBAGENT_UI_BRIDGE_AUTH_TOKEN",
   "PI_SUBAGENT_UI_BRIDGE_ROOT_SOCKET",
-  // feature-flow .ff junction external-storage home override (set below to a temp dir
-  // so tests never create junctions under the real ~/.pi/feature-flow/artifacts/)
-  "PI_FF_HOME",
+  // featyard .featyard junction external-storage home override (set below to a temp dir
+  // so tests never create junctions under the real ~/.pi/featyard/artifacts/)
+  "PI_FY_HOME",
 ] as const;
 
 const savedGlobals: Record<string, unknown> = {};
@@ -93,16 +93,16 @@ import { resetRefs } from "../src/shared/workflow-refs.js";
 import { _resetPhaseReadyPassed } from "../src/tools/phase-ready.js";
 import { resetSettingsState, setTestSettings } from "./helpers/settings-test-helpers.js";
 
-// One temp "home" per worker: all .ff junction external storage during tests lands here
-// instead of the real ~/.pi/feature-flow/artifacts/. Created at module load (before saveState) so the
+// One temp "home" per worker: all .featyard junction external storage during tests lands here
+// instead of the real ~/.pi/featyard/artifacts/. Created at module load (before saveState) so the
 // whole test run isolates junction creation.
-const TEST_FF_HOME = mkdtempSync(path.join(os.tmpdir(), "ff-home-"));
-process.env.PI_FF_HOME = TEST_FF_HOME;
+const TEST_FF_HOME = mkdtempSync(path.join(os.tmpdir(), "fy-home-"));
+process.env.PI_FY_HOME = TEST_FF_HOME;
 
-// NOTE: tests must NEVER mutate the real repo-root `.ff`. Every extension-loading test chdir's
+// NOTE: tests must NEVER mutate the real repo-root `.featyard`. Every extension-loading test chdir's
 // into its own temp dir FIRST (see workflow-monitor/test-helpers.ts: createFakePi /
-// createPiWithToolCapture / withTempCwd), so production init's `ensureFfJunction(process.cwd())`
-// operates on that temp — never the real repo. Do NOT heal/repair the real `.ff` from here: that
+// createPiWithToolCapture / withTempCwd), so production init's `ensureFeatyardJunction(process.cwd())`
+// operates on that temp — never the real repo. Do NOT heal/repair the real `.featyard` from here: that
 // would repoint it (a real-repo mutation) even if restored afterward.
 
 // Wire the canonical mock-DI settings holder globally (schema defaults) so every test reads
@@ -127,7 +127,7 @@ beforeEach(() => {
   // extension entry per test (and some twice within one test) expecting a fresh wiring;
   // without this reset the guard would make those re-invocations no-op. Each test must
   // start in the unwired state the existing suite assumes.
-  delete (globalThis as Record<string, unknown>).__avtcPiFeatureFlowWired;
+  delete (globalThis as Record<string, unknown>).__avtcPiFeatyardWired;
 });
 
 afterAll(() => {
@@ -151,7 +151,7 @@ afterAll(() => {
   // setting (e.g. planReviewMode) without its own afterEach cleanup cannot leak
   // the value into a later file in the same worker (isolate:false shares modules).
   resetSettingsState();
-  // Clean up the test-only .ff external-storage home
+  // Clean up the test-only .featyard external-storage home
   try {
     rmSync(TEST_FF_HOME, { recursive: true, force: true });
   } catch {

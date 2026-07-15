@@ -30,7 +30,7 @@ const NO_UI_MOCK_CTX = {
 describe("finish-phase guardrail whitelist flag lifecycle", () => {
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
     cleanupAfterTest();
   });
@@ -48,7 +48,7 @@ describe("finish-phase guardrail whitelist flag lifecycle", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-04-01-flag-clear-design.md" },
+        input: { path: "docs/featyard/designs/2026-04-01-flag-clear-design.md" },
       } as unknown as ExtensionEvent,
       NO_UI_MOCK_CTX,
     );
@@ -140,16 +140,16 @@ describe("finish-phase guardrail whitelist flag lifecycle", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-04-01-uat-ffnext-design.md" },
+        input: { path: "docs/featyard/designs/2026-04-01-uat-fynext-design.md" },
       } as unknown as ExtensionEvent,
       NO_UI_MOCK_CTX,
     );
 
     // 2. Set up the feature state: all phases complete including finish, uat active
-    const featureState = loadFeatureState("2026-04-01-uat-ffnext", null);
+    const featureState = loadFeatureState("2026-04-01-uat-fynext", null);
     if (!featureState) throw new Error("Feature state not found");
     featureState.workflow.currentPhase = "uat";
-    featureState.git.worktreePath = ".worktrees/2026-04-01-uat-ffnext";
+    featureState.git.worktreePath = ".worktrees/2026-04-01-uat-fynext";
     saveFeatureState(featureState, null);
     setSetting("branchPolicy", "worktree");
 
@@ -171,7 +171,7 @@ describe("finish-phase guardrail whitelist flag lifecycle", () => {
 describe("agent_start re-arm gating (variant C)", () => {
   afterEach(async () => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     disableSubagentMode();
     setFinishPhaseWhitelisted(IS_NOT_WHITELISTED);
     cleanupAfterTest();
@@ -188,7 +188,7 @@ describe("agent_start re-arm gating (variant C)", () => {
       {
         toolCallId: "call-1",
         toolName: "write",
-        input: { path: "docs/ff/designs/2026-04-01-gating-design.md" },
+        input: { path: "docs/featyard/designs/2026-04-01-gating-design.md" },
       } as unknown as ExtensionEvent,
       NO_UI_MOCK_CTX,
     );

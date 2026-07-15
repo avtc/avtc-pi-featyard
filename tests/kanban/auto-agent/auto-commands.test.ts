@@ -60,17 +60,17 @@ function createFakeApi(): {
 }
 
 describe("auto-agent command registration", () => {
-  test("registers /ff:auto-agent, /ff:auto-worker, /ff:auto-designer, /ff:auto-pause commands", async () => {
+  test("registers /fy:auto-agent, /fy:auto-worker, /fy:auto-designer, /fy:auto-pause commands", async () => {
     const { api, registeredCommands } = createFakeApi();
 
     if (typeof kanbanExtension === "function") {
       await kanbanExtension(api, null);
     }
 
-    expect(registeredCommands.has("ff:auto-agent")).toBe(true);
-    expect(registeredCommands.has("ff:auto-worker")).toBe(true);
-    expect(registeredCommands.has("ff:auto-designer")).toBe(true);
-    expect(registeredCommands.has("ff:auto-pause")).toBe(true);
+    expect(registeredCommands.has("fy:auto-agent")).toBe(true);
+    expect(registeredCommands.has("fy:auto-worker")).toBe(true);
+    expect(registeredCommands.has("fy:auto-designer")).toBe(true);
+    expect(registeredCommands.has("fy:auto-pause")).toBe(true);
   });
 
   test("all auto commands have descriptions", async () => {
@@ -80,14 +80,14 @@ describe("auto-agent command registration", () => {
       await kanbanExtension(api, null);
     }
 
-    for (const name of ["ff:auto-agent", "ff:auto-worker", "ff:auto-designer", "ff:auto-pause"]) {
+    for (const name of ["fy:auto-agent", "fy:auto-worker", "fy:auto-designer", "fy:auto-pause"]) {
       const cmd = registeredCommands.get(name);
       expect(cmd).toBeDefined();
       expect((cmd as NonNullable<typeof cmd>).description.length).toBeGreaterThan(0);
     }
   });
 
-  test("ff:auto-agent starts agent state machine", async () => {
+  test("fy:auto-agent starts agent state machine", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -107,14 +107,14 @@ describe("auto-agent command registration", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:auto-agent");
+    const cmd = registeredCommands.get("fy:auto-agent");
     if (cmd) await cmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     expect(notifications.length).toBeGreaterThanOrEqual(1);
     expect(notifications[0].message).toContain("Auto-agent started");
   });
 
-  test("ff:auto-pause requests graceful pause", async () => {
+  test("fy:auto-pause requests graceful pause", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -135,18 +135,18 @@ describe("auto-agent command registration", () => {
     };
 
     // Start an auto-agent first
-    const startCmd = registeredCommands.get("ff:auto-agent");
+    const startCmd = registeredCommands.get("fy:auto-agent");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Then stop it
-    const stopCmd = registeredCommands.get("ff:auto-pause");
+    const stopCmd = registeredCommands.get("fy:auto-pause");
     if (stopCmd) await stopCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     const stopNotify = notifications.find((n) => n.message.includes("paused"));
     expect(stopNotify).toBeDefined();
   });
 
-  test("ff:auto-worker enforces single-worker constraint", async () => {
+  test("fy:auto-worker enforces single-worker constraint", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -167,7 +167,7 @@ describe("auto-agent command registration", () => {
     };
 
     // Start first worker
-    const workerCmd = registeredCommands.get("ff:auto-worker");
+    const workerCmd = registeredCommands.get("fy:auto-worker");
     if (workerCmd) await workerCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Try starting second worker
@@ -188,7 +188,7 @@ describe("auto-agent command registration", () => {
     expect(errorNotify).toBeDefined();
   });
 
-  test("ff:auto-worker blocks second worker (singleton constraint)", async () => {
+  test("fy:auto-worker blocks second worker (singleton constraint)", async () => {
     const { db } = await setupTestDb();
 
     // Create a second project with a real temp directory
@@ -209,7 +209,7 @@ describe("auto-agent command registration", () => {
     }
 
     // Start first worker (project 1 — current cwd)
-    const workerCmd = registeredCommands.get("ff:auto-worker");
+    const workerCmd = registeredCommands.get("fy:auto-worker");
     const notifications1: Array<{ message: string; level: string }> = [];
     const ctx1 = {
       ui: {
@@ -253,7 +253,7 @@ describe("auto-agent command registration", () => {
     }
   });
 
-  test("ff:auto-worker resumes after /ff:auto-pause", async () => {
+  test("fy:auto-worker resumes after /fy:auto-pause", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -274,12 +274,12 @@ describe("auto-agent command registration", () => {
     };
 
     // Start worker
-    const workerCmd = registeredCommands.get("ff:auto-worker");
+    const workerCmd = registeredCommands.get("fy:auto-worker");
     if (workerCmd) await workerCmd.handler("", ctx as unknown as ExtensionCommandContext);
     expect(notifications.some((n) => n.message.includes("Auto-worker started"))).toBe(true);
 
     // Pause it
-    const pauseCmd = registeredCommands.get("ff:auto-pause");
+    const pauseCmd = registeredCommands.get("fy:auto-pause");
     if (pauseCmd) await pauseCmd.handler("", ctx as unknown as ExtensionCommandContext);
     expect(notifications.some((n) => n.message.includes("paused"))).toBe(true);
 
@@ -302,7 +302,7 @@ describe("auto-agent command registration", () => {
     expect(notifications2.some((n) => n.message.includes("Auto-worker resumed"))).toBe(true);
   });
 
-  test("ff:auto-designer starts designer state machine", async () => {
+  test("fy:auto-designer starts designer state machine", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -322,14 +322,14 @@ describe("auto-agent command registration", () => {
       },
     };
 
-    const cmd = registeredCommands.get("ff:auto-designer");
+    const cmd = registeredCommands.get("fy:auto-designer");
     if (cmd) await cmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     expect(notifications.length).toBeGreaterThanOrEqual(1);
     expect(notifications[0].message).toContain("Auto-designer started");
   });
 
-  test("ff:auto-designer resumes after /ff:auto-pause", async () => {
+  test("fy:auto-designer resumes after /fy:auto-pause", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -350,12 +350,12 @@ describe("auto-agent command registration", () => {
     };
 
     // Start designer
-    const designerCmd = registeredCommands.get("ff:auto-designer");
+    const designerCmd = registeredCommands.get("fy:auto-designer");
     if (designerCmd) await designerCmd.handler("", ctx as unknown as ExtensionCommandContext);
     expect(notifications.some((n) => n.message.includes("Auto-designer started"))).toBe(true);
 
     // Pause it
-    const pauseCmd = registeredCommands.get("ff:auto-pause");
+    const pauseCmd = registeredCommands.get("fy:auto-pause");
     if (pauseCmd) await pauseCmd.handler("", ctx as unknown as ExtensionCommandContext);
     expect(notifications.some((n) => n.message.includes("paused"))).toBe(true);
 
@@ -378,7 +378,7 @@ describe("auto-agent command registration", () => {
     expect(notifications2.some((n) => n.message.includes("Auto-designer resumed"))).toBe(true);
   });
 
-  test("ff:auto-pause shows warning when no agent is running", async () => {
+  test("fy:auto-pause shows warning when no agent is running", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -399,7 +399,7 @@ describe("auto-agent command registration", () => {
     };
 
     // Stop without starting any agent
-    const stopCmd = registeredCommands.get("ff:auto-pause");
+    const stopCmd = registeredCommands.get("fy:auto-pause");
     if (stopCmd) await stopCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     const noAgentNotify = notifications.find(
@@ -408,7 +408,7 @@ describe("auto-agent command registration", () => {
     expect(noAgentNotify).toBeDefined();
   });
 
-  test("ff:auto-pause only pauses agents for current project", async () => {
+  test("fy:auto-pause only pauses agents for current project", async () => {
     await setupTestDb();
     const { api, registeredCommands } = createFakeApi();
 
@@ -429,17 +429,17 @@ describe("auto-agent command registration", () => {
     };
 
     // Start an auto-agent — it will be associated with a project
-    const startCmd = registeredCommands.get("ff:auto-agent");
+    const startCmd = registeredCommands.get("fy:auto-agent");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Manually add a fake agent for a different project to the autoAgents map
     new AutoAgentStateMachine("worker", 99999, "session-other");
     // Access autoAgents via the module's resetInstances — we need to get the map
-    // Instead, test indirectly: /ff:auto-pause should pause the agent we started
+    // Instead, test indirectly: /fy:auto-pause should pause the agent we started
     // The other-project agent won't exist in autoAgents (it's module-scoped)
     // So we verify that stop works correctly when project is resolved
 
-    const stopCmd = registeredCommands.get("ff:auto-pause");
+    const stopCmd = registeredCommands.get("fy:auto-pause");
     if (stopCmd) await stopCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     const stopNotify = notifications.find((n) => n.message.includes("paused"));
@@ -469,12 +469,12 @@ describe("cleanupStoppedAgents", () => {
     };
 
     // Start an auto-agent
-    const startCmd = registeredCommands.get("ff:auto-agent");
+    const startCmd = registeredCommands.get("fy:auto-agent");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
     expect(notifications.some((n) => n.message.includes("Auto-agent started"))).toBe(true);
 
     // Stop it (sets state to paused)
-    const stopCmd = registeredCommands.get("ff:auto-pause");
+    const stopCmd = registeredCommands.get("fy:auto-pause");
     if (stopCmd) await stopCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Paused agents are NOT removed by cleanup (they're still active)
@@ -518,7 +518,7 @@ describe("cleanupStoppedAgents", () => {
     };
 
     // Start an auto-agent
-    const startCmd = registeredCommands.get("ff:auto-agent");
+    const startCmd = registeredCommands.get("fy:auto-agent");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Call cleanup while agent is still working
@@ -563,7 +563,7 @@ describe("cleanupStoppedAgents", () => {
     };
 
     // Start an auto-agent
-    const startCmd = registeredCommands.get("ff:auto-agent");
+    const startCmd = registeredCommands.get("fy:auto-agent");
     if (startCmd) await startCmd.handler("", ctx as unknown as ExtensionCommandContext);
 
     // Manually transition to error state via the state machine
@@ -612,8 +612,8 @@ describe("cleanupStoppedAgents", () => {
       },
     };
 
-    const agentStartCmd = registeredCommands.get("ff:auto-agent");
-    const workerStartCmd = registeredCommands.get("ff:auto-worker");
+    const agentStartCmd = registeredCommands.get("fy:auto-agent");
+    const workerStartCmd = registeredCommands.get("fy:auto-worker");
 
     // Start first agent
     if (agentStartCmd) await agentStartCmd.handler("", ctx as unknown as ExtensionCommandContext);
@@ -667,8 +667,8 @@ describe("cleanupStoppedAgents", () => {
       },
     };
 
-    const workerStartCmd = registeredCommands.get("ff:auto-worker");
-    const designerStartCmd = registeredCommands.get("ff:auto-designer");
+    const workerStartCmd = registeredCommands.get("fy:auto-worker");
+    const designerStartCmd = registeredCommands.get("fy:auto-designer");
 
     // 1. Start a worker.
     if (workerStartCmd) await workerStartCmd.handler("", ctx as unknown as ExtensionCommandContext);
@@ -720,8 +720,8 @@ describe("cleanupStoppedAgents", () => {
       },
     };
 
-    const workerStartCmd = registeredCommands.get("ff:auto-worker");
-    const designerStartCmd = registeredCommands.get("ff:auto-designer");
+    const workerStartCmd = registeredCommands.get("fy:auto-worker");
+    const designerStartCmd = registeredCommands.get("fy:auto-designer");
 
     if (workerStartCmd) await workerStartCmd.handler("", ctx as unknown as ExtensionCommandContext);
     const workerSm = globalThis.__piKanban?.autoAgent;
@@ -757,8 +757,8 @@ describe("cleanupStoppedAgents", () => {
       },
     };
 
-    const workerStartCmd = registeredCommands.get("ff:auto-worker");
-    const designerStartCmd = registeredCommands.get("ff:auto-designer");
+    const workerStartCmd = registeredCommands.get("fy:auto-worker");
+    const designerStartCmd = registeredCommands.get("fy:auto-designer");
 
     // Start a worker and simulate it working on a feature (so it holds a lock).
     if (workerStartCmd) await workerStartCmd.handler("", ctx as unknown as ExtensionCommandContext);
@@ -767,7 +767,7 @@ describe("cleanupStoppedAgents", () => {
     workerSm?.adoptFeature(42, "in-progress");
     const workerSessionId = workerSm?.sessionId;
 
-    // Pause it (as if via /ff:auto-pause). Role switch reuses isAgentLive, which is
+    // Pause it (as if via /fy:auto-pause). Role switch reuses isAgentLive, which is
     // true for paused — so the switch branch fires and mutates in place.
     // A paused agent is resumed by re-running a role command (same-role path is
     // tryResumePausedAgent); switching its role resumes it too.
@@ -796,7 +796,7 @@ describe("cleanupStoppedAgents", () => {
     expect(designerSm?.sessionId).toBe(workerSessionId);
     // The role switch RESUMES the paused agent (mirrors tryResumePausedAgent),
     // so one command yields a running designer rather than forcing a second
-    // /ff:auto-designer to resume.
+    // /fy:auto-designer to resume.
     expect(designerSm?.getState()).toBe("working");
     // The notification reflects the resume, not a misleading "started".
     expect(notifications.some((n) => n.message === "Auto-designer resumed")).toBe(true);

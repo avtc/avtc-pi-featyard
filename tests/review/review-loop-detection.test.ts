@@ -27,7 +27,7 @@ import {
  * - cannot-fix issues tracked in reviewHistory
  *
  * NOTE: review-loop completion is driven by calling the phase_ready tool with
- * {issuesFound, cannotFix} during the review phase (the ff-review skill's
+ * {issuesFound, cannotFix} during the review phase (the fy-review skill's
  * completion trigger). Only the FIRST test still exercises task_tracker init
  * directly (it asserts the execution-mode dialog is skipped).
  */
@@ -62,8 +62,8 @@ function setupReviewPhase(slug: string, options: { reviewLoopCount?: number } | 
   writeFeatureStateFile(slug, {
     workflow: {
       currentPhase: "review",
-      designDoc: `docs/ff/designs/${slug}-design.md`,
-      planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+      designDoc: `docs/featyard/designs/${slug}-design.md`,
+      planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
     },
     review: { reviewLoopCount: options?.reviewLoopCount ?? 0, reviewHistory: [] },
   });
@@ -81,8 +81,8 @@ function setupReviewPhaseWithTools(slug: string, options: { reviewLoopCount?: nu
   writeFeatureStateFile(slug, {
     workflow: {
       currentPhase: "review",
-      designDoc: `docs/ff/designs/${slug}-design.md`,
-      planDoc: `.ff/task-plans/${slug}-task-plan.md`,
+      designDoc: `docs/featyard/designs/${slug}-design.md`,
+      planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
     },
     review: { reviewLoopCount: options?.reviewLoopCount ?? 0, reviewHistory: [] },
   });
@@ -97,9 +97,9 @@ describe("review loop detection", () => {
     vi.spyOn(_log, "debug").mockImplementation(() => {});
     vi.spyOn(_log, "error").mockImplementation(() => {});
     // Clean up env vars to prevent cross-test contamination
-    delete process.env.PI_FF_REVIEW_LOOP;
-    delete process.env.PI_FF_STAGE;
-    // Reset featureReviewMode to general for tests expecting ff-review
+    delete process.env.PI_FY_REVIEW_LOOP;
+    delete process.env.PI_FY_STAGE;
+    // Reset featureReviewMode to general for tests expecting fy-review
 
     setSetting("featureReviewMode", "general");
   });
@@ -193,7 +193,7 @@ describe("review loop detection", () => {
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
     expect(lastMessage.options).toEqual({ deliverAs: "followUp" });
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
 
     // Verify reviewLoopCount was incremented
     expect(loadFeatureState("2026-05-16-review-no-prefix", null)?.review.reviewLoopCount).toBe(3);
@@ -230,7 +230,7 @@ describe("review loop detection", () => {
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
     expect(lastMessage.options).toEqual({ deliverAs: "followUp" });
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
 
     // Verify the review loop count was incremented (durable in feature-state)
     expect(loadFeatureState("2026-05-12-review-loop-redispatch", null)?.review.reviewLoopCount).toBe(1);
@@ -319,7 +319,7 @@ describe("review loop detection", () => {
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     // Write a non-empty worth-notes file at the resolved slug path (relative to the temp cwd) so
     // worthNotesPointer is non-null when the loop ends.
-    const notesPath = path.join(process.cwd(), ".ff", "reviews", slug, `${slug}-worth-notes.md`);
+    const notesPath = path.join(process.cwd(), ".featyard", "reviews", slug, `${slug}-worth-notes.md`);
     fs.mkdirSync(path.dirname(notesPath), { recursive: true });
     fs.writeFileSync(notesPath, "## worth noting\n- an oddity\n");
     const ctx = createCtx(true);
@@ -381,7 +381,7 @@ describe("review loop detection", () => {
     const { fake, registeredTools } = setupReviewPhaseWithTools(slug, { reviewLoopCount: 1 });
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     // Write a non-empty worth-notes file at the slug path so the pointer is non-null.
-    const notesPath = path.join(process.cwd(), ".ff", "reviews", slug, `${slug}-worth-notes.md`);
+    const notesPath = path.join(process.cwd(), ".featyard", "reviews", slug, `${slug}-worth-notes.md`);
     fs.mkdirSync(path.dirname(notesPath), { recursive: true });
     fs.writeFileSync(notesPath, "## worth noting\n- oddity\n");
     const ctx = createCtx(true);
@@ -515,7 +515,7 @@ describe("review loop detection", () => {
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
     expect(lastMessage.options).toEqual({ deliverAs: "followUp" });
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
 
     // Should NOT send notify report (loop continues)
     expect(ctx.ui.notify).not.toHaveBeenCalled();
@@ -593,7 +593,7 @@ describe("review loop detection", () => {
     expect(report).toContain("cannot-fix");
   });
 
-  test("featureReviewMode comprehensive dispatches ff-review on loop re-entry", async () => {
+  test("featureReviewMode comprehensive dispatches fy-review on loop re-entry", async () => {
     const slug = "2026-05-12-review-comprehensive";
 
     setSetting("maxFeatureReviewRounds", 3);
@@ -619,12 +619,12 @@ describe("review loop detection", () => {
       ctx as unknown as ExtensionContext,
     );
 
-    // Should re-dispatch ff-review
+    // Should re-dispatch fy-review
     await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
 
     // Verify the review loop count was incremented (durable in feature-state)
     expect(loadFeatureState("2026-05-12-review-comprehensive", null)?.review.reviewLoopCount).toBe(1);
@@ -704,10 +704,10 @@ describe("review loop detection", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
 
     // Verify persisted state on disk
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     const persisted = JSON.parse(fs.readFileSync(statePath, "utf-8"));
     expect(persisted.review.reviewLoopCount).toBe(1); // incremented from 0 → 1
     expect(persisted.review.reviewHistory).toHaveLength(1);
@@ -746,7 +746,7 @@ describe("review loop detection", () => {
     // Should NOT re-dispatch review skill when maxFeatureReviewRounds is 'off'
     if (fake.sentMessages.length > 0) {
       const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-      expect(lastMessage.message).not.toContain('<skill name="ff-review"');
+      expect(lastMessage.message).not.toContain('<skill name="fy-review"');
     }
   });
 });
@@ -758,9 +758,9 @@ describe("minReviewLoops integration", () => {
     vi.spyOn(_log, "debug").mockImplementation(() => {});
     vi.spyOn(_log, "error").mockImplementation(() => {});
     // Clean up env vars to prevent cross-test contamination
-    delete process.env.PI_FF_REVIEW_LOOP;
-    delete process.env.PI_FF_STAGE;
-    // Reset featureReviewMode to general for tests expecting ff-review
+    delete process.env.PI_FY_REVIEW_LOOP;
+    delete process.env.PI_FY_STAGE;
+    // Reset featureReviewMode to general for tests expecting fy-review
 
     setSetting("featureReviewMode", "general");
   });
@@ -806,7 +806,7 @@ describe("minReviewLoops integration", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
     expect(lastMessage.message).not.toContain("Review Round Summary");
   });
 
@@ -956,7 +956,7 @@ describe("minReviewLoops integration", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
     expect(lastMessage.message).not.toContain("Review Round Summary");
   });
 
@@ -995,7 +995,7 @@ describe("minReviewLoops integration", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
     expect(lastMessage.message).not.toContain("Review Round Summary");
   });
 
@@ -1028,7 +1028,7 @@ describe("minReviewLoops integration", () => {
     // maxLoops='off' → shouldLoop=false regardless of minReviewLoops
     if (fake.sentMessages.length > 0) {
       const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-      expect(lastMessage.message).not.toContain('<skill name="ff-review"');
+      expect(lastMessage.message).not.toContain('<skill name="fy-review"');
     }
   });
 
@@ -1175,10 +1175,10 @@ describe("minReviewLoops integration", () => {
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
-    expect(lastMessage.message).toContain('<skill name="ff-review"');
+    expect(lastMessage.message).toContain('<skill name="fy-review"');
 
     // Verify reviewHistory counts tasks without result as fixed
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     const persisted = JSON.parse(fs.readFileSync(statePath, "utf-8"));
     expect(persisted.review.reviewHistory).toHaveLength(1);
     expect(persisted.review.reviewHistory[0].issuesFound).toBe(2); // A and C counted as fixed
@@ -1217,7 +1217,7 @@ describe("minReviewLoops integration", () => {
     expect(report).toContain("Review Round Summary");
 
     // Verify reviewHistory: commit task excluded from counts
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     const persisted = JSON.parse(fs.readFileSync(statePath, "utf-8"));
     expect(persisted.review.reviewHistory).toHaveLength(1);
     expect(persisted.review.reviewHistory[0].issuesFound).toBe(1); // only fix task counted (commit excluded)
@@ -1259,7 +1259,7 @@ describe("minReviewLoops integration", () => {
     expect(getNotifyCall(ctx, 1)).toBe("info");
 
     // Verify reviewHistory: zero issues
-    const statePath = path.join(".ff", "feature-state", `${slug}.json`);
+    const statePath = path.join(".featyard", "feature-state", `${slug}.json`);
     const persisted = JSON.parse(fs.readFileSync(statePath, "utf-8"));
     expect(persisted.review.reviewHistory).toHaveLength(1);
     expect(persisted.review.reviewHistory[0].issuesFound).toBe(0);

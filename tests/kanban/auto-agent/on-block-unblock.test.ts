@@ -39,7 +39,7 @@ describe("onBlock/onUnblock auto-agent notification", () => {
         },
         currentPhase: "implement",
         artifacts: {
-          design: "docs/ff/designs/test-design.md",
+          design: "docs/featyard/designs/test-design.md",
           plan: "docs/plans/test-impl.md",
           implement: null,
           verify: null,
@@ -72,15 +72,15 @@ describe("onBlock/onUnblock auto-agent notification", () => {
       isActive: () => true,
     });
 
-    // Find the auto-agent block/unblock by triggering the execute phase via ff:resume
+    // Find the auto-agent block/unblock by triggering the execute phase via fy:resume
     const selectMock = vi.fn().mockResolvedValue("Subagent-driven (Recommended)");
     const ctxWithSelect = {
       ...mockCtx,
       ui: { ...mockCtx.ui, select: selectMock },
     } as unknown as ExtensionContext;
 
-    // Trigger execution mode dialog via ff:resume command
-    const continueHandler = fake.registeredCommands?.get("ff:resume");
+    // Trigger execution mode dialog via fy:resume command
+    const continueHandler = fake.registeredCommands?.get("fy:resume");
     if (continueHandler) {
       await (continueHandler as (args: string, ctx: ExtensionContext) => Promise<void>)("", ctxWithSelect);
     }

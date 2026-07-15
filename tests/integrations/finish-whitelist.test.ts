@@ -2,13 +2,13 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * Tests for feature-flow's finish-phase whitelist integration.
+ * Tests for featyard's finish-phase whitelist integration.
  *
- * Feature-flow provides a whitelist check function to guardrail that reads
+ * Featyard provides a whitelist check function to guardrail that reads
  * globalThis.__piWorkflowMonitor.finishPhaseWhitelisted and allows branch-switch
  * and merge categories when the flag is true.
  *
- * These tests verify ONLY feature-flow's whitelist function — not guardrail's
+ * These tests verify ONLY featyard's whitelist function — not guardrail's
  * command→category mapping (tested in pi-parallel-work-guardrail).
  */
 import { afterEach, beforeEach, describe, expect, test } from "vitest";

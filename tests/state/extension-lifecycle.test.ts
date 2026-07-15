@@ -49,8 +49,8 @@ function getSingleHandler(handlers: Map<string, Handler[]>, event: string): Hand
 
 describe("workflow-monitor extension lifecycle", () => {
   beforeEach(() => {
-    // Run inside a temp dir so production init's ensureFfJunction(process.cwd()) never touches
-    // the real repo's .ff.
+    // Run inside a temp dir so production init's ensureFeatyardJunction(process.cwd()) never touches
+    // the real repo's .featyard.
     withTempCwd();
   });
 
@@ -58,10 +58,10 @@ describe("workflow-monitor extension lifecycle", () => {
     cleanupAfterTest();
   });
 
-  test("registers /ff:next command", () => {
+  test("registers /fy:next command", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
-    expect(fake.registeredCommands).toContain("ff:next");
+    expect(fake.registeredCommands).toContain("fy:next");
   });
 
   test("clears pending violation on session switch", async () => {

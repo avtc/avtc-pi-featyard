@@ -42,7 +42,7 @@ function resolveSkillPath(name: string): string | null {
  * would produce via _expandSkillCommand().
  *
  * If `substituteFn` is provided, it's called on the skill body before wrapping
- * (used by workflow-monitor for {{PI_FF_*}} template substitution).
+ * (used by workflow-monitor for {{PI_FY_*}} template substitution).
  *
  * Returns the expanded text, or the original text if the skill is not found
  * or on error (matching pi core's _expandSkillCommand behavior).

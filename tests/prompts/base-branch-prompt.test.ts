@@ -95,7 +95,7 @@ describe("base branch selection prompt", () => {
       expect.arrayContaining(["Project settings (persists for all sessions)", "This session only"]),
     );
 
-    const projectSettingsPath = path.join(process.cwd(), ".pi", "avtc-pi-feature-flow-settings.json");
+    const projectSettingsPath = path.join(process.cwd(), ".pi", "avtc-pi-featyard-settings.json");
     expect(fs.existsSync(projectSettingsPath)).toBe(true);
     const saved = JSON.parse(fs.readFileSync(projectSettingsPath, "utf-8"));
     expect(saved.baseBranch).toBe("main");
@@ -156,7 +156,7 @@ describe("base branch selection prompt", () => {
 
     expect(getSettings().baseBranch).toBe("develop");
 
-    const projectSettingsPath = path.join(process.cwd(), ".pi", "avtc-pi-feature-flow-settings.json");
+    const projectSettingsPath = path.join(process.cwd(), ".pi", "avtc-pi-featyard-settings.json");
     expect(fs.existsSync(projectSettingsPath)).toBe(false);
   });
 

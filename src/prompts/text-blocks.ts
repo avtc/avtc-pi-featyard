@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-// Static text blocks injected by the template engine's PI_FF_* placeholders.
+// Static text blocks injected by the template engine's PI_FY_* placeholders.
 // Pure data (array-joined strings) with no runtime deps; the engine imports these.
 // Split out of template-substitution so the prompt content is browsable apart from
 // the substitution mechanics.
 
 /** General reviewer dispatch template — single generalist reviewer. */
 export const GENERAL_DISPATCH_TEMPLATE = [
-  "Dispatch the ff-general-reviewer as a subagent:",
+  "Dispatch the fy-general-reviewer as a subagent:",
   "",
   "```ts",
   "subagent({",
-  '  tasks: [{ agent: "ff-general-reviewer", task: `<filled template>` }],',
+  '  tasks: [{ agent: "fy-general-reviewer", task: `<filled template>` }],',
   "})",
   "```",
   "",
@@ -42,22 +42,22 @@ export const GENERAL_DISPATCH_TEMPLATE = [
 export const COMPREHENSIVE_DISPATCH_TEMPLATE = [
   "Dispatch ALL 6 specialized reviewers as parallel subagents. Do NOT skip any reviewer — each has a unique perspective that catches issues the others miss:",
   "",
-  "- `ff-quality-reviewer` — SOLID, KISS, DRY, maintainability, naming",
-  "- `ff-testing-reviewer` — Test coverage, edge cases, mock quality",
-  "- `ff-security-reviewer` — Injection, auth, secrets, data exposure, input validation",
-  "- `ff-performance-reviewer` — Data processing, algorithms, loops, queries, caching",
-  "- `ff-guidelines-reviewer` — Project conventions, linting rules, architecture patterns, file organization",
-  "- `ff-requirements-reviewer` — Spec compliance: verify implementation matches plan/spec document",
+  "- `fy-quality-reviewer` — SOLID, KISS, DRY, maintainability, naming",
+  "- `fy-testing-reviewer` — Test coverage, edge cases, mock quality",
+  "- `fy-security-reviewer` — Injection, auth, secrets, data exposure, input validation",
+  "- `fy-performance-reviewer` — Data processing, algorithms, loops, queries, caching",
+  "- `fy-guidelines-reviewer` — Project conventions, linting rules, architecture patterns, file organization",
+  "- `fy-requirements-reviewer` — Spec compliance: verify implementation matches plan/spec document",
   "",
   "```ts",
   "subagent({",
   "  tasks: [",
-  '    { agent: "ff-quality-reviewer", task: "<filled template>" },',
-  '    { agent: "ff-testing-reviewer", task: "<filled template>" },',
-  '    { agent: "ff-security-reviewer", task: "<filled template>" },',
-  '    { agent: "ff-performance-reviewer", task: "<filled template>" },',
-  '    { agent: "ff-guidelines-reviewer", task: "<filled template>" },',
-  '    { agent: "ff-requirements-reviewer", task: "<filled template>" },',
+  '    { agent: "fy-quality-reviewer", task: "<filled template>" },',
+  '    { agent: "fy-testing-reviewer", task: "<filled template>" },',
+  '    { agent: "fy-security-reviewer", task: "<filled template>" },',
+  '    { agent: "fy-performance-reviewer", task: "<filled template>" },',
+  '    { agent: "fy-guidelines-reviewer", task: "<filled template>" },',
+  '    { agent: "fy-requirements-reviewer", task: "<filled template>" },',
   "  ],",
   "})",
   "```",
@@ -91,26 +91,26 @@ export const DEFERRED_IS_A_FINDING =
 /** Verify phase templates — full verifier spawn instruction blocks. */
 export const VERIFY_PHASE_TEMPLATES: Record<"verify" | "plan", string> = {
   verify: [
-    '1. **Spawn ff-feature-verifier subagent** — `subagent({ agent: "ff-feature-verifier", task: "..." })`.',
+    '1. **Spawn fy-feature-verifier subagent** — `subagent({ agent: "fy-feature-verifier", task: "..." })`.',
     "Always run this verification — NEVER skip, even if you think there is nothing new to verify.",
-    "2. **If issues found:** Use `todo_add` with `parentId` set to the currently active todo item to create sub-items for all issues (single call, multiple items). Fix them one at a time. After all fixes, commit. Then re-init the todo list (`todo_init` with `overwrite: true`) with a fresh cycle: [spawn verifier, fix issues, run build/lint/tests, call phase_ready], and return to step 1. Max iterations: {{PI_FF_VERIFY_ITERATIONS}}. After max attempts, escalate to user.",
+    "2. **If issues found:** Use `todo_add` with `parentId` set to the currently active todo item to create sub-items for all issues (single call, multiple items). Fix them one at a time. After all fixes, commit. Then re-init the todo list (`todo_init` with `overwrite: true`) with a fresh cycle: [spawn verifier, fix issues, run build/lint/tests, call phase_ready], and return to step 1. Max iterations: {{PI_FY_VERIFY_ITERATIONS}}. After max attempts, escalate to user.",
     DEFERRED_IS_A_FINDING,
-    "3. **Fallback:** If ff-feature-verifier subagent fails (timeout, crash, error), retry once. If still fails, report failure to user.",
+    "3. **Fallback:** If fy-feature-verifier subagent fails (timeout, crash, error), retry once. If still fails, report failure to user.",
   ].join("\n"),
   plan: [
     "1. Load the design document.",
-    '2. Spawn `ff-plan-verifier` subagent — `subagent({ agent: "ff-plan-verifier", task: "..." })`.',
+    '2. Spawn `fy-plan-verifier` subagent — `subagent({ agent: "fy-plan-verifier", task: "..." })`.',
     "Always run this verification — NEVER skip, even if you think there is nothing new to verify.",
-    "3. If ff-plan-verifier finds issues: fix the plan, then re-dispatch ff-plan-verifier to confirm fixes. Max iterations: {{PI_FF_VERIFY_ITERATIONS}}. After max attempts, escalate to user.",
+    "3. If fy-plan-verifier finds issues: fix the plan, then re-dispatch fy-plan-verifier to confirm fixes. Max iterations: {{PI_FY_VERIFY_ITERATIONS}}. After max attempts, escalate to user.",
     DEFERRED_IS_A_FINDING,
     "4. If all ✅: proceed to `phase_ready`",
-    "5. **Fallback:** If ff-plan-verifier subagent fails (timeout, crash, error), retry once. If still fails, fall back to the manual per-point checklist: re-init the todo list (`todo_init` with `overwrite: true`) with one item per design point, verify each has a corresponding plan task.",
+    "5. **Fallback:** If fy-plan-verifier subagent fails (timeout, crash, error), retry once. If still fails, fall back to the manual per-point checklist: re-init the todo list (`todo_init` with `overwrite: true`) with one item per design point, verify each has a corresponding plan task.",
   ].join("\n"),
 };
 
 /**
- * Architecture principles — injected by {{PI_FF_ARCHITECTURE_PRINCIPLES}}.
- * Shared across design / plan / ff-implement / ff-implementer (single source of truth).
+ * Architecture principles — injected by {{PI_FY_ARCHITECTURE_PRINCIPLES}}.
+ * Shared across design / plan / fy-implement / fy-implementer (single source of truth).
  * Role-neutral wording so it fits every phase.
  */
 export const ARCHITECTURE_PRINCIPLES = [
@@ -149,8 +149,8 @@ export const DOC_COVERAGE_PROCESS = [
 ].join("\n");
 
 /**
- * Additional areas of attention — injected by {{PI_FF_ADDITIONAL_AREAS_OF_ATTENTION}}.
- * Concerns to be mindful of while writing tasks (plan) or code (ff-implementer), drawn from
+ * Additional areas of attention — injected by {{PI_FY_ADDITIONAL_AREAS_OF_ATTENTION}}.
+ * Concerns to be mindful of while writing tasks (plan) or code (fy-implementer), drawn from
  * the specialized code reviewers. Heading-less body; each consumer owns its own heading.
  * Deduped against ARCHITECTURE_PRINCIPLES (SOLID/error-handling/coupling/contracts live there).
  */
@@ -189,8 +189,8 @@ export const ADDITIONAL_AREAS_OF_ATTENTION = [
 ].join("\n");
 
 /**
- * Implementer guidance — injected by {{PI_FF_IMPLEMENTER_GUIDANCE}}.
- * Shared by BOTH the ff-implementer agent (agents/implementer.md) and ff-implement's
+ * Implementer guidance — injected by {{PI_FY_IMPLEMENTER_GUIDANCE}}.
+ * Shared by BOTH the fy-implementer agent (agents/implementer.md) and fy-implement's
  * current-session mode. Inner placeholders (ARCHITECTURE_PRINCIPLES, ADDITIONAL_AREAS_OF_ATTENTION)
  * are INLINED here so the block substitutes once (no nested/double substitution).
  */
@@ -245,7 +245,7 @@ export const IMPLEMENTER_GUIDANCE = [
   "",
   "## Very large tasks",
   "",
-  "If a task is too large to finish in one session AND it decomposes into granular, independently-verifiable parts, decompose it and dispatch one nested `ff-implementer` subagent at a time per part, then review each subagent's work for correctness before moving on. Verify sequentially — do not dispatch in parallel.",
+  "If a task is too large to finish in one session AND it decomposes into granular, independently-verifiable parts, decompose it and dispatch one nested `fy-implementer` subagent at a time per part, then review each subagent's work for correctness before moving on. Verify sequentially — do not dispatch in parallel.",
   "",
   "## Blockers",
   "",
@@ -256,11 +256,11 @@ export const IMPLEMENTER_GUIDANCE = [
   ADDITIONAL_AREAS_OF_ATTENTION,
 ].join("\n");
 
-/** Researcher delegation section — injected by {{PI_FF_RESEARCHER_DELEGATION}} when nestedResearchers is "on". */
+/** Researcher delegation section — injected by {{PI_FY_RESEARCHER_DELEGATION}} when nestedResearchers is "on". */
 export const RESEARCHER_DELEGATION_SECTION = [
   "## Delegation",
   "",
-  "When the investigation covers multiple independent sub-areas (multiple modules, long call chains, broad subsystems), delegate each to a nested `ff-researcher` subagent in parallel after mapping the landscape yourself.",
+  "When the investigation covers multiple independent sub-areas (multiple modules, long call chains, broad subsystems), delegate each to a nested `fy-researcher` subagent in parallel after mapping the landscape yourself.",
   "",
   "- **Delegate a part, not the whole task** — split your investigation into narrower scopes, not a repeat of it",
   "- **Map before delegating** — do the initial `find`/`grep` yourself; delegate only after you know what sub-areas exist",
@@ -271,8 +271,8 @@ export const RESEARCHER_DELEGATION_SECTION = [
   "```ts",
   "subagent({",
   "  tasks: [",
-  '    { agent: "ff-researcher", task: "<narrow sub-task>. Write to: <your-path>-agent-X.1.md" },',
-  '    { agent: "ff-researcher", task: "<narrow sub-task>. Write to: <your-path>-agent-X.2.md" },',
+  '    { agent: "fy-researcher", task: "<narrow sub-task>. Write to: <your-path>-agent-X.1.md" },',
+  '    { agent: "fy-researcher", task: "<narrow sub-task>. Write to: <your-path>-agent-X.2.md" },',
   "  ],",
   "})",
   "```",

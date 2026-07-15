@@ -15,9 +15,9 @@ describe("expandSkillCommand", () => {
     _resetFeatureState();
   });
 
-  test("expands /skill:ff-implement with no args into <skill> XML block", () => {
-    const result = expandSkillCommand("/skill:ff-implement", null, null);
-    expect(result).toMatch(/^<skill name="ff-implement" location="[^"]+">/);
+  test("expands /skill:fy-implement with no args into <skill> XML block", () => {
+    const result = expandSkillCommand("/skill:fy-implement", null, null);
+    expect(result).toMatch(/^<skill name="fy-implement" location="[^"]+">/);
     expect(result).toContain("</skill>");
     // Should NOT contain YAML frontmatter block at start
     expect(result).not.toMatch(/^---\n[\s\S]*?\n---/);
@@ -25,18 +25,18 @@ describe("expandSkillCommand", () => {
     expect(result).toContain("# Executing the Task-Plan");
   });
 
-  test("expands /skill:ff-implement with args — appends args after block", () => {
-    const result = expandSkillCommand("/skill:ff-implement docs/plans/my-plan.md", null, null);
-    expect(result).toMatch(/^<skill name="ff-implement" location="[^"]+">/);
+  test("expands /skill:fy-implement with args — appends args after block", () => {
+    const result = expandSkillCommand("/skill:fy-implement docs/plans/my-plan.md", null, null);
+    expect(result).toMatch(/^<skill name="fy-implement" location="[^"]+">/);
     expect(result).toContain("</skill>");
     // Args should appear after the closing tag, separated by double newline
     expect(result).toContain("</skill>\n\ndocs/plans/my-plan.md");
   });
 
-  test("substitutes {{PI_FF_*}} template placeholders in skill body", () => {
-    const result = expandSkillCommand("/skill:ff-implement", null, null);
+  test("substitutes {{PI_FY_*}} template placeholders in skill body", () => {
+    const result = expandSkillCommand("/skill:fy-implement", null, null);
     // After substitution, no raw placeholders should remain
-    expect(result).not.toContain("{{PI_FF_");
+    expect(result).not.toContain("{{PI_FY_");
     // Verify the skill body contains the per-task cycle structure
     expect(result).toContain("**Implement**");
     expect(result).toContain("**Gate + advance**");
@@ -86,19 +86,19 @@ describe("expandSkillCommand", () => {
 
   test("handles multi-line args separated by newline", () => {
     const result = expandSkillCommand(
-      "/skill:ff-implement\nContext was reset. Continue from where you left off.",
+      "/skill:fy-implement\nContext was reset. Continue from where you left off.",
       null,
       null,
     );
-    expect(result).toMatch(/^<skill name="ff-implement"/);
+    expect(result).toMatch(/^<skill name="fy-implement"/);
     expect(result).toContain("</skill>");
     // Args after newline should appear after the closing tag with double-newline separator
     expect(result).toContain("</skill>\n\nContext was reset. Continue from where you left off.");
   });
 
   test("handles whitespace-only args as no-args", () => {
-    const result = expandSkillCommand("/skill:ff-implement   ", null, null);
-    expect(result).toMatch(/^<skill name="ff-implement"/);
+    const result = expandSkillCommand("/skill:fy-implement   ", null, null);
+    expect(result).toMatch(/^<skill name="fy-implement"/);
     expect(result).toContain("</skill>");
     // Should NOT contain trailing whitespace after closing tag
     expect(result).not.toMatch(/<\/skill>\s+$/);
@@ -109,10 +109,10 @@ describe("expandSkillCommand", () => {
   });
 });
 
-// ff-implement SKILL.md was rewritten (dispatch model): task_ready_advance is the
+// fy-implement SKILL.md was rewritten (dispatch model): task_ready_advance is the
 // sole advance mechanism, the per-task gate cycle is implement → gate+advance, and
-// cannot-fix is escalated via the dispatched ff-task-gate (not inline in Step 2).
-describe("ff-implement dispatch-model skill", () => {
+// cannot-fix is escalated via the dispatched fy-task-gate (not inline in Step 2).
+describe("fy-implement dispatch-model skill", () => {
   beforeEach(() => {
     withTempCwd();
     initGitDir(process.cwd());
@@ -120,31 +120,31 @@ describe("ff-implement dispatch-model skill", () => {
   });
 
   test("Step 1 decomposition mandates a task_ready_advance sub-item per task", () => {
-    const result = expandSkillCommand("/skill:ff-implement", null, null);
+    const result = expandSkillCommand("/skill:fy-implement", null, null);
     expect(result).toContain("todo_add");
     expect(result).toContain("call `task_ready_advance`");
   });
 
   test("Step 2 starts the first task via task_ready_advance and uses the Gate + advance header", () => {
-    const result = expandSkillCommand("/skill:ff-implement", null, null);
+    const result = expandSkillCommand("/skill:fy-implement", null, null);
     expect(result).toContain("Start the first task: `task_ready_advance(nextTask:");
     expect(result).toContain("**Gate + advance**");
-    // ff-implement dispatches via task_ready_advance; advance_to_task_gated is not referenced.
+    // fy-implement dispatches via task_ready_advance; advance_to_task_gated is not referenced.
     expect(result).not.toContain("advance_to_task_gated");
-    // ff-implement contains no injected gate markers.
-    expect(result).not.toContain("{{PI_FF_VERIFY_PHASES:implement}}");
-    expect(result).not.toContain("{{PI_FF_PER_TASK_CODE_REVIEW}}");
+    // fy-implement contains no injected gate markers.
+    expect(result).not.toContain("{{PI_FY_VERIFY_PHASES:implement}}");
+    expect(result).not.toContain("{{PI_FY_PER_TASK_CODE_REVIEW}}");
   });
 
   test("Step 3 advances to verify via the last task_ready_advance call (no phase_ready)", () => {
-    const result = expandSkillCommand("/skill:ff-implement", null, null);
+    const result = expandSkillCommand("/skill:fy-implement", null, null);
     expect(result).toContain("After the last task's `task_ready_advance` call");
     expect(result).not.toMatch(/call `phase_ready`/);
   });
 
   test("orchestrator (subagent) IMPLEMENT_MODE block has no duplicate opening line", () => {
     setSetting("implementMode", "subagent-driven");
-    const result = expandSkillCommand("/skill:ff-implement", null, null);
+    const result = expandSkillCommand("/skill:fy-implement", null, null);
     // The orchestrator block opens with the ⚠️ role line (no duplicate opening line).
     expect(result).not.toContain("**You are the orchestrator. You do NOT write code.**");
     expect(result).toContain("⚠️ Never write code yourself — you are the orchestrator.");

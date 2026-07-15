@@ -6,7 +6,7 @@ import { applyModelOverrideForPhase } from "../shared/workflow-refs.js";
 import type { IGuardrails } from "../shared/workflow-types.js";
 import type { FeatureSession } from "../state/feature-session.js";
 import { persistState } from "../state/state-persistence.js";
-import { NO_FEATURE_STATE, updateWidget } from "../ui/feature-flow-widget.js";
+import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 import type { RouteConfig } from "./workflow-router.js";
 
 /**

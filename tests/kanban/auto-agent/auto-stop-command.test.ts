@@ -19,10 +19,10 @@ import {
   writeFeatureStateFile,
 } from "../../helpers/workflow-monitor-test-helpers.js";
 
-describe("ff:auto-stop command", () => {
+describe("fy:auto-stop command", () => {
   afterEach(() => {
     _resetFeatureState();
-    delete process.env.PI_FF_FEATURE;
+    delete process.env.PI_FY_FEATURE;
     // Clear any kanban bridge auto-agent left by a test
     if (globalThis.__piKanban) globalThis.__piKanban.autoAgent = null;
     resetInstances();
@@ -51,7 +51,7 @@ describe("ff:auto-stop command", () => {
     });
 
     // Use env var to activate the feature
-    process.env.PI_FF_FEATURE = "test-feature";
+    process.env.PI_FY_FEATURE = "test-feature";
     await fireAllHandlers(
       fake.handlers,
       "session_start",
@@ -68,7 +68,7 @@ describe("ff:auto-stop command", () => {
     setAutoAgentCallback(mockCallback);
 
     // Get the registered command handler
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
 
     const notify = vi.fn();
@@ -81,7 +81,7 @@ describe("ff:auto-stop command", () => {
     // Should have notified user
     expect(notify).toHaveBeenCalled();
 
-    // /ff:auto-stop intentionally does NOT re-dispatch the phase skill — control returns
+    // /fy:auto-stop intentionally does NOT re-dispatch the phase skill — control returns
     // to the user with no followup message.
     expect(fake.sentMessages.length).toBe(0);
   });
@@ -90,7 +90,7 @@ describe("ff:auto-stop command", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
 
     const notify = vi.fn();
@@ -155,7 +155,7 @@ describe("ff:auto-stop command", () => {
     sm.adoptFeature(featureId, "in-progress");
     if (globalThis.__piKanban) globalThis.__piKanban.autoAgent = sm;
 
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
     const ctx = { hasUI: true, ui: { notify: vi.fn(), setWidget: vi.fn() } } as unknown as ExtensionCommandContext;
     await (handler as (args: string[], ctx: ExtensionCommandContext) => Promise<void>)([], ctx);
@@ -187,7 +187,7 @@ describe("ff:auto-stop command", () => {
     expect(sm.getCurrentFeatureId()).toBeNull();
     if (globalThis.__piKanban) globalThis.__piKanban.autoAgent = sm;
 
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
     const ctx = { hasUI: true, ui: { notify: vi.fn(), setWidget: vi.fn() } } as unknown as ExtensionCommandContext;
     await (handler as (args: string[], ctx: ExtensionCommandContext) => Promise<void>)([], ctx);
@@ -219,11 +219,11 @@ describe("ff:auto-stop command", () => {
     sm.adoptFeature(featureId, "in-progress");
     if (globalThis.__piKanban) globalThis.__piKanban.autoAgent = sm;
 
-    // Simulate the kanban database becoming unavailable (closed/cleared) before /ff:auto-stop.
+    // Simulate the kanban database becoming unavailable (closed/cleared) before /fy:auto-stop.
     setDatabase(NO_DATABASE);
     expect(globalThis.__piKanban?.database).toBeNull();
 
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
     // Must not throw — the missing db is logged, not surfaced as a crash.
     const ctx = { hasUI: true, ui: { notify: vi.fn(), setWidget: vi.fn() } } as unknown as ExtensionCommandContext;
@@ -255,7 +255,7 @@ describe("ff:auto-stop command", () => {
     sm.adoptFeature(ghostFeatureId, "in-progress");
     if (globalThis.__piKanban) globalThis.__piKanban.autoAgent = sm;
 
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
     // Must not throw — the missing feature is logged, not surfaced as a crash.
     const ctx = { hasUI: true, ui: { notify: vi.fn(), setWidget: vi.fn() } } as unknown as ExtensionCommandContext;
@@ -291,7 +291,7 @@ describe("ff:auto-stop command", () => {
     sm.adoptFeature(featureId, "in-progress");
     if (globalThis.__piKanban) globalThis.__piKanban.autoAgent = sm;
 
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
     const ctx = { hasUI: true, ui: { notify: vi.fn(), setWidget: vi.fn() } } as unknown as ExtensionCommandContext;
     await (handler as (args: string[], ctx: ExtensionCommandContext) => Promise<void>)([], ctx);
@@ -325,12 +325,12 @@ describe("ff:auto-stop command", () => {
     expect(gpm.isActive()).toBe(true);
     if (globalThis.__piKanban) globalThis.__piKanban.gracePeriod = gpm;
 
-    const handler = fake.registeredCommands.get("ff:auto-stop");
+    const handler = fake.registeredCommands.get("fy:auto-stop");
     expect(handler).toBeDefined();
     const ctx = { hasUI: true, ui: { notify: vi.fn(), setWidget: vi.fn() } } as unknown as ExtensionCommandContext;
     await (handler as (args: string[], ctx: ExtensionCommandContext) => Promise<void>)([], ctx);
 
-    // /ff:auto-stop transitions the agent to stopped AND clears the GPM interval
+    // /fy:auto-stop transitions the agent to stopped AND clears the GPM interval
     // (requirement: clear timers from any state) — it must not keep ticking
     // widget updates for up to 30s after the user stopped the agent.
     expect(sm.getState()).toBe("stopped");

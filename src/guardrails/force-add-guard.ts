@@ -2,18 +2,18 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 /**
- * `.ff/` force-add guardrail.
+ * `.featyard/` force-add guardrail.
  *
- * The `.ff/` directory is a junction to feature-flow's external artifact storage
- * (~/.pi/feature-flow/artifacts/<key>/). It is auto-created on extension load and
+ * The `.featyard/` directory is a junction to featyard's external artifact storage
+ * (~/.pi/featyard/artifacts/<key>/). It is auto-created on extension load and
  * auto-added to `.gitignore`. Its contents (task-plans, research, reviews,
  * known-issues) must NEVER enter the repo history.
  *
- * Agents following review/commit skill prompts sometimes `git add -f` a `.ff/` file
+ * Agents following review/commit skill prompts sometimes `git add -f` a `.featyard/` file
  * to bypass the ignore. This guardrail hard-blocks any `git add` that uses
- * `-f`/`--force` and would pull in `.ff/` paths — explicitly (a path resolving
- * under `.ff/`) or via a force-sweep (`-fA`, `-f --all`, `-f .` when `.ff/` is
- * under cwd). `.ff/` always exists when feature-flow is active, so a force-sweep
+ * `-f`/`--force` and would pull in `.featyard/` paths — explicitly (a path resolving
+ * under `.featyard/`) or via a force-sweep (`-fA`, `-f --all`, `-f .` when `.featyard/` is
+ * under cwd). `.featyard/` always exists when featyard is active, so a force-sweep
  * unconditionally includes it.
  *
  * Pure (parser) + fs-injected (sweep cwd checks) so the parser is unit-testable
@@ -50,16 +50,16 @@ function toFwd(p: string): string {
   return p.replace(/\\/g, "/");
 }
 
-/** True if a resolved absolute path has `.ff` as a path segment (targets the junction). */
-function targetsFfSegment(absPath: string): boolean {
+/** True if a resolved absolute path has `.featyard` as a path segment (targets the junction). */
+function targetsFeatyardSegment(absPath: string): boolean {
   const segs = toFwd(absPath).split("/");
-  return segs.includes(".ff");
+  return segs.includes(".featyard");
 }
 
 /**
  * Tokenize a shell argument string into argv tokens, respecting single and
  * double quotes. Backslashes are treated as literal path separators (NOT shell
- * escapes) so Windows backslash paths survive intact for `.ff/` detection — git
+ * escapes) so Windows backslash paths survive intact for `.featyard/` detection — git
  * pathspecs canonically use forward slashes, but agents on Windows may write
  * backslash paths. For embedded spaces, agents use quotes (handled).
  */
@@ -213,12 +213,12 @@ export function parseGitAddCommand(subcommand: string): GitAddParse | null {
   return { isGitAdd: true, force, sweepAll, pathspecs, gitCDir };
 }
 
-/** Resolve a pathspec against effective cwd and check whether it lands under `.ff/`. */
-function pathspecTargetsFf(pathspec: string, effectiveCwd: string): boolean {
+/** Resolve a pathspec against effective cwd and check whether it lands under `.featyard/`. */
+function pathspecTargetsFeatyard(pathspec: string, effectiveCwd: string): boolean {
   // Normalize separators so Windows backslash pathspecs resolve consistently,
   // then resolve `..`/`.` lexically against effective cwd.
   const resolved = path.resolve(effectiveCwd, toFwd(pathspec));
-  return targetsFfSegment(resolved);
+  return targetsFeatyardSegment(resolved);
 }
 
 /** Resolve the effective cwd for a parsed command: `git -C <dir>` overrides the tracked cwd. */
@@ -227,22 +227,22 @@ function resolveEffectiveCwd(trackedCwd: string | null, baseCwd: string, parse: 
   return trackedCwd ?? baseCwd;
 }
 
-/** True if a `.ff` directory exists directly under `dir` (cwd-sweep would include it). */
-function ffUnderDir(dir: string, fs: typeof fsType): boolean {
-  return fs.existsSync(path.join(dir, ".ff"));
+/** True if a `.featyard` directory exists directly under `dir` (cwd-sweep would include it). */
+function featyardUnderDir(dir: string, fs: typeof fsType): boolean {
+  return fs.existsSync(path.join(dir, ".featyard"));
 }
 /**
- * Check a full (possibly compound) bash command for a `.ff/` force-add.
+ * Check a full (possibly compound) bash command for a `.featyard/` force-add.
  *
  * Decomposes compound commands (`cd sub && git add ...`) tracking effective cwd,
  * parses each `git add`, and returns a hard block if any subcommand force-adds a
- * `.ff/` path or force-sweeps while `.ff/` would be included.
+ * `.featyard/` path or force-sweeps while `.featyard/` would be included.
  *
  * @param command raw bash command string
  * @param baseCwd the process cwd (base for `cd` resolution)
  * @param fs filesystem seam (defaults to the real fs)
  */
-export function checkFfForceAdd(command: string, baseCwd: string, fs: typeof fsType): BlockResult | null {
+export function checkFeatyardForceAdd(command: string, baseCwd: string, fs: typeof fsType): BlockResult | null {
   const subcommands = decomposeWithCwd(command, baseCwd);
 
   for (const { command: sub, effectiveCwd: trackedCwd } of subcommands) {
@@ -251,25 +251,25 @@ export function checkFfForceAdd(command: string, baseCwd: string, fs: typeof fsT
 
     const effectiveCwd = resolveEffectiveCwd(trackedCwd, baseCwd, parse);
 
-    // 1. Explicit pathspec targeting .ff/ → block.
+    // 1. Explicit pathspec targeting .featyard/ → block.
     for (const spec of parse.pathspecs) {
       if (spec === ".") {
-        // cwd sweep: block only if .ff is directly under effective cwd
-        if (ffUnderDir(effectiveCwd, fs)) {
+        // cwd sweep: block only if .featyard is directly under effective cwd
+        if (featyardUnderDir(effectiveCwd, fs)) {
           return blockResult(spec, effectiveCwd);
         }
         continue;
       }
-      if (pathspecTargetsFf(spec, effectiveCwd)) {
+      if (pathspecTargetsFeatyard(spec, effectiveCwd)) {
         return blockResult(spec, effectiveCwd);
       }
     }
 
-    // 2. Force-sweep (-A/--all) → .ff always exists when feature-flow is active,
+    // 2. Force-sweep (-A/--all) → .featyard always exists when featyard is active,
     //    so a repo-wide force-add unconditionally pulls it in. Guard defensively:
-    //    only block if a .ff exists anywhere up the tree from effective cwd.
+    //    only block if a .featyard exists anywhere up the tree from effective cwd.
     if (parse.sweepAll && parse.pathspecs.length === 0) {
-      if (ffExistsUpTree(effectiveCwd, fs)) {
+      if (featyardExistsUpTree(effectiveCwd, fs)) {
         return blockResultSweep();
       }
     }
@@ -278,12 +278,12 @@ export function checkFfForceAdd(command: string, baseCwd: string, fs: typeof fsT
   return null;
 }
 
-/** Walk up from `dir` looking for a `.ff` directory (the junction is at the repo/session root). */
-function ffExistsUpTree(startDir: string, fs: typeof fsType): boolean {
+/** Walk up from `dir` looking for a `.featyard` directory (the junction is at the repo/session root). */
+function featyardExistsUpTree(startDir: string, fs: typeof fsType): boolean {
   let dir = path.resolve(startDir);
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    if (fs.existsSync(path.join(dir, ".ff"))) return true;
+    if (fs.existsSync(path.join(dir, ".featyard"))) return true;
     const parent = path.dirname(dir);
     if (parent === dir) return false;
     dir = parent;
@@ -294,9 +294,9 @@ function blockResult(pathspec: string, effectiveCwd: string): BlockResult {
   return {
     block: true,
     reason:
-      "Refused: `git add -f` targets the `.ff/` junction (external artifact storage). " +
-      "`.ff/` is gitignored and must never be committed. " +
-      `Resolved \`${pathspec}\` under ${effectiveCwd} lands in \`.ff/\`. ` +
+      "Refused: `git add -f` targets the `.featyard/` junction (external artifact storage). " +
+      "`.featyard/` is gitignored and must never be committed. " +
+      `Resolved \`${pathspec}\` under ${effectiveCwd} lands in \`.featyard/\`. ` +
       "Stage only your source changes (e.g. `git add <path>` without `-f`).",
   };
 }
@@ -305,8 +305,8 @@ function blockResultSweep(): BlockResult {
   return {
     block: true,
     reason:
-      "Refused: `git add -f -A` (force-sweep) would pull in the gitignored `.ff/` junction. " +
-      "`.ff/` is external artifact storage and must never be committed. " +
+      "Refused: `git add -f -A` (force-sweep) would pull in the gitignored `.featyard/` junction. " +
+      "`.featyard/` is external artifact storage and must never be committed. " +
       "Stage only your source changes (e.g. `git add -A` without `-f`).",
   };
 }

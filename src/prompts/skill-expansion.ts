@@ -3,7 +3,7 @@
 
 /**
  * Skill expansion — template substitution and skill command expansion.
- * Handles all {{PI_FF_*}} placeholder resolution and finish instruction generation.
+ * Handles all {{PI_FY_*}} placeholder resolution and finish instruction generation.
  */
 
 import { getBranchOrShortSha } from "../git/git-queries.js";
@@ -70,7 +70,7 @@ function buildWorktreeContextSection(
 }
 
 /**
- * Substitute all known PI_FF_* template placeholders in the given text.
+ * Substitute all known PI_FY_* template placeholders in the given text.
  * Returns the modified text (or original if no placeholders found) and
  * metadata about whether the guardrail whitelist should be activated.
  */
@@ -86,84 +86,84 @@ export function substituteTemplates(
 
   // Cache feature state for the active slug — avoids repeated disk reads + JSON.parse.
   // Derive the slug from the handler when available, else from the override (so generic
-  // placeholders like {{PI_FF_WORTH_NOTES_PATH}} resolve in tests/dispatch without a handler).
+  // placeholders like {{PI_FY_WORTH_NOTES_PATH}} resolve in tests/dispatch without a handler).
   const cachedFeatureState = featureStateOverride ?? handler?.getActiveFeatureState() ?? undefined;
   const activeSlug = handler?.getActiveFeatureSlug() ?? cachedFeatureState?.featureSlug ?? undefined;
 
-  // {{PI_FF_IMPLEMENT_MODE}} — inject ff-implementer guidance (current-session) or orchestrator
+  // {{PI_FY_IMPLEMENT_MODE}} — inject fy-implementer guidance (current-session) or orchestrator
   // dispatch instructions (subagent) based on executionMode.
-  // - current-session: the main agent implements directly, so it gets the FULL ff-implementer guidance
+  // - current-session: the main agent implements directly, so it gets the FULL fy-implementer guidance
   //   (IMPLEMENTER_GUIDANCE — pre-resolved with architecture principles + attention inlined, so no
-  //   nested substitution; it carries Blockers, so ff-implement needs no separate When-to-Stop).
-  // - subagent: the main agent is the orchestrator (dispatches ff-implementer subagents that carry their
+  //   nested substitution; it carries Blockers, so fy-implement needs no separate When-to-Stop).
+  // - subagent: the main agent is the orchestrator (dispatches fy-implementer subagents that carry their
   //   own guidance); it gets dispatch instructions + escalation (when to stop/escalate to the user).
-  if (text.includes("{{PI_FF_IMPLEMENT_MODE}}")) {
+  if (text.includes("{{PI_FY_IMPLEMENT_MODE}}")) {
     const subagent = isSubagentMode(flowToExecutionMode(getSettings().implementMode));
     const instruction = subagent
       ? [
-          "Dispatch an ff-implementer subagent:",
+          "Dispatch an fy-implementer subagent:",
           "",
           "```ts",
-          'subagent({ agent: "ff-implementer", task: "... task prompt ..." })',
+          'subagent({ agent: "fy-implementer", task: "... task prompt ..." })',
           "```",
           "",
           "Task prompt should include: task number, design section, scene-setting context (dependencies from previous tasks), working directory.",
           "",
-          "If the ff-implementer reports uncertainties or assumptions: re-dispatch with clarifications if critical, or accept and note for review.",
+          "If the fy-implementer reports uncertainties or assumptions: re-dispatch with clarifications if critical, or accept and note for review.",
           "",
           "⚠️ Never dispatch multiple implementation subagents in parallel (file conflicts).",
           "⚠️ Never write code yourself — you are the orchestrator.",
           "",
-          "**Escalate to the user and stop if an ff-implementer subagent:** reports a blocker it cannot resolve, reports that the plan is wrong, or fails twice on the same task. Do not silently work around it.",
+          "**Escalate to the user and stop if an fy-implementer subagent:** reports a blocker it cannot resolve, reports that the plan is wrong, or fails twice on the same task. Do not silently work around it.",
         ].join("\n")
       : IMPLEMENTER_GUIDANCE;
-    text = text.replaceAll("{{PI_FF_IMPLEMENT_MODE}}", instruction);
+    text = text.replaceAll("{{PI_FY_IMPLEMENT_MODE}}", instruction);
   }
 
-  // {{PI_FF_WORTH_NOTES}} — worth-notes handling, branches on executionMode.
+  // {{PI_FY_WORTH_NOTES}} — worth-notes handling, branches on executionMode.
   // Subagent mode: the implementer reports worth-notes; the orchestrator appends them.
   // Direct mode: the in-session implementer appends its own worth-notes directly.
-  if (text.includes("{{PI_FF_WORTH_NOTES}}")) {
+  if (text.includes("{{PI_FY_WORTH_NOTES}}")) {
     const subagent = isSubagentMode(flowToExecutionMode(getSettings().implementMode));
     const instruction = subagent
-      ? "Collect worth-notes from each implementer subagent's final report and append them to `{{PI_FF_WORTH_NOTES_PATH}}`: out-of-scope code smells needing refactoring, bugs you could not fix, and anything strange (what and where)."
-      : "When you notice an out-of-scope code smell, a bug you cannot fix, or anything strange during your work, append it to `{{PI_FF_WORTH_NOTES_PATH}}` (what and where).";
-    text = text.replaceAll("{{PI_FF_WORTH_NOTES}}", instruction);
+      ? "Collect worth-notes from each implementer subagent's final report and append them to `{{PI_FY_WORTH_NOTES_PATH}}`: out-of-scope code smells needing refactoring, bugs you could not fix, and anything strange (what and where)."
+      : "When you notice an out-of-scope code smell, a bug you cannot fix, or anything strange during your work, append it to `{{PI_FY_WORTH_NOTES_PATH}}` (what and where).";
+    text = text.replaceAll("{{PI_FY_WORTH_NOTES}}", instruction);
   }
 
-  // {{PI_FF_WORKTREE_CONTEXT}} — worktree paths, subagent CWD, sync commands
-  if (text.includes("{{PI_FF_WORKTREE_CONTEXT}}")) {
+  // {{PI_FY_WORKTREE_CONTEXT}} — worktree paths, subagent CWD, sync commands
+  if (text.includes("{{PI_FY_WORKTREE_CONTEXT}}")) {
     if (settings.branchPolicy === "worktree") {
       const slug = handler?.getActiveFeatureSlug() ?? null;
       if (!slug) {
         // No active feature — expand to empty (not a worktree failure)
-        text = text.replaceAll("{{PI_FF_WORKTREE_CONTEXT}}", "");
+        text = text.replaceAll("{{PI_FY_WORKTREE_CONTEXT}}", "");
       } else {
         const fsData = cachedFeatureState;
         if (fsData?.git?.worktreePath) {
           const mainRepoPath = resolveMainRepoPathSync();
           const baseBranch = fsData.git.baseBranch ?? settings.baseBranch ?? "main";
           text = text.replaceAll(
-            "{{PI_FF_WORKTREE_CONTEXT}}",
+            "{{PI_FY_WORKTREE_CONTEXT}}",
             buildWorktreeContextSection(fsData.git.worktreePath, slug, baseBranch, mainRepoPath),
           );
         } else {
           // Worktree creation failed
           text = text.replaceAll(
-            "{{PI_FF_WORKTREE_CONTEXT}}",
+            "{{PI_FY_WORKTREE_CONTEXT}}",
             "⚠️ Worktree creation failed. You are working in the main repo directory. Do NOT set cwd on subagent dispatches — let them inherit the main repo path.",
           );
         }
       }
     } else {
       // current-branch policy — no worktree context
-      text = text.replaceAll("{{PI_FF_WORKTREE_CONTEXT}}", "");
+      text = text.replaceAll("{{PI_FY_WORKTREE_CONTEXT}}", "");
     }
   }
 
-  // {{PI_FF_FINISH_INSTRUCTIONS}}
+  // {{PI_FY_FINISH_INSTRUCTIONS}}
   // 4 variants: branchPolicy × autoAgentActive
-  const hasFinishPlaceholder = text.includes("{{PI_FF_FINISH_INSTRUCTIONS}}");
+  const hasFinishPlaceholder = text.includes("{{PI_FY_FINISH_INSTRUCTIONS}}");
   if (hasFinishPlaceholder) {
     const autoAgentCb = getAutoAgentCb?.();
     const isActive = autoAgentCb?.isActive?.();
@@ -209,10 +209,10 @@ export function substituteTemplates(
         : buildCurrentBranchInteractiveSection(finishCtx);
     }
 
-    text = text.replaceAll("{{PI_FF_FINISH_INSTRUCTIONS}}", section);
+    text = text.replaceAll("{{PI_FY_FINISH_INSTRUCTIONS}}", section);
   }
 
-  // Apply generic placeholder substitution (PI_FF_REVIEWER_SKIP, etc.)
+  // Apply generic placeholder substitution (PI_FY_REVIEWER_SKIP, etc.)
   const emptyLoops = activeSlug ? getEmptyLoopsForSlug?.(activeSlug) : undefined;
 
   // Current workflow phase — drives review-iteration context placeholders
@@ -240,7 +240,7 @@ export function substituteTemplates(
 
 /**
  * Expand a /skill:name command into the <skill> XML block that pi core
- * would produce via _expandSkillCommand(). Also substitutes {{PI_FF_*}}
+ * would produce via _expandSkillCommand(). Also substitutes {{PI_FY_*}}
  * template placeholders in the skill body.
  *
  * Returns the expanded text, or the original text if the skill is not found

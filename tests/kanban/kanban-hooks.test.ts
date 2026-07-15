@@ -29,7 +29,10 @@ describe("ensureKanbanFeature", () => {
     const cwd = withTempCwd();
     const _projectId = db.createProject({ name: "Test", repoPath: cwd });
 
-    const state = createFeatureState("2026-05-16-new-feature", "docs/ff/designs/2026-05-16-new-feature-design.md");
+    const state = createFeatureState(
+      "2026-05-16-new-feature",
+      "docs/featyard/designs/2026-05-16-new-feature-design.md",
+    );
     saveFeatureState(state, null);
 
     await ensureKanbanFeature(db, state, null, null, "design");
@@ -50,7 +53,10 @@ describe("ensureKanbanFeature", () => {
     const cwd = withTempCwd();
     // No project created — should auto-create
 
-    const state = createFeatureState("2026-05-16-auto-project", "docs/ff/designs/2026-05-16-auto-project-design.md");
+    const state = createFeatureState(
+      "2026-05-16-auto-project",
+      "docs/featyard/designs/2026-05-16-auto-project-design.md",
+    );
     saveFeatureState(state, null);
 
     await ensureKanbanFeature(db, state, null, null, "design");
@@ -67,7 +73,10 @@ describe("ensureKanbanFeature", () => {
     cleanup.push(db);
 
     withTempCwd();
-    const state = createFeatureState("2026-05-16-already-has", "docs/ff/designs/2026-05-16-already-has-design.md");
+    const state = createFeatureState(
+      "2026-05-16-already-has",
+      "docs/featyard/designs/2026-05-16-already-has-design.md",
+    );
     state.featureId = 42;
     saveFeatureState(state, null);
 
@@ -86,7 +95,7 @@ describe("ensureKanbanFeature", () => {
 
     const state = createFeatureState(
       "2026-05-16-worktree-feature",
-      "docs/ff/designs/2026-05-16-worktree-feature-design.md",
+      "docs/featyard/designs/2026-05-16-worktree-feature-design.md",
     );
     saveFeatureState(state, null);
 
@@ -116,7 +125,7 @@ describe("ensureKanbanFeature", () => {
       lane: "ready",
     });
 
-    const state = createFeatureState("2026-05-16-existing", "docs/ff/designs/2026-05-16-existing-design.md");
+    const state = createFeatureState("2026-05-16-existing", "docs/featyard/designs/2026-05-16-existing-design.md");
     saveFeatureState(state, null);
 
     await ensureKanbanFeature(db, state, null, null, "design");
@@ -134,7 +143,7 @@ describe("ensureKanbanFeature", () => {
     const cwd = withTempCwd();
     db.createProject({ name: "Test", repoPath: cwd });
 
-    const state = createFeatureState("2026-05-16-state-file", "docs/ff/designs/2026-05-16-state-file-design.md");
+    const state = createFeatureState("2026-05-16-state-file", "docs/featyard/designs/2026-05-16-state-file-design.md");
     saveFeatureState(state, null);
 
     await ensureKanbanFeature(db, state, null, null, "design");
@@ -153,7 +162,7 @@ describe("ensureKanbanFeature", () => {
     const cwd = withTempCwd();
     db.createProject({ name: "Test", repoPath: cwd });
 
-    const state = createFeatureState("2026-05-16-mutate", "docs/ff/designs/2026-05-16-mutate-design.md");
+    const state = createFeatureState("2026-05-16-mutate", "docs/featyard/designs/2026-05-16-mutate-design.md");
     saveFeatureState(state, null);
 
     // ensureKanbanFeature mutates state in place and returns nothing.
