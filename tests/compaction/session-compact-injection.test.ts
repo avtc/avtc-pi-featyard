@@ -12,6 +12,11 @@ import type {
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFERRED_COMPACT_FOLLOWUP_MS } from "../../src/compaction/compact-handler.js";
 import workflowMonitorExtension, { _getExpectedSkill, _resetFeatureState } from "../../src/index.js";
+import {
+  clearPostTurnFollowUp,
+  hasPostTurnFollowUp,
+  schedulePostTurnFollowUp,
+} from "../../src/state/post-turn-dispatch.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
   createFakePi,
@@ -869,6 +874,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     vi.useFakeTimers();
     withTempCwd();
     _resetFeatureState();
+    clearPostTurnFollowUp();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
     delete process.env.PI_FY_FEATURE;
     enableSubagentMode();
@@ -878,6 +884,7 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     delete globalThis.__piCtx;
     vi.useRealTimers();
     _resetFeatureState();
+    clearPostTurnFollowUp();
     delete process.env.PI_SUBAGENT_CHILD_AGENT;
     delete process.env.PI_FY_FEATURE;
   });
@@ -1090,6 +1097,76 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     expect(sendUserMessageCalls.length).toBe(0);
 
     // After the defer window: inject fires.
+    vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
+    expect(sendUserMessageCalls.length).toBe(1);
+    expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
+  });
+
+  test("pi auto-compaction with a staged post-turn followUp supersedes it: injects (not editor) + clears the slot", async () => {
+    // Regression guard for the redundant-editor-paste bug: when pi's own auto-compaction fires
+    // in _handlePostAgentRun (after agent_end → agentJustFinished=TRUE) while a phase-transition
+    // followUp is staged, the compaction must (a) clear the staged followUp so the agent_settled
+    // drain does not deliver a SECOND copy, and (b) inject its own skill+framing (not route to
+    // editor) so the workflow continues. Without the fix, agentJustFinished=TRUE routed to editor
+    // AND the drain sent the followUp → same transition in both editor and a running turn.
+    const slug = "test-auto-compact-supersedes-staged";
+    process.env.PI_FY_FEATURE = slug;
+
+    const fake = createFakePi();
+    writeExecuteState(slug);
+
+    const sendUserMessageCalls: string[] = [];
+    const editorText: string[] = [];
+    const piApi = {
+      ...fake.api,
+      sendUserMessage(msg: string) {
+        sendUserMessageCalls.push(msg);
+      },
+    };
+
+    workflowMonitorExtension(piApi as unknown as ExtensionAPI);
+
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { source: "user", hasUI: false },
+      { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
+    );
+
+    // Fire agent_end — simulates the agent ending its turn (sets agentJustFinished=TRUE).
+    const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
+    await onAgentEnd({} as unknown as ExtensionEvent, { hasUI: false } as unknown as ExtensionContext);
+
+    // A phase-transition followUp is staged (as phase_ready would do at agent_settled boundary).
+    schedulePostTurnFollowUp('<skill name="fy-implement"/> staged transition');
+    expect(hasPostTurnFollowUp()).toBe(true);
+
+    // pi's own auto-compaction fires now (reason=threshold), with agentJustFinished=TRUE.
+    const onCompact = getSingleHandler(fake.handlers, "session_compact");
+    await onCompact(
+      {
+        compactionEntry: { id: "c1", type: "compaction" } as unknown as unknown,
+        fromExtension: false,
+        reason: "threshold",
+        willRetry: false,
+      } as unknown as ExtensionEvent,
+      {
+        hasUI: true,
+        ui: {
+          setWidget: () => {},
+          setEditorText: (t: string) => editorText.push(t),
+          getEditorText: () => "",
+          notify: () => {},
+        } as unknown as ExtensionUIContext,
+      } as unknown as ExtensionContext,
+    );
+
+    // The staged followUp must be cleared — the agent_settled drain would otherwise duplicate.
+    expect(hasPostTurnFollowUp()).toBe(false);
+    // Must NOT route to editor (that was the redundant paste).
+    expect(editorText.length).toBe(0);
+
+    // After the defer window: the compaction's own skill+framing is injected (workflow continues).
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
     expect(sendUserMessageCalls.length).toBe(1);
     expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);

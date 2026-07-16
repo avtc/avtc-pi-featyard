@@ -5,6 +5,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   clearPostTurnFollowUp,
+  hasPostTurnFollowUp,
   schedulePostTurnDrain,
   schedulePostTurnFollowUp,
 } from "../../src/state/post-turn-dispatch.js";
@@ -83,6 +84,27 @@ describe("post-turn-dispatch", () => {
     clearPostTurnFollowUp();
     vi.advanceTimersByTime(1000);
     expect(sent).toHaveLength(0);
+  });
+
+  test("hasPostTurnFollowUp reflects whether a followUp is staged", () => {
+    const { pi } = makeFakePi();
+    expect(hasPostTurnFollowUp()).toBe(false);
+    schedulePostTurnFollowUp("fy-review");
+    expect(hasPostTurnFollowUp()).toBe(true);
+    // Still staged while a drain is pending (not yet fired)...
+    schedulePostTurnDrain(pi);
+    vi.advanceTimersByTime(499);
+    expect(hasPostTurnFollowUp()).toBe(true);
+    // ...and cleared once the drain fires.
+    vi.advanceTimersByTime(1);
+    expect(hasPostTurnFollowUp()).toBe(false);
+  });
+
+  test("hasPostTurnFollowUp is false after clearPostTurnFollowUp", () => {
+    schedulePostTurnFollowUp("fy-review");
+    expect(hasPostTurnFollowUp()).toBe(true);
+    clearPostTurnFollowUp();
+    expect(hasPostTurnFollowUp()).toBe(false);
   });
 
   test("a second schedulePostTurnDrain while one is pending is a no-op (no double delivery)", () => {

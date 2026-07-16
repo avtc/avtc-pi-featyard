@@ -37,9 +37,13 @@
  * The `phase_ready` guard is reset on `agent_end` (per-cycle), so the new cycle's
  * `phase_ready` honors correctly.
  *
- * Compaction is unchanged: it aborts the turn mid-turn and re-injects its own
- * followUp via the separate `__piCompactFollowUp` slot; that path never stages a
- * followUp here.
+ * Compaction supersedes a staged followUp: when `session_compact` fires with a
+ * staged followUp present (only possible for pi's own auto-compaction, which runs
+ * in `_handlePostAgentRun` *before* `agent_settled` drains — extension
+ * `ctx.compact()` never stages one), the compaction handler clears the slot via
+ * {@link hasPostTurnFollowUp}/{@link clearPostTurnFollowUp} and injects its own
+ * skill+framing message instead. Without this, both the compaction's editor-write
+ * and this drain would deliver the same transition (redundant editor paste).
  *
  * Module-level single slot: at most one phase-transition followUp is staged per
  * turn (the once-per-turn guard guarantees at most one honoring), and the slot +
@@ -91,6 +95,11 @@ export function schedulePostTurnDrain(pi: ExtensionAPI): void {
     log.info(`[workflow] post-turn followUp drained after agent_settled (${text.length} chars)`);
     pi.sendUserMessage(text, { deliverAs: "followUp" });
   }, DRAIN_DELAY_MS);
+}
+
+/** Whether a phase-transition followUp is currently staged (pending drain). */
+export function hasPostTurnFollowUp(): boolean {
+  return pendingPostTurnFollowUp !== null;
 }
 
 /** Drop any staged followUp and cancel a pending drain — session teardown / fy:reset. */
