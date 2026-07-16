@@ -40,6 +40,7 @@ import {
   getGuardrailsRef,
   NO_AGENT_NAME,
   NO_FEATURE_STATE_OVERRIDE,
+  substituteTemplates,
 } from "../shared/workflow-refs.js";
 import { slugifyTaskDesignation } from "../state/artifact-paths.js";
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
@@ -166,13 +167,20 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
         log.info(
           `task_ready_advance: dispatch round ${nextRound}/${max} (verify=${runVerifier} review=${runReviewer}) for ${cur}`,
         );
-        const skill = buildTaskGateSkill({
-          round: nextRound,
-          task: cur,
-          next: params.nextTask,
-          runVerifier,
-          runReviewer,
-        });
+        const skill = buildTaskGateSkill(
+          {
+            round: nextRound,
+            task: cur,
+            next: params.nextTask,
+            runVerifier,
+            runReviewer,
+          },
+          // Resolve ALL {{PI_FY_*}} markers at dispatch time so the block reaches
+          // conversation history fully resolved (history is immutable — there is no
+          // per-call re-substitution). Resolving against current state here is correct:
+          // the gate gates `cur`, which is still the active task at dispatch.
+          (t) => substituteTemplates(t, NO_FEATURE_STATE_OVERRIDE, NO_AGENT_NAME).text,
+        );
         pi.sendUserMessage(skill, { deliverAs: "steer" });
         return textResult("End your turn, wait for instructions."); // NO compact (the gate skill must reach the agent)
       }

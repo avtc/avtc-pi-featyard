@@ -31,7 +31,6 @@ import { registerTurnEnd } from "./agent/turn-end.js";
 import { registerTurnStart } from "./agent/turn-start.js";
 import type { EventDeps } from "./event-deps.js";
 import { registerInput } from "./input/input.js";
-import { registerContext } from "./session/context.js";
 import { registerModelSelect } from "./session/model-select.js";
 import { registerSessionCompact } from "./session/session-compact.js";
 import { registerSessionShutdown } from "./session/session-shutdown.js";
@@ -57,9 +56,6 @@ export function registerAllEvents(deps: EventDeps): void {
   // tool_call (per-tool gating) + tool_result (warnings/recording) — events/tool/
   registerToolCall(pi, guardrails, handler);
   registerToolResult(pi, guardrails, handler);
-
-  // context → {{PI_FY_*}} substitution in <skill> blocks — events/session/
-  registerContext(pi);
 
   // model_select → capture active model for kanban title/topic generation — events/session/
   registerModelSelect(pi);

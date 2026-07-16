@@ -1,6 +1,6 @@
 {
   "name": "avtc-pi-featyard",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Predictable, deterministic feature development for pi — deep upfront design, configurable comprehensive review and verification rigor, and auto-agents draining a backlog",
   "type": "module",
   "keywords": [

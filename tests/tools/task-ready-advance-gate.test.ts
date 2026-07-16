@@ -116,6 +116,23 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expect(featureState.implement.taskReviewRounds["1-task"]).toBe(1);
   });
 
+  // INVARIANT: history is immutable — the dispatched gate block must reach conversation
+  // history with ALL {{PI_FY_*}} markers already resolved. No per-call re-substitution
+  // exists to fix this later (that would mutate mid-history text on every rewind and
+  // re-prefill local models). The block is resolved once, at dispatch time.
+  test("dispatched gate block reaches history fully resolved (no {{PI_FY_ markers)", async () => {
+    installHandler("1. Task", { "1-task": 0 });
+    const { getTool, sent } = captureTaskReadyAdvanceTool();
+    await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, makeCtx(NOOP));
+    const gate = expectGateDispatch(sent, { verifier: true, reviewer: true });
+    // Zero unresolved markers in the message committed to history.
+    expect(gate.text).not.toContain("{{PI_FY_");
+    // The task-scoped known-issues marker resolved to a real reviews path (proves real
+    // substitution, not marker-stripping). Resolves to the slug-based path when a feature
+    // is active, or the date-based fallback otherwise — match loosely to avoid brittleness.
+    expect(gate.text).toMatch(/\.featyard\/reviews\/[^\s]*known-issues\.md/);
+  });
+
   // resume-safe: a task resumed with no prior counter entry coerces to 0 → ENTRY dispatch
   test("resume coerce: a missing taskReviewRounds entry is treated as round 0 → ENTRY dispatch", async () => {
     // No explicit { "1-task": 0 } — the entry is absent (e.g. task started before this field existed).

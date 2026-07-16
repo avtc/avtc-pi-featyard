@@ -162,8 +162,12 @@ describe("auto-agent finishing skill template substitution", () => {
       isActive: () => true,
     });
 
-    // initGitDir already initialized in beforeEach; create a feature branch
-    execSync("git checkout -b feature/test-branch", { cwd: process.cwd() });
+    // Point HEAD at a feature branch WITHOUT invoking git (initGitDir already wrote a
+    // `ref: refs/heads/main` HEAD). `git symbolic-ref --short HEAD` — used by getBranchOrShortSha
+    // when the production code detects the current branch — reads HEAD directly, so this is
+    // enough for the current-branch != baseBranch detection the test asserts. Avoids leaking
+    // "Switched to a new branch" to the test output.
+    fs.writeFileSync(path.join(process.cwd(), ".git", "HEAD"), "ref: refs/heads/feature/test-branch\n");
 
     setSetting("branchPolicy", "current-branch");
     setSetting("baseBranch", "main");
@@ -207,8 +211,12 @@ describe("auto-agent finishing skill template substitution", () => {
       isActive: () => true,
     });
 
-    // initGitDir already initialized in beforeEach; create a feature branch
-    execSync("git checkout -b feature/test-branch", { cwd: process.cwd() });
+    // Point HEAD at a feature branch WITHOUT invoking git (initGitDir already wrote a
+    // `ref: refs/heads/main` HEAD). `git symbolic-ref --short HEAD` — used by getBranchOrShortSha
+    // when the production code detects the current branch — reads HEAD directly, so this is
+    // enough for the current-branch != baseBranch detection the test asserts. Avoids leaking
+    // "Switched to a new branch" to the test output.
+    fs.writeFileSync(path.join(process.cwd(), ".git", "HEAD"), "ref: refs/heads/feature/test-branch\n");
 
     setSetting("branchPolicy", "current-branch");
     setSetting("baseBranch", "main");

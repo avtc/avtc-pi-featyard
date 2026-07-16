@@ -405,8 +405,12 @@ function ensureFeatyardLocallyIgnored(cwd: string, projectRoot: string): void {
  */
 function resolveCommonGitDir(cwd: string, projectRoot: string): string | null {
   try {
+    // git's stderr is silenced (ignore) so a failed/unusable repo — e.g. an empty `.git`
+    // dir used by tests, or a non-git directory — doesn't leak `fatal: not a git repository`
+    // into the caller's output. Detection failure is handled by the catch + fs fallback below.
     const out = execSync("git rev-parse --git-common-dir", {
       encoding: "utf-8",
+      stdio: ["pipe", "pipe", "ignore"],
       cwd,
     }).trim();
     // rev-parse returns a path relative to cwd (e.g. ".git", "../../.git") — resolve it.
