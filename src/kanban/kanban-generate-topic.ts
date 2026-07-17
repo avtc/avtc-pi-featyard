@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
-import type { Api, EventStream, Message, Model } from "@earendil-works/pi-ai";
-import { Type } from "@earendil-works/pi-ai";
+import type { Api, EventStream, Message, Model } from "@earendil-works/pi-ai/compat";
+import { Type } from "@earendil-works/pi-ai/compat";
 import { log } from "../log.js";
 
 /** Model and registry for LLM-based topic generation. */

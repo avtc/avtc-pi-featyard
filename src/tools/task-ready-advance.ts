@@ -26,7 +26,7 @@
  * phase (returns a reason instead of executing).
  */
 
-import { Type } from "@earendil-works/pi-ai";
+import { Type } from "@earendil-works/pi-ai/compat";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { NO_COMPACT_CALLBACK, triggerContextCompact } from "../compaction/compact-trigger.js";
 import { areAllTodosDone } from "../integrations/todo-integration.js";

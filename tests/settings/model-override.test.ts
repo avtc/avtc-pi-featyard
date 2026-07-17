@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-import type { Api, Model } from "@earendil-works/pi-ai";
+import type { Api, Model } from "@earendil-works/pi-ai/compat";
 import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";

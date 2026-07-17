@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-import type { Api, Model } from "@earendil-works/pi-ai";
+import type { Api, Model } from "@earendil-works/pi-ai/compat";
 import type { ModelRegistry } from "@earendil-works/pi-coding-agent";
 import { afterEach, describe, expect, test } from "vitest";
 import { resetInstances } from "../../src/kanban/kanban-bridge.js";

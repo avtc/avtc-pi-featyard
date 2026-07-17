@@ -4,7 +4,7 @@
 /** Register the add_to_backlog tool — adds a new feature to the kanban board backlog. */
 
 import { basename } from "node:path";
-import { Type } from "@earendil-works/pi-ai";
+import { Type } from "@earendil-works/pi-ai/compat";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import type { KanbanContext } from "../kanban/kanban-context.js";

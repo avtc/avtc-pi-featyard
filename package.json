@@ -1,6 +1,6 @@
 {
   "name": "avtc-pi-featyard",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Predictable, deterministic feature development for pi — deep upfront design, configurable comprehensive review and verification rigor, and auto-agents draining a backlog",
   "type": "module",
   "keywords": [
@@ -57,10 +57,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
-    "@earendil-works/pi-agent-core": "^0.80.6",
-    "@earendil-works/pi-ai": "^0.80.6",
-    "@earendil-works/pi-coding-agent": "^0.80.6",
-    "@earendil-works/pi-tui": "^0.80.6",
+    "@earendil-works/pi-agent-core": "^0.80.10",
+    "@earendil-works/pi-ai": "^0.80.10",
+    "@earendil-works/pi-coding-agent": "^0.80.10",
+    "@earendil-works/pi-tui": "^0.80.10",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.9.3",
     "jscpd": "^5.0.10",
@@ -69,14 +69,14 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "avtc-pi-logger": "^1.0.0",
-    "avtc-pi-settings-ui": "^1.0.0",
-    "avtc-pi-ui-components": "^1.0.0",
-    "avtc-pi-subagent": "^1.0.0",
-    "avtc-pi-todo": "^1.0.0",
-    "avtc-pi-parallel-work-guardrail": "^1.0.0",
-    "avtc-pi-subagent-ui-bridge": "^1.0.0",
-    "avtc-pi-unstuck": "^1.0.0"
+    "avtc-pi-logger": "^1.0.3",
+    "avtc-pi-settings-ui": "^1.0.6",
+    "avtc-pi-ui-components": "^1.0.3",
+    "avtc-pi-subagent": "^1.0.5",
+    "avtc-pi-todo": "^1.0.6",
+    "avtc-pi-parallel-work-guardrail": "^1.0.6",
+    "avtc-pi-subagent-ui-bridge": "^1.0.4",
+    "avtc-pi-unstuck": "^1.0.4"
   },
   "bugs": {
     "url": "https://github.com/avtc/avtc-pi-featyard/issues"

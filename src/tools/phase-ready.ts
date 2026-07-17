@@ -14,7 +14,7 @@
  * All factory-coupled dependencies are injected via PhaseReadyDeps.
  */
 
-import { Type } from "@earendil-works/pi-ai";
+import { Type } from "@earendil-works/pi-ai/compat";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { NO_COMPACT_CALLBACK, triggerContextCompact } from "../compaction/compact-trigger.js";

@@ -3,8 +3,8 @@
 
 import * as fs from "node:fs";
 import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
-import type { EventStream, Message } from "@earendil-works/pi-ai";
-import { Type } from "@earendil-works/pi-ai";
+import type { EventStream, Message } from "@earendil-works/pi-ai/compat";
+import { Type } from "@earendil-works/pi-ai/compat";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { log } from "../log.js";
 
