@@ -16,9 +16,13 @@ Featyard makes agentic development predictable and deterministic:
 - **Kanban board** — browser UI tracking features across lanes with locks; auto-agents pull the next approved design off the board.
 - **Per-feature git worktrees** — each feature gets an isolated branch workspace so parallel agents never collide.
 
+## Demo
+
+[![Featyard demo video](assets/images/demo-video.png)](https://www.youtube.com/watch?v=SIBvJw3cwy4)
+
 ## Requirements
 
-**Pi 0.80.4 or later** must be installed.
+**Pi 0.80.10 or later** must be installed.
 
 **Git** must be installed separately — needed for per-feature worktrees, review diffs, and TDD guardrails.
 
