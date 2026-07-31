@@ -74,12 +74,14 @@ export function createAgentLifecycle(deps: AgentLifecycleDeps): IAgentLifecycle 
     // Clear finish-phase guardrail whitelist flag on agent end
     setFinishPhaseWhitelisted(false);
     // Reset the once-per-agent-turn phase_ready guard. This is the per-cycle
-    // boundary for the guard: each low-level run (including retry / compact /
-    // followUp continuations) ends with its own agent_end, so the guard is cleared
-    // here between every cycle. NOT reset on turn_end: a pi "turn" is one LLM
-    // response, and a confused model's repeated phase_ready calls span multiple
-    // turns within one agent run (those repeats must stay collapsed until the run
-    // truly ends). The phase-transition followUp itself is drained at
+    // boundary for the guard: each low-level run ends with its own agent_end, so the
+    // guard is cleared here between every non-compact cycle. NOT reset on turn_end:
+    // a pi "turn" is one LLM response, and a confused model's repeated phase_ready
+    // calls span multiple turns within one agent run (those repeats must stay
+    // collapsed until the run truly ends). The compact-triggered path is the
+    // exception — it is reset by the compaction handler (deliverStoredFollowUp),
+    // because extension-triggered compactions resume the SAME agent run without
+    // firing agent_end. The phase-transition followUp itself is drained at
     // agent_settled (see onAgentSettled), not here.
     phaseReady.resetTracking();
     // Don't trigger finish-done detection if Pi will auto-retry — the agent hasn't truly finished.

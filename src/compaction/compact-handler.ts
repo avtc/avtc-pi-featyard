@@ -38,6 +38,13 @@ export interface CompactionDeps {
   /** The current in-progress todo item formatted for followUp (`In progress: ▶ id: name\ndetails`),
    *  or null. Injected to decouple from pi-todo. */
   getInProgressItem: () => string | null;
+  /** Reset the once-per-agent-run phase_ready dedup guard. A compaction is a natural boundary
+   *  within an agent run: the resumed agent gets a fresh (compacted) context with a re-injected
+   *  skill, so it may legitimately call phase_ready again. Extension-triggered compactions
+   *  (ctx.compact()) do NOT fire agent_end before resuming, so without this reset the guard
+   *  would survive the compact and dedupe the post-compact phase_ready call. Harmless for
+   *  pi-auto compactions (agent_end already reset it). */
+  resetPhaseReadyGuard: () => void;
 }
 
 /**
@@ -75,6 +82,7 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     agentJustFinishedRef,
     getCompletedItemId,
     getInProgressItem,
+    resetPhaseReadyGuard,
   } = deps;
   const emptyLoopTracker = new EmptyLoopTracker();
   const DEFERRED_FOLLOWUP_MS = DEFERRED_COMPACT_FOLLOWUP_MS;
@@ -247,6 +255,13 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
    * message, routes editor-vs-inject, and runs onAfterFollowUp (which clears the guard).
    */
   async function deliverStoredFollowUp(reason: "manual" | "threshold" | "overflow" | undefined): Promise<void> {
+    // A compaction is a natural boundary within an agent run. The resumed agent gets a fresh
+    // (compacted) context with a re-injected skill, so the once-per-run phase_ready dedup guard
+    // must be cleared — otherwise a compact-triggered iteration (which set the guard before
+    // firing ctx.compact()) would have its post-compact phase_ready call silently deduped, and
+    // the agent would stall. agent_end also clears it, but extension-triggered compactions
+    // resume the SAME agent run without firing agent_end, so this is the reset point for them.
+    resetPhaseReadyGuard();
     // --- Stored pending-follow-up from a featyard caller (inter-task compact, review loop). ---
     // Caller provides { skillName?, message, onAfterFollowUp? } — message is the specific note only
     // (no /skill: prefix, no generic framing); this handler owns the skill + framing line.

@@ -58,8 +58,7 @@ const MSG_NO_CALLBACK = "phase_ready failed — auto-agent callback lost.";
 // response; the agent frequently re-calls phase_ready across several turns within
 // one agent run (Thinking between calls). turn_end fires between those calls and
 // would reset a turn-scoped guard — so this guard is reset on agent_end instead
-// (the per-cycle boundary: every low-level run, including retry/compact/followUp
-// continuations, ends with its own agent_end).
+// (the per-cycle boundary).
 //
 // IMPORTANT: phase-transition followUps are NOT dispatched inline. An inline
 // followUp would drain inside the same agent loop with NO agent_end between the
@@ -71,6 +70,15 @@ const MSG_NO_CALLBACK = "phase_ready failed — auto-agent callback lost.";
 // continuation, and at that point session.isStreaming is false, so the drained
 // followUp starts a FRESH agent run. agent_end therefore fires between every
 // iteration and the guard resets correctly.
+//
+// The compact-triggered path is the exception: ctx.compact() aborts the turn and
+// resumes the SAME agent run (no agent_end), so the guard would survive the
+// compact and dedupe the post-compact phase_ready call (the review skill re-injected
+// after compaction legitimately needs to call phase_ready at the end of its work).
+// The compaction handler (compact-handler.ts) therefore resets this guard when it
+// delivers the post-compact follow-up (deliverStoredFollowUp) — a compaction is a
+// natural boundary: the resumed agent has a fresh context and may call phase_ready
+// again.
 //
 // Set ONLY when phase_ready is honored — gates passed AND a real action occurred
 // (phase transition OR followUp staged). NOT on gate failures / no-ops / UI
@@ -724,15 +732,21 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
     },
   });
 
-  // The once-per-agent-run guard (phaseReadyPassed) is reset from the
-  // agent_end handler (auto-agent-events.ts) — the per-cycle boundary. The staged
-  // phase-transition followUp is drained (deferred) by the agent_settled handler
-  // (post-turn-dispatch.ts), which starts a fresh agent run. So agent_end fires
-  // between every run, the guard is cleared, and the next run's phase_ready (e.g.
-  // the fy-review skill ending its iteration) processes instead of being deduped.
-  // NOTE: intentionally NOT reset on turn_end — a pi "turn" is one LLM response,
-  // and a confused model's repeated phase_ready calls span multiple turns within
-  // one agent turn (those repeats must stay collapsed until the turn truly ends).
+  // The once-per-agent-run guard (phaseReadyPassed) is reset from TWO boundaries:
+  //  1. agent_end (auto-agent-events.ts) — the per-cycle boundary for normal runs.
+  //  2. deliverStoredFollowUp (compact-handler.ts) — a compaction is a natural boundary:
+  //     the resumed agent gets a fresh (compacted) context with a re-injected skill. This is
+  //     required because extension-triggered compactions (ctx.compact()) resume the SAME agent
+  //     run without firing agent_end, so without this reset a compact-triggered review
+  //     iteration's post-compact phase_ready call would be silently deduped and the agent
+  //     would stall.
+  // The staged phase-transition followUp is drained (deferred) by the agent_settled handler
+  // (post-turn-dispatch.ts), which starts a fresh agent run. So agent_end fires between every
+  // non-compact run, the guard is cleared, and the next run's phase_ready (e.g. the fy-review
+  // skill ending its iteration) processes instead of being deduped.
+  // NOTE: intentionally NOT reset on turn_end — a pi "turn" is one LLM response, and a
+  // confused model's repeated phase_ready calls span multiple turns within one agent turn
+  // (those repeats must stay collapsed until the turn truly ends).
 
   return {
     resetTracking() {

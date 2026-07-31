@@ -18,6 +18,7 @@ import {
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
+  getSingleHandler,
   NO_AUTO_AGENT_CALLBACK,
   NO_UI_CTX,
   PLAN_ACTIVE_STATE,
@@ -1740,6 +1741,66 @@ describe("phase_ready — code review loop deduplication within same turn", () =
     // Third call — should process again (guard was reset)
     await phaseReady.execute("tc-reset-3", { issuesFound: 3 }, undefined, undefined, NO_UI_CTX);
     expect(loadFeatureState(slug, null)?.review.reviewLoopCount).toBe(3); // incremented
+  });
+
+  test("code review: post-compact phase_ready is NOT deduped (guard reset on compaction)", async () => {
+    // Regression: the isReview branch sets phaseReadyPassed BEFORE calling
+    // completeCodeReviewLoop, which can trigger a compact (reviewIterationCompact).
+    // Extension-triggered compactions resume the SAME agent run without firing agent_end,
+    // so the guard would survive the compact and the post-compact fy-review phase_ready call
+    // would be deduped. The compaction handler (deliverStoredFollowUp) resets the guard.
+    setSetting("maxFeatureReviewRounds", 5);
+    setSetting("minReviewLoops", 0);
+    setSetting("reviewIterationCompact", "compact");
+
+    const { fake, registeredTools, api } = createPiWithToolCapture();
+    const slug = "2026-07-04-review-compact-reset";
+    writeFeatureStateFile(slug, {
+      workflow: {
+        currentPhase: "review",
+        designDoc: `docs/featyard/designs/${slug}-design.md`,
+        planDoc: `.featyard/task-plans/${slug}-task-plan.md`,
+      },
+      review: { reviewLoopCount: 1, reviewActive: false },
+    });
+
+    const ctx = {
+      ...NO_UI_CTX,
+      compact: () => {
+        // Fire-and-forget — the session_compact handler consumes the stored follow-up below.
+      },
+    };
+
+    await workflowMonitorExtension(api as unknown as ExtensionAPI);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+
+    const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
+
+    // First call — shouldLoop=true (issuesFound>0), triggers compact, sets the dedup guard.
+    await phaseReady.execute(
+      "tc-cr-compact-1",
+      { issuesFound: 5 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionContext,
+    );
+    expect(loadFeatureState(slug, null)?.review.reviewLoopCount).toBe(2);
+
+    // Compaction completes → deliverStoredFollowUp resets the guard (the fix).
+    const onCompact = getSingleHandler(fake.handlers, "session_compact");
+    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    delete globalThis.__piCompactFollowUp;
+
+    // Second call (post-compact) — without the fix this would be deduped (counter stays at 2).
+    // With the fix the guard was reset, so it processes and increments.
+    await phaseReady.execute(
+      "tc-cr-compact-2",
+      { issuesFound: 3 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionContext,
+    );
+    expect(loadFeatureState(slug, null)?.review.reviewLoopCount).toBe(3); // incremented, not deduped
   });
 });
 

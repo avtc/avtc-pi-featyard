@@ -448,6 +448,9 @@ async function initWorkflowMonitor(pi: ExtensionAPI, _deps: { todoApi: ReturnTyp
     agentJustFinishedRef: orchestratorRefs.getAgentJustFinishedRef(),
     getCompletedItemId: getTodoCompletedItemId,
     getInProgressItem: getTodoInProgressItem,
+    // Lazy read: phaseReady is registered below (after compaction), but session_compact only
+    // fires at runtime — long after init — so the ref is always set by then.
+    resetPhaseReadyGuard: () => orchestratorRefs.getPhaseReadyRef()?.resetTracking(),
   });
 
   // Wire module-level refs through compaction instance (stored in orchestrator-refs)

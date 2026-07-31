@@ -18,12 +18,13 @@
  * 5. Plan shouldLoop=false — compact before execution handoff message
  */
 import * as fs from "node:fs";
-import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFERRED_COMPACT_FOLLOWUP_MS } from "../../src/compaction/compact-handler.js";
 import { _resetCompactGuard } from "../../src/compaction/compact-trigger.js";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
 import { type AutoAgentCallback, setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
+import { loadFeatureState } from "../../src/state/feature-state.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
   BRAINSTORM_ACTIVE_STATE,
@@ -31,6 +32,7 @@ import {
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
+  getSingleHandler,
   MOCK_CALLED,
   NO_AUTO_AGENT_CALLBACK,
   NO_UI_CTX,
@@ -899,5 +901,140 @@ describe("review iteration compact — edge cases", () => {
     expect(fake.sentMessages.length).toBeGreaterThan(0);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
     expect(lastMessage.message).toContain("design review iteration");
+  });
+});
+
+describe("review iteration compact — phase_ready dedup guard survives compact boundary", () => {
+  // Regression: the once-per-agent-run phase_ready dedup guard (phaseReadyPassed) was set
+  // when a compact triggered, but only reset on agent_end. Extension-triggered compactions
+  // (ctx.compact()) abort the turn and resume the SAME agent run without firing agent_end,
+  // so the guard survived the compact and the post-compact phase_ready call was silently
+  // deduped — the agent stalled (the exact bug the user hit: design review loop stopped
+  // after a compact-triggered iteration). The fix resets the guard in the compaction
+  // handler when it delivers the post-compact follow-up.
+  beforeEach(() => {
+    enableSubagentMode();
+  });
+
+  afterEach(async () => {
+    _resetFeatureState();
+    delete process.env.PI_FY_FEATURE;
+    delete process.env.PI_FY_REVIEW_LOOP;
+
+    setSetting("maxPlanReviewRounds", 0);
+    setSetting("minReviewLoops", 0);
+    setSetting("reviewIterationCompact", "none");
+  });
+
+  test("design: post-compact phase_ready is NOT deduped (guard reset on compaction)", async () => {
+    setSetting("maxPlanReviewRounds", 5);
+    setSetting("minReviewLoops", 0);
+    setSetting("reviewIterationCompact", "compact");
+
+    const { fake, registeredTools, api } = createPiWithToolCapture();
+    const slug = "rir-compact-dedup-reset";
+    writeFeatureStateFile(slug, {
+      ...BRAINSTORM_ACTIVE_STATE,
+      design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
+    });
+
+    const ctx = {
+      ...NO_UI_CTX,
+      compact: () => {
+        // Fire-and-forget like the real ctx.compact — the session_compact handler
+        // consumes the stored follow-up (simulated below).
+      },
+    };
+
+    await workflowMonitorExtension(api as unknown as ExtensionAPI);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+
+    const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
+
+    // First call — shouldLoop=true, triggers compact, sets the dedup guard.
+    const result1 = await phaseReady.execute(
+      "tc-dedup-compact-1",
+      { issuesFound: 3 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionContext,
+    );
+    expect((result1.content[0] as { text: string }).text).toBe("");
+    // Counter incremented to 2 by this call.
+    expect(loadFeatureState(slug, null)?.design.reviewLoopCount).toBe(2);
+
+    // Simulate the compaction completing: the session_compact handler runs deliverStoredFollowUp,
+    // which resets the guard (the fix).
+    const onCompact = getSingleHandler(fake.handlers, "session_compact");
+    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    delete globalThis.__piCompactFollowUp;
+
+    // Second call (post-compact) — WITHOUT the fix this would be a deduped no-op (counter
+    // stays at 2). WITH the fix the guard was reset by the compaction handler, so it
+    // processes again and increments the counter.
+    const result2 = await phaseReady.execute(
+      "tc-dedup-compact-2",
+      { issuesFound: 2 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionContext,
+    );
+    expect((result2.content[0] as { text: string }).text).toBe("");
+    expect(loadFeatureState(slug, null)?.design.reviewLoopCount).toBe(3); // incremented, not deduped
+  });
+
+  test("plan: post-compact phase_ready is NOT deduped (guard reset on compaction)", async () => {
+    // Same regression as the design case, but the plan phase uses a separate shouldLoop path
+    // (the isPlan branch). Both go through handleReviewLoop → triggerContextCompact, so the fix
+    // (deliverStoredFollowUp reset) must cover both.
+    setSetting("maxPlanReviewRounds", 5);
+    setSetting("minReviewLoops", 0);
+    setSetting("reviewIterationCompact", "compact");
+
+    const { fake, registeredTools, api } = createPiWithToolCapture();
+    const slug = "rir-compact-dedup-reset-plan";
+    writeFeatureStateFile(slug, {
+      ...PLAN_ACTIVE_STATE,
+      plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 1 },
+    });
+
+    const ctx = {
+      ...NO_UI_CTX,
+      compact: () => {
+        // Fire-and-forget — the session_compact handler consumes the stored follow-up below.
+      },
+    };
+
+    await workflowMonitorExtension(api as unknown as ExtensionAPI);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+
+    const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
+
+    // First call — shouldLoop=true, triggers compact, sets the dedup guard.
+    const result1 = await phaseReady.execute(
+      "tc-dedup-compact-plan-1",
+      { issuesFound: 3 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionContext,
+    );
+    expect((result1.content[0] as { text: string }).text).toBe("");
+    expect(loadFeatureState(slug, null)?.plan.reviewLoopCount).toBe(2);
+
+    // Compaction completes → deliverStoredFollowUp resets the guard (the fix).
+    const onCompact = getSingleHandler(fake.handlers, "session_compact");
+    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    delete globalThis.__piCompactFollowUp;
+
+    // Second call (post-compact) — would be deduped without the fix; with it, increments.
+    const result2 = await phaseReady.execute(
+      "tc-dedup-compact-plan-2",
+      { issuesFound: 2 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionContext,
+    );
+    expect((result2.content[0] as { text: string }).text).toBe("");
+    expect(loadFeatureState(slug, null)?.plan.reviewLoopCount).toBe(3); // incremented, not deduped
   });
 });
