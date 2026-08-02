@@ -23,14 +23,14 @@ Read the plan and seed your task list from its tasks:
 
 `task_ready_advance` starts a task, gates it, and advances — the extension decides whether to run the per-task gates. The `todo` tool tracks the finer work items within each task.
 
-Start the first task: `task_ready_advance(nextTask: "<task number + name>")`.
+Start the first task: `task_ready_advance(taskToActivate: "<task number + name>")`.
 
 For each task:
 **Implement**
 {{PI_FY_IMPLEMENT_MODE}}
 {{PI_FY_WORTH_NOTES}}
 **Gate + advance**
-After task implemented, call `task_ready_advance(nextTask: "<next task number + name>")` and follow tool call result instructions. The extension either asks to end turn to wait for further instructions (run them, triage, then call again with the fixable counts) or advances to the next task (continue working). On the **last planned task**, omit `nextTask` param.
+After task implemented, call `task_ready_advance(taskToActivate: "<next task number + name>")` and follow tool call result instructions. The extension either asks to end turn to wait for further instructions (run them, triage, then call again with the fixable counts) or advances to the next task (continue working). On the **last planned task**, pass `taskToActivate: null`.
 
 ### Step 3: All Tasks Complete
-After the last task's `task_ready_advance` call (`nextTask` omitted) the extension advances to the `verify` phase and runs the verification skill.
+After the last task's `task_ready_advance` call (`taskToActivate: null`) the extension advances to the `verify` phase and runs the verification skill.

@@ -95,7 +95,7 @@ describe("auto phase transition execute → verify → review", () => {
       createCtx(NO_UI, NO_BRANCH),
     );
 
-    // Last task: call task_ready_advance with nextTask omitted → advances to verify.
+    // Last task: call task_ready_advance with taskToActivate: null → advances to verify.
     // (phase_ready is blocked in implement by the guardrails interceptor.)
     const taskReadyAdvance = registeredTools.find((t) => (t as { name: string }).name === "task_ready_advance");
     const result = await (

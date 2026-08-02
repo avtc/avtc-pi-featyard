@@ -127,7 +127,7 @@ describe("fy-implement dispatch-model skill", () => {
 
   test("Step 2 starts the first task via task_ready_advance and uses the Gate + advance header", () => {
     const result = expandSkillCommand("/skill:fy-implement", null, null);
-    expect(result).toContain("Start the first task: `task_ready_advance(nextTask:");
+    expect(result).toContain("Start the first task: `task_ready_advance(taskToActivate:");
     expect(result).toContain("**Gate + advance**");
     // fy-implement dispatches via task_ready_advance; advance_to_task_gated is not referenced.
     expect(result).not.toContain("advance_to_task_gated");

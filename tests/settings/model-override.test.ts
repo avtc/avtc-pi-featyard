@@ -262,7 +262,7 @@ describe("auto-advance model overrides", () => {
 
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
-    // Last task: call task_ready_advance with nextTask omitted → advances to verify.
+    // Last task: call task_ready_advance with taskToActivate: null → advances to verify.
     // (phase_ready is blocked in implement by the guardrails interceptor.)
     const taskReadyAdvance = registeredTools.find(
       (t) => (t as { name: string }).name === "task_ready_advance",
@@ -389,7 +389,7 @@ describe("env var sync after state transitions", () => {
 
     await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "reload" }, ctx);
 
-    // Last task: call task_ready_advance with nextTask omitted → advances to verify.
+    // Last task: call task_ready_advance with taskToActivate: null → advances to verify.
     // (phase_ready is blocked in implement by the guardrails interceptor.)
     const taskReadyAdvance = registeredTools.find(
       (t) => (t as { name: string }).name === "task_ready_advance",

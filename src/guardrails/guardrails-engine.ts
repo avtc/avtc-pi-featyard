@@ -504,7 +504,7 @@ export function createGuardrails(deps: GuardrailsDeps): IGuardrails {
     if (phaseReadyWs?.currentPhase === "implement") {
       return {
         block:
-          "During implementation, use task_ready_advance to move between tasks, and to advance to verify on the last task (call it with nextTask omitted). phase_ready is not used in implement.",
+          "During implementation, use task_ready_advance to move between tasks, and to advance to verify on the last task (call it with taskToActivate set to null). phase_ready is not used in implement.",
       };
     }
     return {};

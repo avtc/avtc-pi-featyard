@@ -6,9 +6,9 @@
  * plan-task boundary during the implement phase of an active featyard workflow.
  *
  * One tool owns all implement-phase task transitions:
- *   - START a task           (currentTask == null, nextTask set)
- *   - ADVANCE to the next    (currentTask set, gates clean/cap/gates-off, nextTask set)
- *   - last task → verify      (currentTask set, nextTask omitted, todos done)
+ *   - START a task           (currentTask == null, taskToActivate set)
+ *   - ADVANCE to the next    (currentTask set, gates clean/cap/gates-off, taskToActivate set)
+ *   - last task → verify      (currentTask set, taskToActivate: null, todos done)
  *
  * Between START and advance, the tool drives a per-task gate cycle: after a task
  * is implemented, the model calls this tool, and the extension either dispatches
@@ -62,10 +62,10 @@ const Schema = Type.Object({
         "Fixable issues you fixed this pass from the fy-general-reviewer report, plus issues you self-found and fixed (exclude false-positives and cannot-fix). Omit on START/entry.",
     }),
   ),
-  nextTask: Type.Optional(
-    Type.String({
+  taskToActivate: Type.Optional(
+    Type.Union([Type.String(), Type.Null()], {
       description:
-        "The plan-task to advance to next (<task number + name>), or omit on the last task to finish implementation.",
+        "The plan-task to activate (<task number + name>), or pass null on the last task to finish implementation.",
     }),
   ),
 });
@@ -77,7 +77,7 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
     name: "task_ready_advance",
     label: "",
     description:
-      "Use this tool ONLY when instructed by fy-implement skill. Start a task, advance to the next, or — on the last task, with nextTask omitted — finish implementation. After implementing a task, call it to enter the per-task gate cycle (the extension dispatches the gates or advances). Pass the fixable issues you fixed this pass per gate (verifierIssuesFixed, reviewerIssuesFixed; omit if no gates ran). Track active task from existing task-plan document. Not related to todo tools or items.",
+      "Use this tool ONLY when instructed by fy-implement skill. Start a task, advance to the next, or — on the last task, with taskToActivate set to null — finish implementation. After implementing a task, call it to enter the per-task gate cycle (the extension dispatches the gates or advances). Pass the fixable issues you fixed this pass per gate (verifierIssuesFixed, reviewerIssuesFixed; omit if no gates ran). Track active task from existing task-plan document. Not related to todo tools or items.",
     parameters: Schema,
 
     async execute(_id, params, _signal, _onUpdate, ctx: ExtensionContext) {
@@ -98,15 +98,15 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
       const settings = getSettings();
 
       // Shared task-entry side-effects (START and task→task advance both enter a new task).
-      const enterTask = async (nextTask: string): Promise<void> => {
-        featureState.implement.currentTask = nextTask;
-        featureState.implement.taskReviewRounds[slugifyTaskDesignation(nextTask)] = 0;
+      const enterTask = async (taskToActivate: string): Promise<void> => {
+        featureState.implement.currentTask = taskToActivate;
+        featureState.implement.taskReviewRounds[slugifyTaskDesignation(taskToActivate)] = 0;
         persistState(pi, handler);
         await triggerContextCompact(
           ctx,
           {
             settingValue: settings.interTaskCompact,
-            message: `Next: "${sanitizeSkillText(nextTask)}".`,
+            message: `Next: "${sanitizeSkillText(taskToActivate)}".`,
             logLabel: "inter-task compact",
           },
           NO_COMPACT_CALLBACK,
@@ -121,13 +121,13 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
 
       // --- START (no task in progress) ---
       if (cur === null) {
-        const nextTask = String(params.nextTask ?? "").trim();
-        if (!nextTask) {
-          return textResult("Provide nextTask to start a task.");
+        const taskToActivate = String(params.taskToActivate ?? "").trim();
+        if (!taskToActivate) {
+          return textResult("Provide a task to activate to start a task.");
         }
-        log.info(`task_ready_advance: START → ${nextTask}`);
-        await enterTask(nextTask);
-        return textResult(`Current task: "${sanitizeSkillText(nextTask)}".`);
+        log.info(`task_ready_advance: START → ${taskToActivate}`);
+        await enterTask(taskToActivate);
+        return textResult(`Current task: "${sanitizeSkillText(taskToActivate)}".`);
       }
 
       // --- gate cycle (current task in progress) ---
@@ -171,7 +171,7 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
           {
             round: nextRound,
             task: cur,
-            next: params.nextTask,
+            next: params.taskToActivate,
             runVerifier,
             runReviewer,
           },
@@ -186,20 +186,31 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
       }
 
       // --- ADVANCE (clean / cap reached / gates-off) ---
-      // nextTask must be a real task name to advance; an empty value is neither a valid
-      // advance nor an explicit omission (to finish, omit nextTask entirely).
-      const nextTaskRaw = params.nextTask;
-      if (nextTaskRaw !== undefined && nextTaskRaw !== null) {
-        const nextTask = String(nextTaskRaw).trim();
-        if (!nextTask) {
-          return textResult("Provide a non-empty nextTask to advance, or omit nextTask to finish the last task.");
+      // taskToActivate must be a real task name to advance; an empty value is neither a valid
+      // advance nor a finish signal (to finish, pass taskToActivate: null).
+      const taskToActivateRaw = params.taskToActivate;
+      if (taskToActivateRaw !== undefined && taskToActivateRaw !== null) {
+        const taskToActivate = String(taskToActivateRaw).trim();
+        if (!taskToActivate) {
+          return textResult(
+            "Provide a task to activate to advance, or pass taskToActivate: null to finish the last task.",
+          );
         }
-        log.info(`task_ready_advance: ADVANCE ${cur} → ${nextTask}`);
-        await enterTask(nextTask);
-        return textResult(`Current task: "${sanitizeSkillText(nextTask)}", do not end your turn, work on it.`);
+        // Self-advance guard: activating the already-active task is never the intent — it would
+        // reset the gate-cycle round counter and loop forever. The model hits this when it wants
+        // to finish but passed the current task instead of null; reject so it corrects.
+        if (slugifyTaskDesignation(taskToActivate) === slugifyTaskDesignation(cur)) {
+          log.info(`task_ready_advance: self-advance rejected (${cur})`);
+          return textResult(
+            `"${sanitizeSkillText(cur)}" is already the active task. To advance, pass a next task's number + name; to finish the last task, pass taskToActivate: null.`,
+          );
+        }
+        log.info(`task_ready_advance: ADVANCE ${cur} → ${taskToActivate}`);
+        await enterTask(taskToActivate);
+        return textResult(`Current task: "${sanitizeSkillText(taskToActivate)}", do not end your turn, work on it.`);
       }
 
-      // --- LAST → VERIFY (nextTask omitted) ---
+      // --- LAST → VERIFY (taskToActivate null/omitted) ---
       if (!areAllTodosDone()) {
         log.info("[workflow] task_ready_advance (last→verify): todos not all done, staying in implement");
         return textResult("Not all TODO items are complete. Finish every item, then call task_ready_advance again.");

@@ -108,7 +108,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
   test("entry (round 0, both gates active) dispatches round 1 via steer with both gates", async () => {
     const featureState = installHandler("1. Task", { "1-task": 0 });
     const { getTool, sent } = captureTaskReadyAdvanceTool();
-    const result = await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, makeCtx(NOOP));
+    const result = await getTool()?.execute("id", { taskToActivate: "2. Next" }, undefined, undefined, makeCtx(NOOP));
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
       /End your turn, wait for instructions/i,
     );
@@ -123,7 +123,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
   test("dispatched gate block reaches history fully resolved (no {{PI_FY_ markers)", async () => {
     installHandler("1. Task", { "1-task": 0 });
     const { getTool, sent } = captureTaskReadyAdvanceTool();
-    await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, makeCtx(NOOP));
+    await getTool()?.execute("id", { taskToActivate: "2. Next" }, undefined, undefined, makeCtx(NOOP));
     const gate = expectGateDispatch(sent, { verifier: true, reviewer: true });
     // Zero unresolved markers in the message committed to history.
     expect(gate.text).not.toContain("{{PI_FY_");
@@ -139,7 +139,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     const featureState = installHandler("1. Task", {});
     expect(featureState.implement.taskReviewRounds["1-task"]).toBeUndefined();
     const { getTool, sent } = captureTaskReadyAdvanceTool();
-    await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, makeCtx(NOOP));
+    await getTool()?.execute("id", { taskToActivate: "2. Next" }, undefined, undefined, makeCtx(NOOP));
     // Coerced ?? 0 → ENTRY → round 1 dispatched.
     expectGateDispatch(sent, { verifier: true, reviewer: true });
     expect(featureState.implement.taskReviewRounds["1-task"]).toBe(1);
@@ -151,7 +151,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 2, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 2, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -169,7 +169,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 0, reviewerIssuesFixed: 1, nextTask: "2. Next" },
+      { verifierIssuesFixed: 0, reviewerIssuesFixed: 1, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -180,12 +180,12 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
   });
 
   // both counts 0 → advances
-  test("recall with both counts 0 → advances to nextTask (no dispatch)", async () => {
+  test("recall with both counts 0 → advances to taskToActivate (no dispatch)", async () => {
     const featureState = installHandler("1. Task", { "1-task": 1 });
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -204,7 +204,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: -5, reviewerIssuesFixed: -1, nextTask: "2. Next" },
+      { verifierIssuesFixed: -5, reviewerIssuesFixed: -1, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -224,7 +224,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     // reviewerIssuesFixed>0 but reviewer inactive AND verifier has no findings → no reloop.
     const result = await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 0, reviewerIssuesFixed: 3, nextTask: "2. Next" },
+      { verifierIssuesFixed: 0, reviewerIssuesFixed: 3, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -244,7 +244,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     // fixedV>0 but verifier inactive → no verifier respawn; reviewer only if fixedR>0
     await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 2, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 2, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -260,7 +260,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 5, reviewerIssuesFixed: 5, nextTask: "2. Next" },
+      { verifierIssuesFixed: 5, reviewerIssuesFixed: 5, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -280,7 +280,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 1, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 1, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -303,7 +303,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       delete globalThis.__piCompactFollowUp;
       stored?.onAfterFollowUp?.();
     });
-    await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, dispatchCtx);
+    await getTool()?.execute("id", { taskToActivate: "2. Next" }, undefined, undefined, dispatchCtx);
     expect(dispatchCompact).toBe(0);
     // (b) advance (both counts 0) → compacts.
     let advanceCompact = 0;
@@ -316,7 +316,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     });
     await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       advanceCtx,
@@ -328,7 +328,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
   test("counts omitted on a recall → treated as 0/0 (advances)", async () => {
     installHandler("1. Task", { "1-task": 1 });
     const { getTool, sent } = captureTaskReadyAdvanceTool();
-    const result = await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, makeCtx(NOOP));
+    const result = await getTool()?.execute("id", { taskToActivate: "2. Next" }, undefined, undefined, makeCtx(NOOP));
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
       /do not end your turn, work on it/i,
     );
@@ -343,7 +343,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     // so a 0/0 report means no re-dispatch is needed.
     await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -351,8 +351,8 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expect(sent.find((s) => s.text.includes("fy-task-gate"))).toBeUndefined();
   });
 
-  // last-task reloop dispatch: recall on the last task with nextTask OMITTED + findings + round<max
-  test("last-task reloop: nextTask omitted + findings + round<max → dispatches gate (not last→verify)", async () => {
+  // last-task reloop dispatch: recall on the last task with taskToActivate OMITTED + findings + round<max
+  test("last-task reloop: taskToActivate omitted + findings + round<max → dispatches gate (not last→verify)", async () => {
     const featureState = installHandler("1. Only task", { "1-only-task": 1 }); // round 1, max 3
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute(
@@ -362,16 +362,16 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
       undefined,
       makeCtx(NOOP),
     );
-    // nextTask omitted BUT round(1) < max(3) with fixes → dispatch a gate round (do NOT take last→verify)
+    // taskToActivate omitted BUT round(1) < max(3) with fixes → dispatch a gate round (do NOT take last→verify)
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(
       /End your turn, wait for instructions/i,
     );
     expectGateDispatch(sent, { verifier: true, reviewer: true });
     expect(featureState.implement.currentTask).toBe("1. Only task"); // unchanged
-    // The dispatched skill omits nextTask in its example call (last-task reloop).
+    // The dispatched skill omits taskToActivate in its example call (last-task reloop).
     const gate = sent.find((s) => s.text.includes("fy-task-gate"));
     if (!gate) throw new Error("expected a fy-task-gate dispatch");
-    expect(gate.text).not.toContain("nextTask:");
+    expect(gate.text).not.toContain("taskToActivate:");
   });
 
   // last→verify fires fy-verify on ANY !fired (interTaskCompact=none → !fired → fallback)
@@ -382,7 +382,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     installHandler("1. Final task", { "1-final-task": 0 });
     setGuardrailsRef({ setVerifyTestsPassed: () => {} } as unknown as IGuardrails);
     const { getTool, sent, pi } = captureTaskReadyAdvanceTool();
-    await getTool()?.execute("id", {}, undefined, undefined, makeCtx(NOOP)); // nextTask omitted, todos done
+    await getTool()?.execute("id", {}, undefined, undefined, makeCtx(NOOP)); // taskToActivate omitted, todos done
     // fy-verify is staged for agent_settled delivery — schedule the deferred drain and flush the timer.
     vi.useFakeTimers();
     schedulePostTurnDrain(pi);
@@ -392,14 +392,20 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
   });
 
   // R4-5: single-task plan with gates active — START (no dispatch), then ENTRY dispatch round 1,
-  // then a clean recall (round 1, fixed 0, nextTask omitted) exits the gate cycle into last→verify.
-  test("single-task plan: START → ENTRY dispatch round 1 → clean recall with nextTask omitted → last→verify", async () => {
+  // then a clean recall (round 1, fixed 0, taskToActivate omitted) exits the gate cycle into last→verify.
+  test("single-task plan: START → ENTRY dispatch round 1 → clean recall with taskToActivate omitted → last→verify", async () => {
     const featureState = installHandler(null); // no current task
     setGuardrailsRef({ setVerifyTestsPassed: () => {} } as unknown as IGuardrails);
     const { getTool, sent, pi } = captureTaskReadyAdvanceTool();
 
     // --- call 1: START the only task (cur null) → enter task, NO dispatch (deferred to recall) ---
-    let result = await getTool()?.execute("id", { nextTask: "1. Only task" }, undefined, undefined, makeCtx(NOOP));
+    let result = await getTool()?.execute(
+      "id",
+      { taskToActivate: "1. Only task" },
+      undefined,
+      undefined,
+      makeCtx(NOOP),
+    );
     expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(/Current task:/i);
     expect(featureState.implement.currentTask).toBe("1. Only task");
     expect(featureState.implement.taskReviewRounds["1-only-task"]).toBe(0); // round 0 until the ENTRY dispatch
@@ -413,11 +419,11 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expectGateDispatch(sent, { verifier: true, reviewer: true });
     expect(featureState.implement.taskReviewRounds["1-only-task"]).toBe(1);
 
-    // --- call 3: model implemented, clean recall (fixed 0), nextTask omitted (last task) ---
+    // --- call 3: model implemented, clean recall (fixed 0), taskToActivate omitted (last task) ---
     const beforeVerify = sent.length;
     result = await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0 }, // nextTask omitted
+      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0 }, // taskToActivate omitted
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -438,7 +444,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     expect(featureState.implement.currentTask).toBeNull();
   });
 
-  // R4-7: a task→task ADVANCE (nextTask provided) succeeds when todos are NOT all done —
+  // R4-7: a task→task ADVANCE (taskToActivate provided) succeeds when todos are NOT all done —
   // the areAllTodosDone() gate is scoped to the last→verify branch only.
   test("task→task advance succeeds when todos are NOT all done (areAllTodosDone scoped to last→verify)", async () => {
     _setAreAllTodosDoneOverride(false);
@@ -446,7 +452,7 @@ describe("task_ready_advance gate cycle (dispatch model)", () => {
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     const result = await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 0, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),
@@ -484,7 +490,7 @@ describe("task_ready_advance single-gate activeness", () => {
     setSetting("perTaskReviewMode", "general"); // reviewer on
     installHandler("1. Task", { "1-task": 0 });
     const { getTool, sent } = captureTaskReadyAdvanceTool();
-    await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, makeCtx(NOOP));
+    await getTool()?.execute("id", { taskToActivate: "2. Next" }, undefined, undefined, makeCtx(NOOP));
     expectGateDispatch(sent, { verifier: false, reviewer: true });
   });
 
@@ -493,7 +499,7 @@ describe("task_ready_advance single-gate activeness", () => {
     setSetting("perTaskReviewMode", "off"); // reviewer off
     installHandler("1. Task", { "1-task": 0 });
     const { getTool, sent } = captureTaskReadyAdvanceTool();
-    await getTool()?.execute("id", { nextTask: "2. Next" }, undefined, undefined, makeCtx(NOOP));
+    await getTool()?.execute("id", { taskToActivate: "2. Next" }, undefined, undefined, makeCtx(NOOP));
     expectGateDispatch(sent, { verifier: true, reviewer: false });
   });
 
@@ -504,7 +510,7 @@ describe("task_ready_advance single-gate activeness", () => {
     const { getTool, sent } = captureTaskReadyAdvanceTool();
     await getTool()?.execute(
       "id",
-      { verifierIssuesFixed: 2, reviewerIssuesFixed: 0, nextTask: "2. Next" },
+      { verifierIssuesFixed: 2, reviewerIssuesFixed: 0, taskToActivate: "2. Next" },
       undefined,
       undefined,
       makeCtx(NOOP),

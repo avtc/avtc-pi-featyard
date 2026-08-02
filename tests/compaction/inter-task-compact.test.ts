@@ -91,7 +91,7 @@ describe("inter-task compact (task_ready_advance)", () => {
     const compactCalls: unknown[] = [];
     const ctx = makeCtx(() => compactCalls.push(true));
 
-    await getTool()?.execute("id1", { nextTask: "1. First task" }, undefined, undefined, ctx);
+    await getTool()?.execute("id1", { taskToActivate: "1. First task" }, undefined, undefined, ctx);
     expect(compactCalls.length).toBe(0);
   });
 
@@ -107,7 +107,7 @@ describe("inter-task compact (task_ready_advance)", () => {
       stored?.onAfterFollowUp?.();
     });
 
-    await getTool()?.execute("id1", { nextTask: "2. Wire the login form" }, undefined, undefined, ctx);
+    await getTool()?.execute("id1", { taskToActivate: "2. Wire the login form" }, undefined, undefined, ctx);
 
     expect(compactCalls.length).toBe(1);
     // Follow-up must name the task being advanced to
@@ -124,7 +124,7 @@ describe("inter-task compact (task_ready_advance)", () => {
       (captured as { onAfterFollowUp?: () => void })?.onAfterFollowUp?.();
     });
 
-    await getTool()?.execute("id1", { nextTask: "3. Add the validator" }, undefined, undefined, ctx);
+    await getTool()?.execute("id1", { taskToActivate: "3. Add the validator" }, undefined, undefined, ctx);
 
     expect(captured).toBeDefined();
     // skillName is intentionally NOT set — compaction.ts derives it from the current phase
@@ -142,7 +142,7 @@ describe("inter-task compact (task_ready_advance)", () => {
     // Below-threshold context: 1000 tokens
     (ctx as { getContextUsage?: () => unknown }).getContextUsage = () => ({ tokens: 1000 });
 
-    await getTool()?.execute("id1", { nextTask: "1. Start" }, undefined, undefined, ctx);
+    await getTool()?.execute("id1", { taskToActivate: "1. Start" }, undefined, undefined, ctx);
     expect(compactCalls.length).toBe(0);
   });
 
@@ -158,7 +158,7 @@ describe("inter-task compact (task_ready_advance)", () => {
     });
     (ctx as { getContextUsage?: () => unknown }).getContextUsage = () => ({ tokens: 200_000 });
 
-    await getTool()?.execute("id1", { nextTask: "1. Start" }, undefined, undefined, ctx);
+    await getTool()?.execute("id1", { taskToActivate: "1. Start" }, undefined, undefined, ctx);
     expect(compactCalls.length).toBe(1);
   });
 
@@ -172,8 +172,8 @@ describe("inter-task compact (task_ready_advance)", () => {
     // First call STARTs task 1 (compact). The second call ADVANCEs to task 2 — with gates
     // off it would compact too, but the in-flight compact guard suppresses a re-entrant
     // compact, so only one compact fires.
-    await getTool()?.execute("id1", { nextTask: "1. First" }, undefined, undefined, ctx);
-    await getTool()?.execute("id2", { nextTask: "2. Second" }, undefined, undefined, ctx);
+    await getTool()?.execute("id1", { taskToActivate: "1. First" }, undefined, undefined, ctx);
+    await getTool()?.execute("id2", { taskToActivate: "2. Second" }, undefined, undefined, ctx);
 
     expect(compactCalls.length).toBe(1);
   });
@@ -186,7 +186,7 @@ describe("inter-task compact (task_ready_advance)", () => {
     expect(featureState).not.toBeNull();
 
     expect(featureState?.implement.currentTask ?? null).toBeNull();
-    await getTool()?.execute("id1", { nextTask: "4. Recorded task" }, undefined, undefined, ctx);
+    await getTool()?.execute("id1", { taskToActivate: "4. Recorded task" }, undefined, undefined, ctx);
     expect(featureState?.implement.currentTask).toBe("4. Recorded task");
   });
 
@@ -201,7 +201,13 @@ describe("inter-task compact (task_ready_advance)", () => {
     const compactCalls: unknown[] = [];
     const ctx = makeCtx(() => compactCalls.push(true));
 
-    const result = await getTool()?.execute("id1", { nextTask: "5. Should be blocked" }, undefined, undefined, ctx);
+    const result = await getTool()?.execute(
+      "id1",
+      { taskToActivate: "5. Should be blocked" },
+      undefined,
+      undefined,
+      ctx,
+    );
 
     const out = (result?.content?.[0] as { text: string } | undefined)?.text ?? "";
     expect(out).toMatch(/Not available outside featyard implement phase/i);
@@ -214,7 +220,7 @@ describe("inter-task compact (task_ready_advance)", () => {
     const { getTool } = captureTaskReadyAdvanceTool();
     const ctx = makeCtx(() => {});
 
-    const result = await getTool()?.execute("id1", { nextTask: "6. No workflow" }, undefined, undefined, ctx);
+    const result = await getTool()?.execute("id1", { taskToActivate: "6. No workflow" }, undefined, undefined, ctx);
 
     const out = (result?.content?.[0] as { text: string } | undefined)?.text ?? "";
     expect(out).toMatch(/Not available outside featyard implement phase/i);

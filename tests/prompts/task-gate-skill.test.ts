@@ -115,23 +115,31 @@ describe("buildTaskGateSkill (fy-task-gate dispatch body)", () => {
     expect(skill).not.toContain("{{PI_FY_");
   });
 
-  test("includes nextTask in the example call when next is set", () => {
+  test("includes taskToActivate in the example call when next is set", () => {
     const skill = buildTaskGateSkill(
       { round: 1, task: "t", next: "2. Next", runVerifier: true, runReviewer: true },
       null,
     );
     expect(skill).toContain(
-      'task_ready_advance({ verifierIssuesFixed: <count>, reviewerIssuesFixed: <count>, nextTask: "2. Next" })',
+      'task_ready_advance({ verifierIssuesFixed: <count>, reviewerIssuesFixed: <count>, taskToActivate: "2. Next" })',
     );
   });
 
-  test("omits nextTask from the example call when next is undefined (last-task reloop)", () => {
+  test("omits taskToActivate from the example call when next is undefined", () => {
     const skill = buildTaskGateSkill(
       { round: 2, task: "t", next: undefined, runVerifier: true, runReviewer: true },
       null,
     );
     expect(skill).toContain("task_ready_advance({ verifierIssuesFixed: <count>, reviewerIssuesFixed: <count> })");
-    expect(skill).not.toContain("nextTask:");
+    expect(skill).not.toContain("taskToActivate:");
+  });
+
+  // next === null is the explicit last-task finish signal → the example demonstrates it.
+  test("renders taskToActivate: null in the example call when next is null (last task)", () => {
+    const skill = buildTaskGateSkill({ round: 2, task: "t", next: null, runVerifier: true, runReviewer: true }, null);
+    expect(skill).toContain(
+      "task_ready_advance({ verifierIssuesFixed: <count>, reviewerIssuesFixed: <count>, taskToActivate: null })",
+    );
   });
 
   test("does not tell the model the cap (Round {N} only, no 'of {max}')", () => {
@@ -150,7 +158,7 @@ describe("buildTaskGateSkill (fy-task-gate dispatch body)", () => {
 
   test("sanitizes task/next so they cannot break the <skill> tag boundary or quoting", () => {
     // A task name containing </skill> would prematurely close the skill block; a " would break
-    // the nextTask example quoting; a backtick would break the markdown code span.
+    // the taskToActivate example quoting; a backtick would break the markdown code span.
     const skill = buildTaskGateSkill(
       {
         round: 1,
@@ -163,7 +171,7 @@ describe("buildTaskGateSkill (fy-task-gate dispatch body)", () => {
     );
     // The raw tag-closer / quote / backtick never reach the output unescaped.
     expect(skill).not.toContain("</skill>evil");
-    expect(skill).not.toMatch(/nextTask: "next "<\/skill>/);
+    expect(skill).not.toMatch(/taskToActivate: "next "<\/skill>/);
     // Exactly one <skill ...> opener and one </skill> closer (the wrapper's own).
     expect(skill.match(/<skill name="fy-task-gate"/g)).toHaveLength(1);
     expect(skill.match(/<\/skill>/g)).toHaveLength(1);

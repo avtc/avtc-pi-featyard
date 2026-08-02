@@ -34,8 +34,8 @@ export interface TaskGateSkillInput {
   round: number;
   /** The current task the gate is gating (the model is told it is not ready to advance). */
   task: string;
-  /** The next task to advance to, or undefined when on the last task (nextTask omitted in the example call). */
-  next: string | undefined;
+  /** The task to activate next, null when on the last task (rendered as taskToActivate: null), or undefined if unknown. */
+  next: string | null | undefined;
   /** Dispatch the #### Verify section (fy-task-verifier). */
   runVerifier: boolean;
   /** Dispatch the #### Review section (fy-general-reviewer). */
@@ -46,7 +46,7 @@ export interface TaskGateSkillInput {
 export type TaskGateSubstituteFn = ((text: string) => string) | null;
 
 /** Escape model-provided task names so they cannot break the `<skill>` tag boundary, the
- *  `nextTask: "..."` quoting, or the markdown code spans in the skill body. The task/next
+ *  `taskToActivate: "..."` quoting, or the markdown code spans in the skill body. The task/next
  *  values originate from plan content; this is defense-in-depth, not an adversarial sink.
  *  Exported because the same task name is interpolated into tool-result / compact
  *  follow-up messages that also reach pi's message pipeline. */
@@ -64,8 +64,10 @@ export function buildTaskGateSkill(
   substituteFn: TaskGateSubstituteFn,
 ): string {
   const safeTask = sanitizeSkillText(task);
-  const safeNext = next === undefined ? undefined : sanitizeSkillText(next);
-  const nextParam = safeNext === undefined ? "" : `, nextTask: "${safeNext}"`;
+  // next === null ⟹ last task (render taskToActivate: null); undefined ⟹ unknown (omit); string ⟹ activate it.
+  const safeNext = next === undefined ? undefined : next === null ? null : sanitizeSkillText(next);
+  const nextParam =
+    safeNext === undefined ? "" : safeNext === null ? ", taskToActivate: null" : `, taskToActivate: "${safeNext}"`;
 
   const verifySection = runVerifier
     ? `
