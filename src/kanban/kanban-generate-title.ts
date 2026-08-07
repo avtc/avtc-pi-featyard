@@ -2,8 +2,15 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 import * as fs from "node:fs";
-import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
-import type { EventStream, Message } from "@earendil-works/pi-ai/compat";
+import type {
+  AgentContext,
+  AgentEvent,
+  AgentLoopConfig,
+  AgentMessage,
+  AgentTool,
+  StreamFn,
+} from "@earendil-works/pi-agent-core";
+import type { EventStream, Message, ProviderHeaders } from "@earendil-works/pi-ai/compat";
 import { Type } from "@earendil-works/pi-ai/compat";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { log } from "../log.js";
@@ -20,13 +27,14 @@ export interface AgentLoopDeps {
     prompts: AgentMessage[],
     context: AgentContext,
     config: AgentLoopConfig,
-    signal?: AbortSignal,
+    signal: AbortSignal | undefined,
+    streamFn: StreamFn,
   ) => AgentLoopStream;
 }
 
 export interface AuthInfo {
   apiKey: string;
-  headers?: Record<string, string>;
+  headers?: ProviderHeaders;
   model: PiModel;
 }
 
@@ -94,7 +102,7 @@ Return only the title using the return_title tool.
     toolExecution: "sequential",
   };
 
-  const stream = deps.agentLoop(messages, context, config, signal ?? undefined);
+  const stream = deps.agentLoop(messages, context, config, signal ?? undefined, undefined as unknown as StreamFn);
   for await (const _event of stream) {
     /* drain events */
   }
@@ -234,7 +242,7 @@ Use the return_meta tool to return both.
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
     try {
-      const stream = agentLoop(messages, context, config, controller.signal);
+      const stream = agentLoop(messages, context, config, controller.signal, undefined as unknown as StreamFn);
       for await (const _event of stream) {
         /* drain events */
       }

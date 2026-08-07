@@ -156,12 +156,14 @@ describe("generateTitleCore", () => {
       controller.signal,
     );
 
-    // 4th argument to agentLoop should be the signal
+    // 4th argument to agentLoop should be the signal; 5th is the streamFn
+    // (undefined → pi-agent-core falls back to the host-installed default).
     expect(mockAgentLoop).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
       expect.anything(),
       controller.signal,
+      undefined,
     );
   });
 });

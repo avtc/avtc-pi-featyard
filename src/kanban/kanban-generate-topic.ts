@@ -1,8 +1,15 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
-import type { Api, EventStream, Message, Model } from "@earendil-works/pi-ai/compat";
+import type {
+  AgentContext,
+  AgentEvent,
+  AgentLoopConfig,
+  AgentMessage,
+  AgentTool,
+  StreamFn,
+} from "@earendil-works/pi-agent-core";
+import type { Api, EventStream, Message, Model, ProviderHeaders } from "@earendil-works/pi-ai/compat";
 import { Type } from "@earendil-works/pi-ai/compat";
 import { log } from "../log.js";
 
@@ -10,7 +17,7 @@ import { log } from "../log.js";
 export interface TopicModelRef {
   model?: Model<Api>;
   registry?: {
-    getApiKeyAndHeaders(model: Model<Api>): Promise<{ ok: boolean; apiKey?: string; headers?: Record<string, string> }>;
+    getApiKeyAndHeaders(model: Model<Api>): Promise<{ ok: boolean; apiKey?: string; headers?: ProviderHeaders }>;
   };
 }
 
@@ -32,7 +39,8 @@ export async function generateTopic(
       prompts: AgentMessage[],
       context: AgentContext,
       config: AgentLoopConfig,
-      signal?: AbortSignal,
+      signal: AbortSignal | undefined,
+      streamFn: StreamFn,
     ) => AgentLoopStream;
     modelRef?: TopicModelRef | null;
   },
@@ -102,7 +110,7 @@ Use the return_topic tool to return the topic.
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5_000);
     try {
-      const stream = deps.agentLoop(messages, context, config, controller.signal);
+      const stream = deps.agentLoop(messages, context, config, controller.signal, undefined as unknown as StreamFn);
       for await (const _event of stream) {
         /* drain events */
       }
