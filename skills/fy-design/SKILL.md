@@ -7,7 +7,7 @@ disable-model-invocation: true
 # Designing a Feature
 Investigate the codebase before asking anything. Drive the design as a dialogue — one focused question per turn, one section at a time, each section confirmed before the next.
 
-> The document is a **specification, not a plan.** It states WHAT the feature achieves, HOW it integrates with the existing system, and HOW it affects every area it touches — in enough detail that planning only has to *sequence* the work, not *decide* it. If you drift into step-by-step build instructions, pull back to the contract.
+> The document is a **specification, not a plan.** It states WHAT the feature achieves, HOW it integrates with the existing system, and HOW it affects every area it touches — in enough detail that planning only has to *sequence* the work, not *decide* it. The design owns behavior and approach in concrete detail; implementation code and tests are built later.
 
 ## Scope of action
 - Read source code and documentation.
@@ -67,7 +67,9 @@ subagent({
 - Specify what must be covered: critical paths, edge cases, and regressions, so implementation and verification know the target.
 
 ## Present the design
-- Build the design document one numbered section at a time. Show each section in chat and get explicit approval before writing it to the file.
+- **Do a section's work before you present any of it.** Research the section via the per-section deep dive, break it into sub-sections and track each as a todo sub-item, and elaborate each until it is definitive: every behavior, path, edge case, failure, and decision resolved concretely or explicitly escalated. The design owns what the feature does, how it behaves, and the approach in concrete detail; the implementation code and tests are built later. If a part can't be made definitive as one, split it further.
+- **Self-review each sub-section before showing it** — nothing missed, every claim grounded — then present the finished sub-sections one at a time and get explicit approval before writing.
+- **LLM-agent-facing prompts and tools, user-facing text and UI, and config are design content.** Each is a separate sub-section, tracked as a todo sub-item; work them one at a time: draft several variants, elaborate and role-play each from its consumer's perspective — the agent or the user — critique, then present the refined variant, or the few that survive critique, for approval before writing.
 - **NEVER write to `{{PI_FY_DESIGN_DOC_PATH}}` before user approval.** The `<!-- approved -->` marker is added only after the user confirms. Once approved, append via `edit`.
 - The design doc is the permanent knowledge base; research reports are working notes. Summarize key findings with a link to the report; do not copy reports verbatim.
 - **Every section includes:** Current state (mechanism traced during research); Proposed change (what & why); Constraints & edge cases; Uncertainties; Rejected alternatives (brief).
