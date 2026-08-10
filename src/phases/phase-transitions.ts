@@ -25,7 +25,7 @@ import {
   syncAndSaveFeatureState,
 } from "../state/feature-state.js";
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
-import { persistState } from "../state/state-persistence.js";
+import { FEATYARD_STATE_ENTRY_TYPE, persistState } from "../state/state-persistence.js";
 import { notifyFeatureCompleted } from "../state/worth-notes.js";
 import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 
@@ -136,6 +136,9 @@ export async function completeFeature(
   const doneState = markFeatureDone(featureState);
   saveFeatureState(doneState, DEFAULT_DIR);
   handler.setActiveFeatureState(doneState);
+  // Mirror completion into the session log: resume reads this tier, so completedAt
+  // must reach appendEntry or a resumed completed feature appears incomplete.
+  pi.appendEntry(FEATYARD_STATE_ENTRY_TYPE, handler.getFullState());
   // Sync the worktree status icon for the done state (completion is the off-signal
   // clears the icon regardless of whether worktree removal succeeded).
   syncWorktreeStatus(doneState);

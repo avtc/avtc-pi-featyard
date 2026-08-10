@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { startReviewIteration } from "../../src/review/review-counter.js";
 import { NO_FEATURE_STATE_OVERRIDE } from "../../src/shared/workflow-refs.js";
@@ -25,7 +26,9 @@ describe("startReviewIteration", () => {
 
   /** Minimal handler stub — provides the methods the helper now calls.
    *  getActiveFeatureState reads the active feature from disk (the SOTS record
-   *  the production handler would hold in memory). */
+   *  the production handler would hold in memory). getFullState returns the
+   *  FeatyardState wrapper shape that pi.appendEntry expects (featureState +
+   *  guardrailsState), so the session-log append is exercised. */
   function makeHandler(reviewActiveCalls: Array<{ phase: string; value: boolean }>): FeatureSession {
     return {
       setReviewActiveFlag: (phase: string, value: boolean) => reviewActiveCalls.push({ phase, value }),
@@ -33,7 +36,20 @@ describe("startReviewIteration", () => {
         const slug = process.env.PI_FY_FEATURE;
         return slug ? loadFeatureState(slug, null) : null;
       },
+      getFullState: () => ({
+        featureState: loadFeatureState(process.env.PI_FY_FEATURE ?? "", null),
+        guardrailsState: { verification: "not-run" },
+      }),
     } as unknown as FeatureSession;
+  }
+
+  /** Minimal pi stub — appendEntry captures the session-log entry (the resume tier). */
+  function makePi(): { pi: ExtensionAPI; entries: Array<{ customType: string; data: unknown }> } {
+    const entries: Array<{ customType: string; data: unknown }> = [];
+    const pi = {
+      appendEntry: (customType: string, data: unknown) => entries.push({ customType, data }),
+    } as unknown as ExtensionAPI;
+    return { pi, entries };
   }
 
   describe("design phase", () => {
@@ -43,14 +59,20 @@ describe("startReviewIteration", () => {
       });
       const calls: Array<{ phase: string; value: boolean }> = [];
       const handler = makeHandler(calls);
+      const { pi, entries } = makePi();
 
-      const savedState = startReviewIteration(handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
+      const savedState = startReviewIteration(pi, handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
 
       expect(savedState?.design.reviewLoopCount).toBe(1);
       expect(calls).toEqual([{ phase: "design", value: true }]);
       // Returned object reflects the incremented counter
       const state = loadFeatureState(slug, null);
       expect(state?.design.reviewLoopCount).toBe(1);
+      // The increment is mirrored to the session log (the tier resume reads).
+      const appended = entries.find((e) => e.customType === "featyard_state");
+      expect(appended?.data).toMatchObject({
+        featureState: { design: { reviewLoopCount: 1, reviewActive: true } },
+      });
     });
 
     it("increments counter N→N+1 on subsequent iterations", () => {
@@ -58,8 +80,9 @@ describe("startReviewIteration", () => {
         design: { doc: null, reviewActive: false, reviewLoopCount: 2 },
       });
       const handler = makeHandler([]);
+      const { pi } = makePi();
 
-      const savedState = startReviewIteration(handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
+      const savedState = startReviewIteration(pi, handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
 
       expect(savedState?.design.reviewLoopCount).toBe(3);
       const state = loadFeatureState(slug, null);
@@ -74,8 +97,9 @@ describe("startReviewIteration", () => {
       });
       const calls: Array<{ phase: string; value: boolean }> = [];
       const handler = makeHandler(calls);
+      const { pi } = makePi();
 
-      const savedState = startReviewIteration(handler, slug, "plan", NO_FEATURE_STATE_OVERRIDE);
+      const savedState = startReviewIteration(pi, handler, slug, "plan", NO_FEATURE_STATE_OVERRIDE);
 
       expect(savedState?.plan.reviewLoopCount).toBe(2);
       expect(calls).toEqual([{ phase: "plan", value: true }]);
@@ -87,8 +111,9 @@ describe("startReviewIteration", () => {
         plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 0 },
       });
       const handler = makeHandler([]);
+      const { pi } = makePi();
 
-      startReviewIteration(handler, slug, "plan", NO_FEATURE_STATE_OVERRIDE);
+      startReviewIteration(pi, handler, slug, "plan", NO_FEATURE_STATE_OVERRIDE);
 
       const state = loadFeatureState(slug, null);
       expect(state?.plan.reviewLoopCount).toBe(1);
@@ -102,8 +127,9 @@ describe("startReviewIteration", () => {
         design: { doc: null, reviewActive: false, reviewLoopCount: 3 },
       });
       const handler = makeHandler([]);
+      const { pi } = makePi();
 
-      startReviewIteration(handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
+      startReviewIteration(pi, handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
       clearFeatureStateCache(); // force a fresh disk read
 
       const state = loadFeatureState(slug, null);
@@ -128,8 +154,9 @@ describe("startReviewIteration", () => {
         },
       });
       const handler = makeHandler([]);
+      const { pi } = makePi();
 
-      startReviewIteration(handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
+      startReviewIteration(pi, handler, slug, "design", NO_FEATURE_STATE_OVERRIDE);
 
       const state = loadFeatureState(slug, null);
       expect(state?.design.reviewLoopCount).toBe(1);
@@ -157,8 +184,9 @@ describe("startReviewIteration", () => {
         },
       ];
       const handler = makeHandler([]);
+      const { pi, entries } = makePi();
 
-      const savedState = startReviewIteration(handler, slug, "design", state);
+      const savedState = startReviewIteration(pi, handler, slug, "design", state);
 
       expect(savedState?.design.reviewLoopCount).toBe(2);
       // The unsaved reviewHistory mutation must be persisted alongside the increment.
@@ -166,6 +194,11 @@ describe("startReviewIteration", () => {
       expect(reloaded?.design.reviewLoopCount).toBe(2);
       expect(reloaded?.review.reviewHistory).toHaveLength(1);
       expect(reloaded?.review.reviewHistory?.[0].issuesFound).toBe(5);
+      // ...and mirrored to the session log (resume tier), including the unsaved history.
+      const appended = entries.find((e) => e.customType === "featyard_state");
+      expect(appended?.data).toMatchObject({
+        featureState: { design: { reviewLoopCount: 2 }, review: { reviewHistory: [{ issuesFound: 5 }] } },
+      });
     });
   });
 
@@ -173,7 +206,9 @@ describe("startReviewIteration", () => {
     it("returns null and does not throw when no feature state exists", () => {
       const calls: Array<{ phase: string; value: boolean }> = [];
       const handler = makeHandler(calls);
+      const { pi, entries } = makePi();
       const savedState = startReviewIteration(
+        pi,
         handler,
         "nonexistent-slug-start-iter",
         "design",
@@ -182,6 +217,8 @@ describe("startReviewIteration", () => {
       expect(savedState).toBeNull();
       // : setReviewActiveFlag must NOT be called when state is missing
       expect(calls).toEqual([]);
+      // And nothing is appended to the session log.
+      expect(entries).toHaveLength(0);
     });
   });
 });

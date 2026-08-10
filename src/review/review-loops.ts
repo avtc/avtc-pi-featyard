@@ -18,6 +18,7 @@ import { NO_AGENT_NAME, NO_FEATURE_STATE_OVERRIDE } from "../shared/workflow-ref
 import type { FeatureSession } from "../state/feature-session.js";
 import { DEFAULT_DIR, type ExpandSkillCommandFn, type FeatureState, saveFeatureState } from "../state/feature-state.js";
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
+import { FEATYARD_STATE_ENTRY_TYPE } from "../state/state-persistence.js";
 import { worthNotesPointerFor } from "../state/worth-notes.js";
 import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 import { generateReviewReport } from "./review-report.js";
@@ -87,7 +88,11 @@ export function createReviewLoopHandlers(deps: ReviewLoopDeps) {
 
     if (shouldLoop) {
       featureState.review.reviewLoopCount = currentLoop + 1;
+      // Persist to BOTH tiers (file + session log): resume reconstructs the active
+      // feature from the session log, so the increment must reach appendEntry, not
+      // just the file — otherwise a mid-loop session exit + resume restarts at round 1.
       saveFeatureState(featureState, DEFAULT_DIR);
+      pi.appendEntry(FEATYARD_STATE_ENTRY_TYPE, handler.getFullState());
       syncEnvVarsFromState(handler);
       updateWidget(handler, NO_FEATURE_STATE);
       const reviewSkill = resolveReviewSkill(settings);
@@ -113,8 +118,11 @@ export function createReviewLoopHandlers(deps: ReviewLoopDeps) {
         }
       }
     } else {
-      // Loop ends — clean up and transition
+      // Loop ends — clean up and transition. saveFeatureState + appendEntry keeps
+      // both tiers in sync (see the shouldLoop branch above) so the recorded
+      // reviewHistory survives a session resume.
       saveFeatureState(featureState, DEFAULT_DIR);
+      pi.appendEntry(FEATYARD_STATE_ENTRY_TYPE, handler.getFullState());
 
       // Generate the review report and its level (always computed — needed by the after-review
       // MERGE below even in headless mode; level is hoisted above the hasUI guard for that).

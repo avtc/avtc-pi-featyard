@@ -126,7 +126,7 @@ export function registerInput(pi: ExtensionAPI, handler: FeatureSession): void {
       if (activeSlug) {
         const phase = invokedSkill === "fy-design-review" ? "design" : "plan";
         // startReviewIteration loads+increments+saves the review counter (side effect).
-        startReviewIteration(handler, activeSlug, phase, NO_FEATURE_STATE_OVERRIDE);
+        startReviewIteration(pi, handler, activeSlug, phase, NO_FEATURE_STATE_OVERRIDE);
         syncEnvVarsFromState(handler);
         updateWidget(handler, NO_FEATURE_STATE);
         log.info(`[workflow] input: manual ${invokedSkill} invocation incremented review counter for ${activeSlug}`);

@@ -44,7 +44,7 @@ import {
   saveFeatureState,
 } from "../state/feature-state.js";
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
-import { isSubagentSession, persistState } from "../state/state-persistence.js";
+import { FEATYARD_STATE_ENTRY_TYPE, isSubagentSession, persistState } from "../state/state-persistence.js";
 import { notifyFeatureCompleted, worthNotesPointerFor } from "../state/worth-notes.js";
 import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 import { textResult } from "./text-result.js";
@@ -188,7 +188,7 @@ async function handleReviewLoop(
   // derivation). The shouldLoop branch below always syncs too; this keeps both
   // branches consistent.
   if (loopCount === 0) {
-    startReviewIteration(handler, slug, opts.phaseName, state);
+    startReviewIteration(deps.pi, handler, slug, opts.phaseName, state);
     syncEnvVarsFromState(handler);
     updateWidget(handler, NO_FEATURE_STATE);
     // Stage the review-skill followUp for delivery after agent_settled (not
@@ -227,7 +227,7 @@ async function handleReviewLoop(
     cannotFixIssues: resolvedCannotFix,
   });
 
-  startReviewIteration(handler, slug, opts.phaseName, state);
+  startReviewIteration(deps.pi, handler, slug, opts.phaseName, state);
 
   if (shouldLoop) {
     syncEnvVarsFromState(handler);
@@ -538,6 +538,9 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
           const doneState = markFeatureDone(featureState);
           saveFeatureState(doneState, DEFAULT_DIR);
           handler.setActiveFeatureState(doneState);
+          // Mirror completion into the session log: resume reads this tier, so completedAt
+          // must reach appendEntry or a resumed completed feature appears incomplete.
+          pi.appendEntry(FEATYARD_STATE_ENTRY_TYPE, handler.getFullState());
           // Sync the worktree status icon for the done state (completion is the
           // off-signal — clears the icon regardless of whether removal succeeded).
           syncWorktreeStatus(doneState);

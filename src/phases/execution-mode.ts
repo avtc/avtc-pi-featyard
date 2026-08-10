@@ -20,7 +20,7 @@ import { NO_AGENT_NAME, NO_FEATURE_STATE_OVERRIDE } from "../shared/workflow-ref
 import type { FeatureSession } from "../state/feature-session.js";
 import { DEFAULT_DIR, type ExpandSkillCommandFn, type FeatureState, saveFeatureState } from "../state/feature-state.js";
 import { schedulePostTurnFollowUp } from "../state/post-turn-dispatch.js";
-import { persistState } from "../state/state-persistence.js";
+import { FEATYARD_STATE_ENTRY_TYPE, persistState } from "../state/state-persistence.js";
 import { NO_FEATURE_STATE, updateWidget } from "../ui/featyard-widget.js";
 
 export interface ExecutionModeDeps {
@@ -62,6 +62,10 @@ export function createExecutionModeApplier(deps: ExecutionModeDeps) {
         const updated = await ensureWorktreeForExecution(featureState, ctx);
         if (updated.git.worktreePath) {
           saveFeatureState(updated, DEFAULT_DIR);
+          // Mirror into the session log: resume reconstructs the active feature from
+          // this tier, not the file, so worktreePath (set after the persistState above)
+          // must reach appendEntry or path-rewriting interception breaks on resume.
+          pi.appendEntry(FEATYARD_STATE_ENTRY_TYPE, handler.getFullState());
         } else if (worktreeMode) {
           // Worktree setup failed in worktree mode. Execution cannot fall back to the main
           // repo here (the implementer is dispatched into the worktree with path-rewriting
