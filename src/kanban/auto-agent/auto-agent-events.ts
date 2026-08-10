@@ -98,7 +98,16 @@ export function createAgentLifecycle(deps: AgentLifecycleDeps): IAgentLifecycle 
       ) {
         return;
       }
-      if (lastAssistant && lastAssistant.stopReason === "error" && lastAssistant.errorMessage) {
+      // pi 0.84.0+ (#7370): ctx.compact() aborts the in-flight run up front, and that abort
+      // emits agent_end with stopReason "error" + "This operation was aborted" (AbortController
+      // default). This is an operational abort that resumes after compaction — NOT a task
+      // execution error. The user-initiated abort (Esc) is a different signature (stopReason
+      // "aborted", "Operation aborted") and never reaches this branch. Classifying the compact
+      // abort as lastError would call onFeatureError → handleFeatureTransientError → state
+      // "waiting", blocking the auto-agent on every todo/extension-triggered compaction in
+      // implement/verify/review. Exclude it so real errors still surface.
+      const isCompactAbort = lastAssistant?.errorMessage === "This operation was aborted";
+      if (lastAssistant && lastAssistant.stopReason === "error" && lastAssistant.errorMessage && !isCompactAbort) {
         lastError = lastAssistant.errorMessage;
       }
     }

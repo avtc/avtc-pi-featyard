@@ -56,6 +56,26 @@ describe("workflow-monitor session_compact — todo re-injection", () => {
     });
   }
 
+  /**
+   * Emit pi-todo:ready simulating a todo_complete-triggered compaction: getCompletedItemId
+   * returns `completedId` once (consume-on-read, like the real API) and getInProgressItem
+   * returns the promoted next item. This is the hosted-mode signal that the compact was
+   * extension/todo-triggered (mid-task), not user-initiated.
+   */
+  function emitTodoReadyTriggered(fake: ReturnType<typeof createFakePi>, completedId: string, followUp: string) {
+    let consumed = false;
+    fake.api.events.emit("pi-todo:ready", {
+      disableBuiltInFollowUp() {},
+      getCompletedItemId: () => {
+        if (consumed) return null;
+        consumed = true;
+        return completedId;
+      },
+      getInProgressItem: () => followUp,
+      areAllTodosDone: () => false,
+    });
+  }
+
   test("injects in_progress todo item after compaction during review phase", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
@@ -125,10 +145,39 @@ describe("workflow-monitor session_compact — todo re-injection", () => {
     await compactHandler({} as unknown as ExtensionEvent, { hasUI: false } as unknown as ExtensionContext);
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
 
-    // Should NOT have sent the todo followUp — user manually compacted
+    // Should NOT have sent the todo followUp — user manually compacted (no completedItemId)
     const todoMessages = fake.sentMessages.filter(
       (m) => typeof m.message === "string" && m.message.includes("Active task"),
     );
     expect(todoMessages).toHaveLength(0);
+  });
+
+  test("todo-triggered compact STILL injects when agentJustFinished is true (pi 0.84.0+ abort regression)", async () => {
+    // Regression guard for pi #7370 (v0.84.0): ctx.compact() now aborts the in-flight run up
+    // front, and that abort emits agent_end, so agentJustFinished is TRUE even for a
+    // todo_complete-triggered compaction. Such a compaction is mid-task (an item was just
+    // completed → completedItemId is set) and MUST auto-resume by injecting the next item.
+    // Before the fix, agentJustFinished=TRUE routed it to /fy:continue staging and the agent
+    // stalled — compaction completed but no follow-up was sent (reproduced in session
+    // 019fe653: featyard log "Staging compaction followUp for /fy:continue (turn-end)").
+    const fake = createFakePi();
+    workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
+
+    setupReviewFeature("2026-08-10-todo-compact-abort-regression");
+    // todo_complete just completed item "3" and promoted the next — completedItemId is set.
+    emitTodoReadyTriggered(fake, "3", "▶ 4: Next task\nContinue here");
+
+    // pi 0.84.0+ ctx.compact() abort fires agent_end → agentJustFinished = true.
+    const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
+    await onAgentEnd({} as unknown as ExtensionEvent, { hasUI: false } as unknown as ExtensionContext);
+
+    const compactHandler = getSingleHandler(fake.handlers, "session_compact");
+    await compactHandler({} as unknown as ExtensionEvent, { hasUI: false } as unknown as ExtensionContext);
+    vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
+
+    // MUST inject (auto-resume) — not stage for /fy:continue.
+    const injected = fake.sentMessages.filter((m) => typeof m.message === "string" && m.message.includes("Next task"));
+    expect(injected.length).toBe(1);
+    expect(injected[0].options).toEqual({ deliverAs: "followUp" });
   });
 });

@@ -328,7 +328,18 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     // control and resumes explicitly — no surprise editor paste, no blocking agent turn.
     // No fallback skill: when there's no mapped skill (workflow inactive / no caller skillName),
     // there is nothing valuable to stage — skip (the user compacted outside a workflow).
-    const routeToContinue = isUserInitiatedManual || (agentJustFinishedRef.value && !hadStagedPostTurnFollowUp);
+    //
+    // The `!extensionTriggered` clause guards a pi 0.84.0 regression (#7370): ctx.compact() now
+    // aborts the in-flight run up front (`await this.abort()`), and that abort emits agent_end,
+    // so agentJustFinished is TRUE even for extension/todo-triggered compactions (which used to
+    // resume the same run without firing agent_end). Such compactions are mid-task — an
+    // inter-task/review-loop compact (storedFollowUp) or a todo item completion
+    // (completedItemId) — and MUST auto-resume. Without this guard they get staged for
+    // /fy:continue and the agent stalls (compaction completes but no follow-up is sent). Only
+    // natural/user compactions (no extension trigger) stage on a finished turn.
+    const extensionTriggered = !!storedFollowUp || !!completedItemId;
+    const routeToContinue =
+      isUserInitiatedManual || (agentJustFinishedRef.value && !hadStagedPostTurnFollowUp && !extensionTriggered);
     if (routeToContinue) {
       if (!skillName) {
         const route = isUserInitiatedManual ? "user-initiated manual" : "turn-end";
