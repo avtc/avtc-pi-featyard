@@ -70,6 +70,14 @@ const Schema = Type.Object({
   ),
 });
 
+/** True when the model signaled "no next task" (finish): `taskToActivate` is omitted, JSON null,
+ *  or the literal string "null". The string form is a defensive accept — some model providers
+ *  stringify a null union value instead of emitting JSON null, which would otherwise read as a
+ *  task literally named "null" (no real task is ever named "null"/""; task names are "<number + name>"). */
+function isFinishSignal(value: unknown): boolean {
+  return value === undefined || value === null || (typeof value === "string" && value.trim().toLowerCase() === "null");
+}
+
 // --- Registration ---
 
 export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure: () => void): void {
@@ -121,7 +129,9 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
 
       // --- START (no task in progress) ---
       if (cur === null) {
-        const taskToActivate = String(params.taskToActivate ?? "").trim();
+        // A finish signal on START is invalid (nothing to finish yet) → treat as "no task given",
+        // so a stray null/"null" can't start a phantom task named "null".
+        const taskToActivate = isFinishSignal(params.taskToActivate) ? "" : String(params.taskToActivate).trim();
         if (!taskToActivate) {
           return textResult("Provide a task to activate to start a task.");
         }
@@ -186,10 +196,10 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
       }
 
       // --- ADVANCE (clean / cap reached / gates-off) ---
-      // taskToActivate must be a real task name to advance; an empty value is neither a valid
-      // advance nor a finish signal (to finish, pass taskToActivate: null).
+      // A non-finish taskToActivate must be a real task name; an empty/whitespace value is
+      // neither a valid advance nor a finish signal (to finish, pass taskToActivate: null).
       const taskToActivateRaw = params.taskToActivate;
-      if (taskToActivateRaw !== undefined && taskToActivateRaw !== null) {
+      if (!isFinishSignal(taskToActivateRaw)) {
         const taskToActivate = String(taskToActivateRaw).trim();
         if (!taskToActivate) {
           return textResult(
@@ -210,7 +220,13 @@ export function registerTaskReadyAdvance(pi: ExtensionAPI, recoverCompactFailure
         return textResult(`Current task: "${sanitizeSkillText(taskToActivate)}", do not end your turn, work on it.`);
       }
 
-      // --- LAST → VERIFY (taskToActivate null/omitted) ---
+      // Some providers stringify a null union value as the literal "null" instead of emitting
+      // JSON null; log it so the quirk is visible (it still finishes correctly via isFinishSignal).
+      if (typeof taskToActivateRaw === "string" && taskToActivateRaw.trim().toLowerCase() === "null") {
+        log.info(`task_ready_advance: finish via stringified "null" on ${cur}`);
+      }
+
+      // --- LAST → VERIFY (taskToActivate null / "null" / omitted) ---
       if (!areAllTodosDone()) {
         log.info("[workflow] task_ready_advance (last→verify): todos not all done, staying in implement");
         return textResult("Not all TODO items are complete. Finish every item, then call task_ready_advance again.");

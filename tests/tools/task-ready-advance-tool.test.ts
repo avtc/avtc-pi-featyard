@@ -204,6 +204,16 @@ describe("task_ready_advance tool (transitions)", () => {
     expect(featureState.implement.currentTask).toBeNull();
   });
 
+  // Defensive: some providers stringify a null union value as the literal "null" instead of
+  // emitting JSON null. On START that must NOT create a phantom task named "null".
+  test("START with the literal string 'null' → asks for a task (no phantom 'null' task)", async () => {
+    const { featureState } = installHandler(null);
+    const { getTool } = captureTaskReadyAdvanceTool();
+    const result = await getTool()?.execute("id", { taskToActivate: "null" }, undefined, undefined, makeCtx(NOOP));
+    expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(/Provide a task to activate/i);
+    expect(featureState.implement.currentTask).toBeNull();
+  });
+
   // gates off → entry advances directly (1 call); single-task plan = START + last→verify
   test("gates off: a recall on the only task with taskToActivate null → last→verify", async () => {
     const { featureState, completed } = installHandler("1. Only task");
@@ -295,6 +305,19 @@ describe("task_ready_advance edge cases + last→verify coverage", () => {
     );
     // currentTask unchanged; phase still implement.
     expect(featureState.implement.currentTask).toBe("1. First task");
+  });
+
+  // Defensive: some providers stringify a null union value as the literal "null" instead of
+  // emitting JSON null. That must finish (last→verify), not advance to a phantom "null" task.
+  test("ADVANCE with the literal string 'null' finishes (last→verify), not a phantom advance", async () => {
+    const { featureState, completed } = installHandler("1. Only task");
+    featureState.implement.taskReviewRounds["1-only-task"] = 0;
+    setGuardrailsRef(mockGuardrails().ref);
+    const { getTool } = captureTaskReadyAdvanceTool();
+    const result = await getTool()?.execute("id", { taskToActivate: "null" }, undefined, undefined, makeCtx(NOOP));
+    expect(completed).toHaveLength(1); // phase advanced to verify
+    expect(featureState.implement.currentTask).toBeNull(); // reset on exit (no phantom "null" task)
+    expect((result?.content?.[0] as { text: string } | undefined)?.text ?? "").toMatch(/advancing to the next phase/i);
   });
 
   // Self-advance guard: the model passing the already-active task (instead of null to finish)
