@@ -1,6 +1,6 @@
 {
   "name": "avtc-pi-featyard",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "Predictable, deterministic feature development for pi — deep upfront design, configurable comprehensive review and verification rigor, and auto-agents draining a backlog",
   "type": "module",
   "keywords": [
@@ -54,7 +54,7 @@
     "skills": [
       "skills"
     ],
-    "image": "https://raw.githubusercontent.com/avtc/avtc-pi-featyard/main/assets/images/kanban-board.png"
+    "image": "https://raw.githubusercontent.com/avtc/avtc-pi-featyard/main/assets/images/cover.png"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
