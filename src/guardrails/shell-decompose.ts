@@ -16,12 +16,9 @@ import { resolve as pathResolve } from "node:path";
  * Returns trimmed, non-empty subcommand strings.
  */
 export function decompose(input: string): string[] {
-  const results: string[] = [];
-  splitInto(input, results);
-  return results.flatMap((s) => {
-    const t = s.trim();
-    return t ? [t] : [];
-  });
+  const out: string[] = [];
+  splitIntoPeel(input, WRAPPER_DEPTH_ROOT, out);
+  return out.map((s) => s.trim()).filter((s) => s !== "");
 }
 
 export interface Subcommand {
@@ -40,10 +37,13 @@ export const CD_UNRESOLVABLE = "__CD_UNRESOLVABLE__";
  */
 export function extractCdTarget(cmd: string): string | null {
   const trimmed = cmd.trim();
-  // Match: cd <path> or cd "<path>" or cd '<path>' or cd ~ or cd -
-  const match = trimmed.match(/^cd\s+(.+)$/);
+  // Match: cd <path> / Set-Location <path> (PowerShell, case-insensitive) / chdir <path>
+  // PowerShell -Path/-LiteralPath parameter prefix is stripped below.
+  const match = trimmed.match(/^(?:cd|set-location|chdir)\s+(.+)$/i);
   if (!match) return null;
   let target = match[1]?.trim();
+  // PowerShell explicit path parameter: Set-Location -Path <path>
+  target = target.replace(/^-(?:Literal)?Path\s+/i, "");
   // Remove surrounding quotes
   if ((target.startsWith('"') && target.endsWith('"')) || (target.startsWith("'") && target.endsWith("'"))) {
     target = target.slice(1, -1);
@@ -90,6 +90,93 @@ export function decomposeWithCwd(input: string, baseCwd: string): Subcommand[] {
   }
 
   return result;
+}
+
+/**
+ * Shell-wrapper peeling (powershell-era bypass hardening).
+ *
+ * A fragment like `powershell -Command "git push"` would never match the
+ * `^git`-anchored guard patterns, so recognized wrapper invocations are
+ * decomposed into their payload commands and checked like any other
+ * subcommand. Wrappers whose payload cannot be inspected (`-File`, stdin,
+ * interactive) are kept as-is.
+ */
+const MAX_WRAPPER_DEPTH = 4;
+/** Depth value for the initial (non-wrapped) decomposition pass. */
+const WRAPPER_DEPTH_ROOT = 0;
+
+/** Strip one layer of matching surrounding quotes ("x" / 'x' → x). */
+function stripOneQuoteLayer(s: string): string {
+  const t = s.trim();
+  if (t.length >= 2 && ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'")))) {
+    return t.slice(1, -1);
+  }
+  return s;
+}
+
+/** Split into fragments, then recursively peel each wrapper fragment into `out`. */
+function splitIntoPeel(input: string, depth: number, out: string[]): void {
+  const frags: string[] = [];
+  splitInto(input, frags);
+  for (const f of frags) {
+    const t = f.trim();
+    if (t) peelFragment(t, depth, out);
+  }
+}
+
+/** Peel one shell-wrapper fragment; pushes resulting subcommand fragments into `out`. */
+function peelFragment(frag: string, depth: number, out: string[]): void {
+  if (depth >= MAX_WRAPPER_DEPTH) {
+    out.push(frag);
+    return;
+  }
+
+  // PowerShell family: powershell / pwsh (.exe) — scan for the first command-bearing token
+  let m = frag.match(/^(?:powershell|pwsh)(?:\.exe)?\s+([\s\S]+)$/i);
+  if (m) {
+    const rest = m[1] ?? "";
+    // -EncodedCommand <base64 UTF-16LE> — decode to recover the payload
+    const enc = rest.match(/(?:^|\s)-EncodedCommand\s+(\S+)/i);
+    if (enc?.[1]) {
+      try {
+        const decoded = Buffer.from(enc[1], "base64").toString("utf16le");
+        splitIntoPeel(decoded, depth + 1, out);
+        return;
+      } catch {
+        out.push(frag); // undecodable — keep the wrapper visible to any pattern that wants it
+        return;
+      }
+    }
+    // -Command / -c <payload> — leading no-arg flags (-NoProfile, …) are skipped naturally
+    const cmdTok = rest.match(/(?:^|\s)-(?:Command|c)\s+([\s\S]+)$/i);
+    if (cmdTok?.[1] !== undefined) {
+      splitIntoPeel(stripOneQuoteLayer(cmdTok[1]), depth + 1, out);
+      return;
+    }
+    out.push(frag); // -File / interactive / stdin — payload not inspectable
+    return;
+  }
+
+  // cmd.exe: /c or /k followed by the command line
+  m = frag.match(/^cmd(?:\.exe)?\s+\/[ck]\s+([\s\S]+)$/i);
+  if (m?.[1] !== undefined) {
+    splitIntoPeel(stripOneQuoteLayer(m[1]), depth + 1, out);
+    return;
+  }
+
+  // POSIX shells: bash / sh / zsh / dash / ksh with -c / -lc <payload>
+  m = frag.match(/^(?:bash|sh|zsh|dash|ksh)(?:\.exe)?\s+([\s\S]+)$/);
+  if (m) {
+    const cTok = m[1]?.match(/(?:^|\s)-(?:lc|c)\s+([\s\S]+)$/);
+    if (cTok?.[1] !== undefined) {
+      splitIntoPeel(stripOneQuoteLayer(cTok[1]), depth + 1, out);
+      return;
+    }
+    out.push(frag); // script path / interactive
+    return;
+  }
+
+  out.push(frag);
 }
 
 /**

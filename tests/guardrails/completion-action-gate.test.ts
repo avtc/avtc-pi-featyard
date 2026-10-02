@@ -180,3 +180,33 @@ describe("publish gate (git push / gh pr create)", () => {
     });
   });
 });
+
+describe("publish gate — powershell tool (pi 0.84.3+)", () => {
+  test("git push via powershell tool before finish → blocked", async () => {
+    const { onToolCall, ctx } = await setup("implement", "pub-ps-implement");
+    const res = await onToolCall(
+      { type: "tool_call", toolCallId: "c1", toolName: "powershell", input: { command: "git push origin main" } },
+      ctx,
+    );
+    expect(res).toMatchObject({ block: true });
+    expect(showSelectWithNoteSpy).not.toHaveBeenCalled();
+  });
+
+  test("git push wrapped in powershell -Command from bash → blocked", async () => {
+    const { onToolCall, ctx } = await setup("implement", "pub-ps-wrap");
+    const res = await onToolCall(
+      { type: "tool_call", toolCallId: "c1", toolName: "bash", input: { command: 'powershell -Command "git push"' } },
+      ctx,
+    );
+    expect(res).toMatchObject({ block: true });
+  });
+
+  test("safe powershell command → allowed", async () => {
+    const { onToolCall, ctx } = await setup("implement", "pub-ps-safe");
+    const res = await onToolCall(
+      { type: "tool_call", toolCallId: "c1", toolName: "powershell", input: { command: "Get-ChildItem -Recurse" } },
+      ctx,
+    );
+    expect((res as { block?: boolean } | undefined)?.block).not.toBe(true);
+  });
+});

@@ -79,6 +79,7 @@ export {
   cleanupWorktreeOnFinishWrapper as _cleanupWorktreeOnFinish,
   createGitExec,
   getActiveWorktreeContext,
+  psSingleQuote,
   WORKTREE_STATUS_KEY,
 } from "./git/worktrees/worktree-helpers.js";
 export { selectValue } from "./ui/select-dialog.js";

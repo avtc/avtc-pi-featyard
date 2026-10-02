@@ -53,6 +53,11 @@ export function bashSingleQuote(str: string): string {
   return `'${str.replace(/'/g, "'\\''")}'`;
 }
 
+/** Escape a string for PowerShell single-quote context: wraps in '...', doubling internal '. */
+export function psSingleQuote(str: string): string {
+  return `'${str.replace(/'/g, "''")}'`;
+}
+
 /**
  * Shared guard for worktree-aware handlers.
  * Returns worktree context if interception should be active, null otherwise.

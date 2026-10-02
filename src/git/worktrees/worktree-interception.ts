@@ -10,7 +10,7 @@
 import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { FeatureSession } from "../../state/feature-session.js";
-import { bashSingleQuote, getActiveWorktreeContext } from "./worktree-helpers.js";
+import { bashSingleQuote, getActiveWorktreeContext, psSingleQuote } from "./worktree-helpers.js";
 
 /** File tools that require a path parameter */
 const FILE_TOOLS_REQUIRED_PATH = new Set(["read", "write", "edit"]);
@@ -35,6 +35,12 @@ export function registerWorktreeInterception(pi: ExtensionAPI, deps: { handler: 
       const input = event.input as { command: string };
       if (!input.command) return undefined;
       input.command = `cd ${bashSingleQuote(worktreePath)} && ${input.command}`;
+    } else if (event.toolName === "powershell") {
+      // PowerShell (pi ≥ 0.84.3): `&&` is PS7-only, so use the `;` statement separator
+      // with Set-Location, and PS single-quote escaping (internal ' doubled).
+      const input = event.input as { command: string };
+      if (!input.command) return undefined;
+      input.command = `Set-Location ${psSingleQuote(worktreePath)}; ${input.command}`;
     } else if (FILE_TOOLS_REQUIRED_PATH.has(event.toolName)) {
       const input = event.input as { path: string };
       if (!path.isAbsolute(input.path)) {

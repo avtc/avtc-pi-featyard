@@ -135,7 +135,8 @@ const SWEEP_SHORT = "A";
  */
 export function parseGitAddCommand(subcommand: string): GitAddParse | null {
   const tokens = tokenizeArgs(subcommand);
-  if (tokens.length === 0 || tokens[0] !== "git") return null;
+  // git.exe — Windows-style invocation of the same binary
+  if (tokens.length === 0 || (tokens[0] !== "git" && tokens[0]?.toLowerCase() !== "git.exe")) return null;
 
   let force = false;
   let sweepAll = false;

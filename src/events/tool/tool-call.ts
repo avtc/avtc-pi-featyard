@@ -30,6 +30,7 @@ export function registerToolCall(pi: ExtensionAPI, guardrails: IGuardrails, hand
 
     switch (event.toolName) {
       case "bash":
+      case "powershell":
         decision = await guardrails.onBashCall(event, ctx);
         break;
       case "write":

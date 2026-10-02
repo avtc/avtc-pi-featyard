@@ -34,6 +34,7 @@ export function registerToolResult(pi: ExtensionAPI, guardrails: IGuardrails, ha
         advisory = guardrails.onWriteEditResult(event.toolCallId);
         break;
       case "bash":
+      case "powershell":
         advisory = guardrails.onBashResult(event, event.toolCallId);
         break;
     }

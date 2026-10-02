@@ -223,3 +223,26 @@ describe("checkFeatyardForceAdd", () => {
     expect(checkFeatyardForceAdd("git add -A", root, featyardPresent())).toBeNull();
   });
 });
+
+describe("checkFeatyardForceAdd — shell wrapper peeling (powershell-era)", () => {
+  const root2 = path.join(os.tmpdir(), "fy-guardrail-root");
+
+  test("blocks .featyard force-add wrapped in powershell -Command", () => {
+    const r = checkFeatyardForceAdd(
+      'powershell -Command "git add -f .featyard/x.md"',
+      root2,
+      fakeFs(root2, true, new Set()),
+    );
+    expect(r?.block).toBe(true);
+  });
+
+  test("blocks .featyard force-add wrapped in bash -c", () => {
+    const r = checkFeatyardForceAdd("bash -c 'git add -f .featyard/x.md'", root2, fakeFs(root2, true, new Set()));
+    expect(r?.block).toBe(true);
+  });
+
+  test("blocks .featyard force-add via git.exe", () => {
+    const r = checkFeatyardForceAdd("git.exe add -f .featyard/x.md", root2, fakeFs(root2, true, new Set()));
+    expect(r?.block).toBe(true);
+  });
+});

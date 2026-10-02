@@ -867,3 +867,37 @@ describe("syncWorktreeStatus", () => {
     expect(setStatus).not.toHaveBeenCalled();
   });
 });
+
+// --- powershell tool redirection (pi 0.84.3+) ---
+
+describe("powershell tool worktree redirection", () => {
+  test("powershell: prepends Set-Location to worktree when active", async () => {
+    const { onToolCall, ctx } = setupWorktreeTest({});
+    const event = mockToolCall("powershell", { command: "git status" });
+    await onToolCall(event as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    expect(event.input.command).toBe(`Set-Location '${DEFAULT_WORKTREE_PATH}'; git status`);
+  });
+
+  test("powershell: doubles apostrophes in worktree path (PS single-quote escaping)", async () => {
+    const { onToolCall, ctx } = setupWorktreeTest({
+      worktreePath: "/path/with'apostrophe/worktree",
+    });
+    const event = mockToolCall("powershell", { command: "ls" });
+    await onToolCall(event as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    expect(event.input.command).toBe("Set-Location '/path/with''apostrophe/worktree'; ls");
+  });
+
+  test("powershell: keeps the user's own cd via ; intact after the prefix", async () => {
+    const { onToolCall, ctx } = setupWorktreeTest({});
+    const event = mockToolCall("powershell", { command: "cd /other; ls" });
+    await onToolCall(event as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    expect(event.input.command).toBe(`Set-Location '${DEFAULT_WORKTREE_PATH}'; cd /other; ls`);
+  });
+
+  test("powershell: no worktree active → command untouched", async () => {
+    const { onToolCall, ctx } = setupWorktreeTest({ worktreePath: null, slug: null });
+    const event = mockToolCall("powershell", { command: "git status" });
+    await onToolCall(event as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    expect(event.input.command).toBe("git status");
+  });
+});
