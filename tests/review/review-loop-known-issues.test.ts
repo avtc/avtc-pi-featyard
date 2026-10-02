@@ -3,7 +3,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionToolContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _getEmptyLoopsForSlug, _resetAllEmptyLoops } from "../../src/index.js";
 import { getPhaseReadyRef } from "../../src/shared/workflow-refs.js";
@@ -14,12 +14,12 @@ import {
   writeFeatureStateFile,
 } from "../helpers/workflow-monitor-test-helpers.js";
 
-function createCtx(): ExtensionContext {
+function createCtx(): ExtensionToolContext {
   return {
     hasUI: false,
     sessionManager: { getBranch: () => [] },
     ui: { setWidget: () => {} },
-  } as unknown as ExtensionContext;
+  } as unknown as ExtensionToolContext;
 }
 
 /** No review loop options (use defaults) */

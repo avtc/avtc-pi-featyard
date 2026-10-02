@@ -7,7 +7,7 @@ import * as path from "node:path";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
 import type {
   ExtensionAPI,
-  ExtensionContext,
+  ExtensionToolContext,
   ToolDefinition,
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
@@ -119,7 +119,7 @@ describe("add_to_backlog tool execute via registered tool", () => {
       { slug, title: "My New Feature", description: "A detailed description of the feature." },
       undefined, // signal
       undefined, // onUpdate
-      {} as unknown as ExtensionContext, // ctx
+      {} as unknown as ExtensionToolContext, // ctx
     );
 
     // Verify return value
@@ -176,7 +176,7 @@ describe("add_to_backlog tool execute via registered tool", () => {
         { slug: collisionSlug, title: "Duplicate Feature", description: "First one." },
         undefined,
         undefined,
-        {} as unknown as ExtensionContext,
+        {} as unknown as ExtensionToolContext,
       );
 
       // Second call — same slug, should detect collision
@@ -185,7 +185,7 @@ describe("add_to_backlog tool execute via registered tool", () => {
         { slug: collisionSlug, title: "Duplicate Feature", description: "Should fail." },
         undefined,
         undefined,
-        {} as unknown as ExtensionContext,
+        {} as unknown as ExtensionToolContext,
       );
 
       expect((result.content[0] as { text?: string }).text).toContain("already exists");
@@ -221,7 +221,7 @@ describe("add_to_backlog tool execute via registered tool", () => {
       { slug: explicitSlug, title: "", description: "Some description" },
       undefined,
       undefined,
-      {} as unknown as ExtensionContext,
+      {} as unknown as ExtensionToolContext,
     );
 
     // Should create a feature with the explicit slug
@@ -257,7 +257,7 @@ describe("add_to_backlog tool execute via registered tool", () => {
       { slug, title: "Empty Desc Feature", description: "" },
       undefined,
       undefined,
-      {} as unknown as ExtensionContext,
+      {} as unknown as ExtensionToolContext,
     );
 
     expect((result.content[0] as { text?: string }).text).toContain("Feature added to backlog");
@@ -293,7 +293,7 @@ describe("add_to_backlog tool execute via registered tool", () => {
       { slug, title: "Project Test Feature", description: "Testing project auto-creation." },
       undefined,
       undefined,
-      {} as unknown as ExtensionContext,
+      {} as unknown as ExtensionToolContext,
     );
 
     // Verify the feature was created and assigned to a project

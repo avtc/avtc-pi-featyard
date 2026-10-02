@@ -10,6 +10,7 @@ import type {
   ExtensionCommandContext,
   ExtensionContext,
   ExtensionEvent,
+  ExtensionToolContext,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import { expect, vi } from "vitest";
@@ -391,7 +392,7 @@ export const NO_UI_CTX = {
   hasUI: false,
   sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
   ui: { setWidget: () => {} },
-} as unknown as ExtensionContext;
+} as unknown as ExtensionToolContext;
 
 // --- Boolean sentinel values for test calls ---
 

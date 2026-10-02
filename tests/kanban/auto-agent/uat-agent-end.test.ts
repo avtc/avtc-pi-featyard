@@ -1,8 +1,15 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  ExtensionEvent,
+  ExtensionToolContext,
+  ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 
+/** The fake event-bus handler shape (ctx is the base ExtensionContext). */
 type Handler = (event: ExtensionEvent, ctx: ExtensionContext) => unknown;
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
@@ -75,7 +82,7 @@ describe("phase_ready finish — UAT guard", () => {
       {},
       undefined,
       undefined,
-      mockCtx as unknown as ExtensionContext,
+      mockCtx as unknown as ExtensionToolContext,
     );
 
     expect((result.content[0] as { text: string }).text).toBe("");
@@ -96,7 +103,7 @@ describe("phase_ready finish — UAT guard", () => {
       {},
       undefined,
       undefined,
-      mockCtx as unknown as ExtensionContext,
+      mockCtx as unknown as ExtensionToolContext,
     );
 
     expect((result.content[0] as { text: string }).text).toBe("");
@@ -122,7 +129,7 @@ describe("phase_ready finish — UAT guard", () => {
       {},
       undefined,
       undefined,
-      mockCtx as unknown as ExtensionContext,
+      mockCtx as unknown as ExtensionToolContext,
     );
 
     // No "UAT not resolved" guard fires — reaching finish derives uat as done.
@@ -145,7 +152,7 @@ describe("phase_ready finish — UAT guard", () => {
       {},
       undefined,
       undefined,
-      mockCtx as unknown as ExtensionContext,
+      mockCtx as unknown as ExtensionToolContext,
     );
 
     expect((result.content[0] as { text: string }).text).toBe("");

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 import * as fs from "node:fs";
-import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionToolContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
 import { loadFeatureState } from "../../src/state/feature-state.js";
@@ -138,7 +138,7 @@ describe("design/plan review context prefix", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, rootCtx);
 
@@ -208,7 +208,7 @@ describe("design/plan review context prefix", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, rootCtx);
 

@@ -4,7 +4,7 @@
 import * as fs from "node:fs";
 import type {
   ExtensionAPI,
-  ExtensionContext,
+  ExtensionToolContext,
   Theme,
   ToolCallEvent,
   ToolDefinition,
@@ -55,7 +55,7 @@ describe("phase_ready tool — stub registration", () => {
     const result = await phaseReady.execute("tc-1", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
     expect((result.content[0] as unknown as { text: string }).text).toBe(
       "phase_ready is not supported — no active workflow.",
     );
@@ -70,13 +70,18 @@ describe("phase_ready tool — stub registration", () => {
     });
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute("tc-null-phase", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
     expect((result.content[0] as unknown as { text: string }).text).toBe(
       "phase_ready is not supported — no active workflow.",
     );
@@ -98,13 +103,13 @@ describe("phase_ready tool — stub registration", () => {
       hasUI: false,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute("tc-2", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
     // Plan interceptor dispatches fy-implement when maxPlanReviewRounds=off
     expect((result.content[0] as unknown as { text: string }).text).toBe("");
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
@@ -131,13 +136,13 @@ describe("phase_ready tool — stub registration", () => {
       hasUI: false,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute("tc-3", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
     expect((result.content[0] as unknown as { text: string }).text).toBe("");
   });
 });
@@ -180,7 +185,12 @@ describe("phase_ready tool — design non-auto mode", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -190,7 +200,7 @@ describe("phase_ready tool — design non-auto mode", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -228,7 +238,12 @@ describe("phase_ready tool — design non-auto mode", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -238,7 +253,7 @@ describe("phase_ready tool — design non-auto mode", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -268,7 +283,12 @@ describe("phase_ready tool — design non-auto mode", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -277,7 +297,7 @@ describe("phase_ready tool — design non-auto mode", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -310,7 +330,12 @@ describe("phase_ready tool — design non-auto mode", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(
@@ -318,7 +343,7 @@ describe("phase_ready tool — design non-auto mode", () => {
       {},
       undefined,
       undefined,
-      NO_UI_CTX as unknown as ExtensionContext,
+      NO_UI_CTX as unknown as ExtensionToolContext,
     );
 
     // No state changes, no messages
@@ -347,7 +372,12 @@ describe("phase_ready tool — design non-auto mode", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -356,7 +386,7 @@ describe("phase_ready tool — design non-auto mode", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     // Pass issuesFound param — should be accepted without error
@@ -417,7 +447,12 @@ describe("phase_ready tool — design auto mode", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     // Set up auto-agent callback mock
     const onFeatureComplete = vi.fn();
@@ -455,7 +490,7 @@ describe("phase_ready tool — design auto mode", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -506,7 +541,12 @@ describe("phase_ready tool — design auto mode", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     // Set up auto-agent callback that throws synchronously (async rejection wouldn't be caught by try-catch)
     setAutoAgentCallback({
@@ -523,7 +563,7 @@ describe("phase_ready tool — design auto mode", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -554,7 +594,12 @@ describe("phase_ready tool — edge cases", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -563,7 +608,7 @@ describe("phase_ready tool — edge cases", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -585,7 +630,7 @@ describe("phase_ready tool — edge cases", () => {
       {},
       undefined,
       undefined,
-      NO_UI_CTX as unknown as ExtensionContext,
+      NO_UI_CTX as unknown as ExtensionToolContext,
     );
 
     expect((result.content[0] as unknown as { text: string }).text).toBe(
@@ -600,7 +645,12 @@ describe("phase_ready tool — edge cases", () => {
     // Do NOT create design doc on disk
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -609,7 +659,7 @@ describe("phase_ready tool — edge cases", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -644,7 +694,12 @@ describe("phase_ready tool — edge cases", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -659,7 +714,7 @@ describe("phase_ready tool — edge cases", () => {
         },
         select: selectFn,
       },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -681,7 +736,12 @@ describe("phase_ready tool — edge cases", () => {
 
     // Write state and start session so workflow state has design phase
     writeFeatureStateFile("2026-05-20-auto-no-slug", BRAINSTORM_ACTIVE_STATE);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     // Clear slug so getActiveFeatureSlug() returns null
     // while workflow state still has currentPhase=design
@@ -693,7 +753,7 @@ describe("phase_ready tool — edge cases", () => {
       {},
       undefined,
       undefined,
-      NO_UI_CTX as unknown as ExtensionContext,
+      NO_UI_CTX as unknown as ExtensionToolContext,
     );
 
     expect((result.content[0] as unknown as { text: string }).text).toBe(
@@ -747,7 +807,12 @@ describe("phase_ready tool — remaining phase stubs", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(
@@ -755,7 +820,7 @@ describe("phase_ready tool — remaining phase stubs", () => {
       {},
       undefined,
       undefined,
-      NO_UI_CTX as unknown as ExtensionContext,
+      NO_UI_CTX as unknown as ExtensionToolContext,
     );
     expect((result.content[0] as unknown as { text: string }).text).toBe(`phase_ready is not supported for ${phase}.`);
   });
@@ -772,7 +837,12 @@ describe("phase_ready tool — remaining phase stubs", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(
@@ -780,7 +850,7 @@ describe("phase_ready tool — remaining phase stubs", () => {
       {},
       undefined,
       undefined,
-      NO_UI_CTX as unknown as ExtensionContext,
+      NO_UI_CTX as unknown as ExtensionToolContext,
     );
     expect((result.content[0] as unknown as { text: string }).text).toBe("");
   });
@@ -962,9 +1032,9 @@ describe("phase_ready tool — verify phase", () => {
 
   /** Fire a passing test via tool_call + tool_result to set verifyTestsPassed flag */
   async function firePassingTest(
-    onToolCall: (event: ToolCallEvent, ctx: ExtensionContext) => unknown,
-    onToolResult: (event: ToolResultEvent, ctx: ExtensionContext) => unknown,
-    ctx: ExtensionContext,
+    onToolCall: (event: ToolCallEvent, ctx: ExtensionToolContext) => unknown,
+    onToolResult: (event: ToolResultEvent, ctx: ExtensionToolContext) => unknown,
+    ctx: ExtensionToolContext,
     toolCallId: string,
   ) {
     await onToolCall(
@@ -1003,7 +1073,7 @@ describe("phase_ready tool — verify phase", () => {
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
     const { onToolCall, onToolResult } = getToolHandlers(fake);
-    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionContext;
+    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionToolContext;
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx);
 
     // Fire a passing test to set verifyTestsPassed flag
@@ -1049,7 +1119,7 @@ describe("phase_ready tool — verify phase", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionContext;
+    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionToolContext;
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx);
 
     // No test run — verifyTestsPassed flag is false
@@ -1075,7 +1145,7 @@ describe("phase_ready tool — verify phase", () => {
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
     const { onToolCall, onToolResult } = getToolHandlers(fake);
-    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionContext;
+    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionToolContext;
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx);
 
     // Fire a passing test to set verifyTestsPassed flag
@@ -1104,7 +1174,12 @@ describe("phase_ready tool — verify phase", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX as unknown as ExtensionContext);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
 
     _clearActiveFeatureSlug();
 
@@ -1112,7 +1187,7 @@ describe("phase_ready tool — verify phase", () => {
     const result = await phaseReady.execute("tc-verify-no-slug", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
 
     expect((result.content[0] as unknown as { text: string }).text).toBe(
       "phase_ready failed — no active feature slug.",
@@ -1131,7 +1206,7 @@ describe("phase_ready tool — verify phase", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionContext;
+    const ctx = { hasUI: false, ui: { setWidget: () => {} } } as unknown as ExtensionToolContext;
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
@@ -1166,7 +1241,7 @@ describe("phase_ready tool — verify phase", () => {
         getSessionFile: () => "/tmp/session.jsonl",
       },
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx);
 
     // Fire a passing test to set verifyTestsPassed flag
@@ -1201,7 +1276,7 @@ describe("phase_ready tool — verify phase", () => {
         getSessionFile: () => "/tmp/session.jsonl",
       },
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx);
 
     // Fire a passing test to set verifyTestsPassed flag
@@ -1239,7 +1314,7 @@ describe("phase_ready tool — verify phase", () => {
         getSessionFile: () => "/tmp/session.jsonl",
       },
       ui: { setWidget: () => {} },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx);
 
     // Fire a passing test to set verifyTestsPassed flag

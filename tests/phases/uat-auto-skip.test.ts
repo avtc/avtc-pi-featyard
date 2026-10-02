@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionToolContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
 import { isPhaseActive, isPhaseDone, type PhaseProgressionView } from "../../src/phases/phase-progression.js";
@@ -36,7 +36,7 @@ describe("UAT auto-skip for off mode", () => {
     hasUI: true,
     sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
     ui: { setWidget: () => {}, notify: () => {} },
-  } as unknown as ExtensionContext;
+  } as unknown as ExtensionToolContext;
 
   /** Review-in-progress fixture: pointer at review, review loop count 0. */
   function reviewActiveOverrides() {

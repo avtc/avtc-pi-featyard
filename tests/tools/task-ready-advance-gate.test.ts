@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionToolContext } from "@earendil-works/pi-coding-agent";
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { _resetCompactGuard } from "../../src/compaction/compact-trigger.js";
@@ -22,13 +22,13 @@ import {
 
 const NOOP = () => {};
 
-function makeCtx(compactImpl: () => void): ExtensionContext {
+function makeCtx(compactImpl: () => void): ExtensionToolContext {
   return {
     hasUI: false,
     ui: { setWidget: vi.fn() },
     sessionManager: { getBranch: () => [] },
     compact: compactImpl,
-  } as unknown as ExtensionContext;
+  } as unknown as ExtensionToolContext;
 }
 
 function makeFeatureState(currentTask: string | null, rounds: Record<string, number> = {}): FeatureState {

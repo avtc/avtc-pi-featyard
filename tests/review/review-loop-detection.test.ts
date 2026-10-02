@@ -3,7 +3,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionEvent,
+  ExtensionToolContext,
+  ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension from "../../src/index.js";
 import { log as _log } from "../../src/log.js";
@@ -44,11 +49,11 @@ function createCtx(hasUI: boolean) {
       setEditorText: () => {},
       notify: vi.fn(),
     },
-  } as unknown as ExtensionContext;
+  } as unknown as ExtensionToolContext;
 }
 
 /** Get the notify mock's call arguments. notify is vi.fn from createCtx. */
-function getNotifyCall(ctx: ExtensionContext, argIndex: 0 | 1): string {
+function getNotifyCall(ctx: ExtensionToolContext, argIndex: 0 | 1): string {
   const calls = vi.mocked(ctx.ui.notify).mock.calls;
   if (calls.length === 0) throw new Error("getNotifyCall: ctx.ui.notify was not called");
   return calls[0][argIndex] as string;
@@ -121,7 +126,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // task_tracker init should succeed without triggering execution mode dialog
@@ -170,7 +175,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should NOT have re-dispatched yet (not all complete)
@@ -184,11 +189,11 @@ describe("review loop detection", () => {
       { issuesFound: 2, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should have re-dispatched the review skill despite non-prefixed task names
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -211,7 +216,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init review fix tasks, mark complete with result "fixed". Review completion
@@ -221,11 +226,11 @@ describe("review loop detection", () => {
       { issuesFound: 1, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should re-dispatch the review skill as followUp
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -248,7 +253,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark task complete with result "false-positive" (zero real issues). Review
@@ -258,7 +263,7 @@ describe("review loop detection", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should send end-of-loop report (NOT re-dispatch review skill)
@@ -285,7 +290,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark task complete with result "false-positive" (zero real issues). Review
@@ -295,7 +300,7 @@ describe("review loop detection", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Headless loop-end: no crash, no notify call, no skill re-dispatch
@@ -328,14 +333,14 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     await phaseReady.execute(
       "tc-complete",
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // uatMode defaults to after-review → report + handoff + worth-notes pointer MERGED into ONE.
@@ -359,14 +364,14 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     await phaseReady.execute(
       "tc-complete",
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     expect(ctx.ui.notify).toHaveBeenCalledTimes(1);
@@ -390,14 +395,14 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     await phaseReady.execute(
       "tc-complete",
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // uatMode off: no UAT handoff. The standalone report notify fires WITH the worth-notes
@@ -420,7 +425,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Reviewer found zero issues — review completion driven by phase_ready with
@@ -430,7 +435,7 @@ describe("review loop detection", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should send end-of-loop report (NOT re-dispatch review skill)
@@ -456,7 +461,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Reviewer found zero issues — review completion driven by phase_ready with
@@ -466,7 +471,7 @@ describe("review loop detection", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should NOT call ctx.ui.notify in headless mode
@@ -496,7 +501,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Reviewer found zero issues at loop 0 — minReviewLoops=2 not met yet. Review
@@ -506,11 +511,11 @@ describe("review loop detection", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should re-dispatch review skill (minReviewLoops not met)
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -536,7 +541,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark task complete with result "fixed" (real issue). Review completion driven
@@ -546,7 +551,7 @@ describe("review loop detection", () => {
       { issuesFound: 1, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Loop cap reached (1 loop done, setting is "1") — should end with report
@@ -569,7 +574,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Fix A: fixed, Fix B: cannot-fix. Review completion driven by phase_ready
@@ -579,7 +584,7 @@ describe("review loop detection", () => {
       { issuesFound: 2, cannotFix: 1 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Loop cap reached (1) — should end with report
@@ -606,7 +611,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark task complete with result "fixed". Review completion driven by
@@ -616,11 +621,11 @@ describe("review loop detection", () => {
       { issuesFound: 1, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should re-dispatch fy-review
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -642,7 +647,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark tasks: A=fixed, B=false-positive, C=cannot-fix. Review completion
@@ -686,7 +691,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark A=fixed (real issue), B=false-positive. Review completion driven by
@@ -700,7 +705,7 @@ describe("review loop detection", () => {
     );
 
     // Should have re-dispatched (1 real issue, loop cap 3 not reached)
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -730,7 +735,7 @@ describe("review loop detection", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark task fixed (real issue). Review completion driven by phase_ready
@@ -740,7 +745,7 @@ describe("review loop detection", () => {
       { issuesFound: 1, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should NOT re-dispatch review skill when maxFeatureReviewRounds is 'off'
@@ -788,7 +793,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init + complete task as false-positive (zero real issues). Review completion
@@ -798,11 +803,11 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // minReviewLoops=2, currentLoop=0, minMet=false → should loop even with 0 real issues
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -824,7 +829,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init + complete task as false-positive (zero real issues). Review completion
@@ -834,7 +839,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=1, numericMin=2, minMet = (1+1) >= 2 = true
@@ -861,7 +866,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init + complete task as false-positive (zero real issues). Review completion
@@ -871,7 +876,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=2, numericMin=2, minMet = 2 >= 2 = true
@@ -899,7 +904,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init + complete task as false-positive (zero real issues). Review completion
@@ -909,7 +914,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=2, numericMin=3, minMet = (2+1) >= 3 = true
@@ -937,7 +942,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init + complete task as false-positive (zero real issues). Review completion
@@ -947,12 +952,12 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=1, numericMin=3, minMet = (1+1) >= 3 = false → !minMet=true
     // issuesFound=0, !minMet=true → (0 || true) = true → shouldLoop = true
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -975,7 +980,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Task is false-positive (zero real issues), but min not met. Review completion
@@ -985,13 +990,13 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=0, numericMin=3, minMet=false → !minMet=true
     // effectiveMax = max(1,3) = 3, currentLoop+1 = 1 < 3 → true
     // shouldLoop = true (even though maxFeatureReviewRounds=1, min raises ceiling)
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -1012,7 +1017,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Task has real issues, but maxFeatureReviewRounds=off. Review completion driven by
@@ -1022,7 +1027,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 1, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // maxLoops='off' → shouldLoop=false regardless of minReviewLoops
@@ -1046,7 +1051,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Complete task as false-positive (zero real issues). Review completion driven
@@ -1056,7 +1061,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=0, numericMin=1, minMet = (0+1) >= 1 = true → !minMet = false
@@ -1083,7 +1088,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Complete task as false-positive (zero real issues). Review completion driven
@@ -1093,7 +1098,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=1, numericMin=1, minMet = (1+1) >= 1 = true → !minMet = false
@@ -1120,7 +1125,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init + complete task as false-positive (zero real issues). Review completion
@@ -1130,7 +1135,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // currentLoop=2, loopsCompleted=3, effectiveMax=3
@@ -1155,7 +1160,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Mark A=complete WITHOUT result field (counts as fixed), B=false-positive,
@@ -1171,7 +1176,7 @@ describe("minReviewLoops integration", () => {
     );
 
     // Should have re-dispatched review (2 actionable issues from tasks without result)
-    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "agent_end", {}, ctx as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBeGreaterThanOrEqual(1);
     const lastMessage = fake.sentMessages[fake.sentMessages.length - 1];
@@ -1197,7 +1202,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init with 1 fix task + 1 commit task. Mark fix task as fixed, commit task as
@@ -1208,7 +1213,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 1, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Loop ended — verify report generated
@@ -1237,7 +1242,7 @@ describe("minReviewLoops integration", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Init with only a commit task (zero issues found, but commit needed).
@@ -1248,7 +1253,7 @@ describe("minReviewLoops integration", () => {
       { issuesFound: 0, cannotFix: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should trigger zero-issues detection immediately (only commit task, no fix tasks)

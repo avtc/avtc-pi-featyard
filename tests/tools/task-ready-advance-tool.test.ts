@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionToolContext } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { _resetCompactGuard } from "../../src/compaction/compact-trigger.js";
 import { _setAreAllTodosDoneOverride } from "../../src/integrations/todo-integration.js";
@@ -17,13 +17,13 @@ import {
   withTempCwd,
 } from "../helpers/workflow-monitor-test-helpers.js";
 
-function makeCtx(compactImpl: () => void): ExtensionContext {
+function makeCtx(compactImpl: () => void): ExtensionToolContext {
   return {
     hasUI: false,
     ui: { setWidget: vi.fn() },
     sessionManager: { getBranch: () => [] },
     compact: compactImpl,
-  } as unknown as ExtensionContext;
+  } as unknown as ExtensionToolContext;
 }
 
 const NOOP = () => {};
@@ -346,7 +346,7 @@ describe("task_ready_advance edge cases + last→verify coverage", () => {
     setGuardrailsRef(mockGuardrails().ref);
     const compactSpy = vi.fn(() => {}); // compact "succeeds" (does nothing) → triggerContextCompact returns fired=true
     const { getTool, sent } = captureTaskReadyAdvanceTool();
-    const ctx = { ...makeCtx(compactSpy), getContextUsage: undefined } as unknown as ExtensionContext;
+    const ctx = { ...makeCtx(compactSpy), getContextUsage: undefined } as unknown as ExtensionToolContext;
     await getTool()?.execute("id", {}, undefined, undefined, ctx);
     expect(compactSpy).toHaveBeenCalled(); // compact was initiated
     expect(completed).toHaveLength(1); // phase advanced

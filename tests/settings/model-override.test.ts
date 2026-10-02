@@ -2,7 +2,12 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 import type { Api, Model } from "@earendil-works/pi-ai/compat";
-import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionEvent,
+  ExtensionToolContext,
+  ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
 import type { FeatyardConfig } from "../../src/settings/model-overrides.js";
@@ -51,7 +56,7 @@ function createCtx(branch: unknown[] | null) {
       setEditorText: () => {},
       notify: () => {},
     },
-  } as unknown as ExtensionContext;
+  } as unknown as ExtensionToolContext;
 }
 
 /**
@@ -59,7 +64,7 @@ function createCtx(branch: unknown[] | null) {
  */
 async function readSkill(
   fake: ReturnType<typeof createFakePi>,
-  ctx: ExtensionContext,
+  ctx: ExtensionToolContext,
   skillPath: string,
   content: string | null,
 ) {
@@ -491,7 +496,7 @@ describe("parseModelRef with multi-slash strings", () => {
         },
       },
       ui: { setWidget: () => {}, select: async () => "next", setEditorText: () => {}, notify: () => {} },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     // Load the feature state written above into the handler so currentPhase="verify"
     // (verify/review/finish skills do not activate a fresh workflow on their own).
@@ -806,7 +811,7 @@ describe("session start model override", () => {
         setEditorText: () => {},
         notify: () => {},
       },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     try {
       await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "new" }, ctx);
@@ -956,7 +961,7 @@ describe("session start model override", () => {
         setEditorText: () => {},
         notify: () => {},
       },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     try {
       await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "new" }, ctx);
@@ -1034,7 +1039,7 @@ describe("session start model override", () => {
         setEditorText: () => {},
         notify: () => {},
       },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     try {
       await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "new" }, ctx);
@@ -1182,7 +1187,7 @@ describe("session start model override", () => {
         setEditorText: () => {},
         notify: () => {},
       },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     try {
       await fireAllHandlers(fake.handlers, "session_start", { source: "user", reason: "new" }, ctx);

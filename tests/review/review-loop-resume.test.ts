@@ -9,7 +9,12 @@
 // held the correct count. These tests pin the contract that a review-loop increment is
 // reflected in the latest featyard_state session entry AND survives a session resume.
 
-import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionEvent,
+  ExtensionToolContext,
+  ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
 import { loadFeatureState, saveFeatureState } from "../../src/state/feature-state.js";
@@ -50,12 +55,12 @@ function branchFromEntries(entries: Array<{ customType: string; data: unknown }>
     .map((e, i) => ({ id: `entry-${i}`, type: "custom", customType: e.customType, data: e.data }));
 }
 
-function makeResumeCtx(branch: ReturnType<typeof branchFromEntries>): ExtensionContext {
+function makeResumeCtx(branch: ReturnType<typeof branchFromEntries>): ExtensionToolContext {
   return {
     hasUI: true,
     sessionManager: { getBranch: () => branch },
     ui: { setWidget: () => {}, select: async () => "x", info: () => {}, setEditorText: () => {} },
-  } as unknown as ExtensionContext;
+  } as unknown as ExtensionToolContext;
 }
 
 describe("review-loop increment survives session resume (session log)", () => {
@@ -232,7 +237,7 @@ describe("feature completion (completedAt) survives session resume", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [] },
       ui: { setWidget: () => {}, select: async () => "next", setEditorText: () => {}, notify: () => {} },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     await phaseReady.execute("tc-finish-resume", {}, undefined, undefined, finishCtx);
 
     expect(loadFeatureState(slug, null)?.completedAt).not.toBeNull();

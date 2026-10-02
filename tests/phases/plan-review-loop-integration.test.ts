@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 avtc <tarasenkov@gmail.com>
 
 import * as fs from "node:fs";
-import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionToolContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
 import { isPhaseDone, type Phase } from "../../src/phases/phase-progression.js";
@@ -85,11 +85,11 @@ describe("design review loop — full lifecycle integration", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn1 },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(uiCtx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
-    await phaseReady.execute("tc-phase-intercept", {} as unknown as ExtensionContext, undefined, undefined, uiCtx);
+    await phaseReady.execute("tc-phase-intercept", {} as unknown as ExtensionToolContext, undefined, undefined, uiCtx);
 
     // Verify interceptor set designReviewLoopCount=1
     const state0 = loadFeatureState("integration-test-feature", null);
@@ -138,7 +138,7 @@ describe("design review loop — full lifecycle integration", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn2 },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(uiCtx2.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -303,7 +303,7 @@ describe("design review loop — full lifecycle integration", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(uiCtx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
@@ -374,7 +374,7 @@ describe("design review loop — full lifecycle integration", () => {
       hasUI: true,
       sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
       ui: { setWidget: () => {}, select: selectFn },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
     setupPiCtx(uiCtx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();

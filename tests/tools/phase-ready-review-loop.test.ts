@@ -3,7 +3,12 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionEvent,
+  ExtensionToolContext,
+  ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
 import { setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
@@ -191,7 +196,7 @@ describe("phase_ready review loop — design phase", () => {
       { issuesFound: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Should have fallen through to existing design completion logic
@@ -268,7 +273,7 @@ describe("phase_ready review loop — design phase", () => {
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     // Call WITHOUT issuesFound — should default to 0 and fall through
-    await phaseReady.execute("tc-undef-1", {}, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-undef-1", {}, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // Should have fallen through to existing design completion logic
     expect(selectFn).toHaveBeenCalled();
@@ -330,7 +335,13 @@ describe("phase_ready review loop — design phase", () => {
     disableSubagentMode();
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
-    await phaseReady.execute("tc-off-1", { issuesFound: 5 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute(
+      "tc-off-1",
+      { issuesFound: 5 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionToolContext,
+    );
 
     // Should fall through to existing design completion (not loop)
     expect(selectFn).toHaveBeenCalled();
@@ -414,7 +425,7 @@ describe("phase_ready review loop — design phase", () => {
       { issuesFound: 2 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // No active feature → defensive error (slug missing in the SOTS model)
@@ -663,7 +674,7 @@ describe("phase_ready review loop — plan phase", () => {
       { issuesFound: 5 },
       undefined,
       undefined,
-      uiCtx as unknown as ExtensionContext,
+      uiCtx as unknown as ExtensionToolContext,
     );
 
     // Should NOT loop — limit reached, falls through to design completion
@@ -1067,7 +1078,7 @@ describe("phase_ready interceptors — design phase", () => {
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
-    await phaseReady.execute("tc-intercept", {}, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-intercept", {}, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // Should send design-review skill as followUp
     await fireAllHandlers(fake.handlers, "agent_end", {}, NO_UI_CTX);
@@ -1117,7 +1128,7 @@ describe("phase_ready interceptors — design phase", () => {
     setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
 
     disableSubagentMode();
-    await phaseReady.execute("tc-reentry", {}, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-reentry", {}, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // Should NOT send design-review — interceptor must be skipped
     const skillMessages = fake.sentMessages.filter(
@@ -1195,7 +1206,7 @@ describe("phase_ready interceptors — design phase", () => {
       {},
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     expect((result.content[0] as { text: string }).text).toContain("no active feature slug");
@@ -1772,7 +1783,7 @@ describe("phase_ready — code review loop deduplication within same turn", () =
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -1782,13 +1793,13 @@ describe("phase_ready — code review loop deduplication within same turn", () =
       { issuesFound: 5 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     expect(loadFeatureState(slug, null)?.review.reviewLoopCount).toBe(2);
 
     // Compaction completes → deliverStoredFollowUp resets the guard (the fix).
     const onCompact = getSingleHandler(fake.handlers, "session_compact");
-    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionToolContext);
     delete globalThis.__piCompactFollowUp;
 
     // Second call (post-compact) — without the fix this would be deduped (counter stays at 2).
@@ -1798,7 +1809,7 @@ describe("phase_ready — code review loop deduplication within same turn", () =
       { issuesFound: 3 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     expect(loadFeatureState(slug, null)?.review.reviewLoopCount).toBe(3); // incremented, not deduped
   });

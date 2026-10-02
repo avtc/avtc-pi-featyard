@@ -3,8 +3,8 @@
 
 import type {
   ExtensionAPI,
-  ExtensionContext,
   ExtensionEvent,
+  ExtensionToolContext,
   SessionEntry,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
@@ -105,13 +105,13 @@ describe("auto phase transition execute → verify → review", () => {
           params: object,
           signal: AbortSignal | undefined,
           onUpdate: unknown,
-          ctx: ExtensionContext,
+          ctx: ExtensionToolContext,
         ) => Promise<{ content: Array<{ text: string }> }>;
       }
     ).execute("tc-tra1", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {}, select: vi.fn(), confirm: vi.fn(), input: vi.fn(), notify: vi.fn() },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
 
     expect((result.content[0] as { text: string }).text).toMatch(/advancing to the next phase/i);
     // fy-verify is staged for agent_settled delivery — settle + drain before asserting.
@@ -161,13 +161,13 @@ describe("auto phase transition execute → verify → review", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Simulate running tests that pass
     await onToolCall(
       { type: "tool_call", toolCallId: "tc-test1", toolName: "bash", input: { command: "npx vitest run" } },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     await onToolResult(
@@ -178,7 +178,7 @@ describe("auto phase transition execute → verify → review", () => {
         content: [{ type: "text", text: "\n ✓ test 1\n ✓ test 2\n Tests: 2 passed\n" }],
         details: { exitCode: 0 },
       } as unknown as ExtensionEvent,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Passing tests alone should NOT trigger transition
@@ -186,7 +186,7 @@ describe("auto phase transition execute → verify → review", () => {
 
     // Trigger agent_end — should NOT transition either (auto-transition removed)
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
-    await onAgentEnd({} as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    await onAgentEnd({} as unknown as ExtensionEvent, ctx as unknown as ExtensionToolContext);
 
     // Still no transition from agent_end
     expect(fake.sentMessages.length).toBe(0);
@@ -196,14 +196,14 @@ describe("auto phase transition execute → verify → review", () => {
     const result = await phaseReady.execute("tc-pr1", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {}, select: vi.fn(), confirm: vi.fn(), input: vi.fn(), notify: vi.fn() },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
 
     // phase_ready triggers the transition — stages the review skill (drained at agent_end)
     expect((result.content[0] as { text: string }).text).toBe("");
     await fireAllHandlers(fake.handlers, "agent_end", {}, {
       hasUI: false,
       ui: { setWidget: () => {}, select: vi.fn(), confirm: vi.fn(), input: vi.fn(), notify: vi.fn() },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
     expect(fake.sentMessages[0].message).toMatch(/^<skill name="fy-review"/);
@@ -262,13 +262,13 @@ describe("auto phase transition execute → verify → review", () => {
         setEditorText: () => {},
         notify: vi.fn(),
       },
-    } as unknown as ExtensionContext;
+    } as unknown as ExtensionToolContext;
 
     await fireAllHandlers(
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Simulate task_tracker update: mark last task complete (triggers auto-transition to verify)
@@ -279,7 +279,7 @@ describe("auto phase transition execute → verify → review", () => {
         toolName: "task_tracker",
         input: { action: "update", index: 1, status: "complete" },
       } as unknown as ExtensionEvent,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     await onToolResult(
       {
@@ -295,11 +295,11 @@ describe("auto phase transition execute → verify → review", () => {
           ],
         },
       } as unknown as ExtensionEvent,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Now agent_end fires — should NOT show any dialog (boundary dialogs removed)
-    await onAgentEnd({} as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    await onAgentEnd({} as unknown as ExtensionEvent, ctx as unknown as ExtensionToolContext);
 
     expect(selectCalled).toBe(false);
   });
@@ -338,7 +338,7 @@ describe("auto phase transition execute → verify → review", () => {
       fake.handlers,
       "session_start",
       { source: "user", reason: "reload" },
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Fire a passing test to set verifyTestsPassed flag
@@ -349,7 +349,7 @@ describe("auto phase transition execute → verify → review", () => {
         toolName: "bash",
         input: { command: "npx vitest run" },
       } as unknown as ExtensionEvent,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     await onToolResult(
       {
@@ -359,7 +359,7 @@ describe("auto phase transition execute → verify → review", () => {
         content: [{ type: "text", text: "\n ✓ test 1\n Tests: 1 passed\n" }],
         details: { exitCode: 0 },
       } as unknown as ExtensionEvent,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Call phase_ready to trigger the transition
@@ -367,14 +367,14 @@ describe("auto phase transition execute → verify → review", () => {
     const result = await phaseReady.execute("tc-verify-loops", {}, undefined, undefined, {
       hasUI: false,
       ui: { setWidget: () => {}, select: vi.fn(), confirm: vi.fn(), input: vi.fn(), notify: vi.fn() },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
 
     // maxFeatureReviewRounds='3' → should dispatch fy-review (staged, drained at agent_end)
     expect((result.content[0] as { text: string }).text).toBe("");
     await fireAllHandlers(fake.handlers, "agent_end", {}, {
       hasUI: false,
       ui: { setWidget: () => {}, select: vi.fn(), confirm: vi.fn(), input: vi.fn(), notify: vi.fn() },
-    } as unknown as ExtensionContext);
+    } as unknown as ExtensionToolContext);
     await settleAndDrainPostTurnFollowUp(fake.handlers);
     expect(fake.sentMessages.length).toBe(1);
     expect(fake.sentMessages[0].message).toContain('<skill name="fy-review"');

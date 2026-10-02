@@ -18,7 +18,12 @@
  * 5. Plan shouldLoop=false — compact before execution handoff message
  */
 import * as fs from "node:fs";
-import type { ExtensionAPI, ExtensionContext, ExtensionEvent, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionEvent,
+  ExtensionToolContext,
+  ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFERRED_COMPACT_FOLLOWUP_MS } from "../../src/compaction/compact-handler.js";
 import { _resetCompactGuard } from "../../src/compaction/compact-trigger.js";
@@ -84,10 +89,10 @@ describe("review iteration compact — design shouldLoop=true", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-1", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-1", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // No compact should have been called
     expect(compactCalls.length).toBe(0);
@@ -121,7 +126,7 @@ describe("review iteration compact — design shouldLoop=true", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(
@@ -129,7 +134,7 @@ describe("review iteration compact — design shouldLoop=true", () => {
       { issuesFound: 3 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Compact should have been called (bare, no args)
@@ -202,7 +207,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
     disableSubagentMode();
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(
@@ -210,7 +215,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
       { issuesFound: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Select dialog should have been shown
@@ -276,7 +281,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
     // Must be called AFTER workflowMonitorExtension + session_start so __piKanban bridge exists
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     setAutoAgentCallback({
       isActive: () => true,
@@ -291,7 +296,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
       { issuesFound: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Compact should have been called (auto mode)
@@ -334,10 +339,10 @@ describe("review iteration compact — design shouldLoop=false", () => {
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
     disableSubagentMode();
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-5", { issuesFound: 0 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-5", { issuesFound: 0 }, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // Select dialog should have been shown
     expect(selectFn).toHaveBeenCalled();
@@ -382,7 +387,7 @@ describe("review iteration compact — plan shouldLoop=true", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(
@@ -390,7 +395,7 @@ describe("review iteration compact — plan shouldLoop=true", () => {
       { issuesFound: 2 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Compact should have been called
@@ -446,7 +451,7 @@ describe("review iteration compact — plan shouldLoop=false", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(
@@ -454,7 +459,7 @@ describe("review iteration compact — plan shouldLoop=false", () => {
       { issuesFound: 0 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Compact should have been called
@@ -512,10 +517,10 @@ describe("review iteration compact — threshold behavior", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-8", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-8", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // No compact — below threshold
     expect(compactCalls.length).toBe(0);
@@ -549,10 +554,10 @@ describe("review iteration compact — threshold behavior", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-9", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-9", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // Compact should have been called — above threshold
     expect(compactCalls.length).toBe(1);
@@ -605,7 +610,7 @@ describe("review iteration compact — error handling", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -615,7 +620,7 @@ describe("review iteration compact — error handling", () => {
       { issuesFound: 3 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
 
     // Compact was attempted (bare call, no args)
@@ -654,7 +659,7 @@ describe("review iteration compact — error handling", () => {
       };
 
       await workflowMonitorExtension(api as unknown as ExtensionAPI);
-      await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+      await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
       const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
       const result = await phaseReady.execute(
@@ -662,7 +667,7 @@ describe("review iteration compact — error handling", () => {
         { issuesFound: 3 },
         undefined,
         undefined,
-        ctx as unknown as ExtensionContext,
+        ctx as unknown as ExtensionToolContext,
       );
 
       // Result is empty (phase_ready always returns an empty tool result).
@@ -702,10 +707,16 @@ describe("review iteration compact — error handling", () => {
       };
 
       await workflowMonitorExtension(api as unknown as ExtensionAPI);
-      await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+      await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
       const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-      await phaseReady.execute("tc-10c", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionContext);
+      await phaseReady.execute(
+        "tc-10c",
+        { issuesFound: 3 },
+        undefined,
+        undefined,
+        ctx as unknown as ExtensionToolContext,
+      );
 
       await vi.advanceTimersByTimeAsync(DEFERRED_COMPACT_FOLLOWUP_MS);
       // Subagent recovery path: handleSubagentCompact() injects the subagent role reminder,
@@ -776,10 +787,10 @@ describe("review iteration compact — edge cases", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-11", { issuesFound: 0 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-11", { issuesFound: 0 }, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // No compact — maxPlanReviewRounds is off
     expect(compactCalls.length).toBe(0);
@@ -820,10 +831,16 @@ describe("review iteration compact — edge cases", () => {
     process.env.PI_FY_AUTO_AGENT = "1";
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-11b", { issuesFound: 0 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute(
+      "tc-11b",
+      { issuesFound: 0 },
+      undefined,
+      undefined,
+      ctx as unknown as ExtensionToolContext,
+    );
 
     // No compact — maxPlanReviewRounds is off, even in auto mode
     expect(compactCalls.length).toBe(0);
@@ -850,10 +867,10 @@ describe("review iteration compact — edge cases", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-12", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-12", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // No compact — getContextUsage unavailable with threshold
     expect(compactCalls.length).toBe(0);
@@ -887,10 +904,10 @@ describe("review iteration compact — edge cases", () => {
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
-    await phaseReady.execute("tc-13", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionContext);
+    await phaseReady.execute("tc-13", { issuesFound: 3 }, undefined, undefined, ctx as unknown as ExtensionToolContext);
 
     // At exact threshold (75000 <= 75000) → skip compact, send directly
     expect(compactCalls.length).toBe(0);
@@ -947,7 +964,7 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -957,7 +974,7 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
       { issuesFound: 3 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     expect((result1.content[0] as { text: string }).text).toBe("");
     // Counter incremented to 2 by this call.
@@ -966,7 +983,7 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
     // Simulate the compaction completing: the session_compact handler runs deliverStoredFollowUp,
     // which resets the guard (the fix).
     const onCompact = getSingleHandler(fake.handlers, "session_compact");
-    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionToolContext);
     delete globalThis.__piCompactFollowUp;
 
     // Second call (post-compact) — WITHOUT the fix this would be a deduped no-op (counter
@@ -977,7 +994,7 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
       { issuesFound: 2 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     expect((result2.content[0] as { text: string }).text).toBe("");
     expect(loadFeatureState(slug, null)?.design.reviewLoopCount).toBe(3); // incremented, not deduped
@@ -1006,7 +1023,7 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
     };
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
-    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionContext);
+    await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -1016,14 +1033,14 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
       { issuesFound: 3 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     expect((result1.content[0] as { text: string }).text).toBe("");
     expect(loadFeatureState(slug, null)?.plan.reviewLoopCount).toBe(2);
 
     // Compaction completes → deliverStoredFollowUp resets the guard (the fix).
     const onCompact = getSingleHandler(fake.handlers, "session_compact");
-    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionContext);
+    await onCompact({ reason: "manual" } as unknown as ExtensionEvent, ctx as unknown as ExtensionToolContext);
     delete globalThis.__piCompactFollowUp;
 
     // Second call (post-compact) — would be deduped without the fix; with it, increments.
@@ -1032,7 +1049,7 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
       { issuesFound: 2 },
       undefined,
       undefined,
-      ctx as unknown as ExtensionContext,
+      ctx as unknown as ExtensionToolContext,
     );
     expect((result2.content[0] as { text: string }).text).toBe("");
     expect(loadFeatureState(slug, null)?.plan.reviewLoopCount).toBe(3); // incremented, not deduped
