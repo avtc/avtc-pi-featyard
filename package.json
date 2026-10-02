@@ -1,6 +1,6 @@
 {
   "name": "avtc-pi-featyard",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Predictable, deterministic feature development for pi — deep upfront design, configurable comprehensive review and verification rigor, and auto-agents draining a backlog",
   "type": "module",
   "keywords": [
@@ -75,7 +75,7 @@
     "avtc-pi-ui-components": "^1.0.7",
     "avtc-pi-subagent": "^1.0.9",
     "avtc-pi-todo": "^1.0.10",
-    "avtc-pi-parallel-work-guardrail": "^1.0.10",
+    "avtc-pi-parallel-work-guardrail": "^1.1.0",
     "avtc-pi-subagent-ui-bridge": "^1.0.8",
     "avtc-pi-unstuck": "^1.0.6"
   },
