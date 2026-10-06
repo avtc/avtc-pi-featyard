@@ -20,8 +20,8 @@ import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js
 import { loadFeatureState, saveFeatureState } from "../../src/state/feature-state.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
@@ -83,7 +83,7 @@ describe("review-loop increment survives session resume (session log)", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const slug = "2026-07-30-design-resume";
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 

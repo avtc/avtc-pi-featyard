@@ -19,8 +19,8 @@ import { loadFeatureState } from "../../src/state/feature-state.js";
 import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
@@ -55,7 +55,7 @@ describe("phase_ready review loop — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-loop", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -98,7 +98,7 @@ describe("phase_ready review loop — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-cf-fp", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -133,7 +133,7 @@ describe("phase_ready review loop — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-numbering", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -167,7 +167,7 @@ describe("phase_ready review loop — design phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-noloop-design.md";
     writeFeatureStateFile("2026-05-20-design-noloop", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 1 },
     });
@@ -210,7 +210,7 @@ describe("phase_ready review loop — design phase", () => {
     expect(state?.review.reviewHistory).toHaveLength(1);
     expect(state?.review.reviewHistory?.[0]).toMatchObject({ phase: "design", loopNumber: 0, issuesFound: 0 });
 
-    // Brainstorm completed, plan active
+    // Design completed, plan active
     const lastEntry = fake.appendedEntries[fake.appendedEntries.length - 1] as {
       data: { featureState: { workflow: { currentPhase: string } } };
       phase: string;
@@ -248,7 +248,7 @@ describe("phase_ready review loop — design phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-undef-design.md";
     writeFeatureStateFile("2026-05-20-design-undef", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 1 },
     });
@@ -279,7 +279,7 @@ describe("phase_ready review loop — design phase", () => {
     // Should have fallen through to existing design completion logic
     expect(selectFn).toHaveBeenCalled();
 
-    // Brainstorm completed, plan active
+    // Design completed, plan active
     const lastEntry = fake.appendedEntries[fake.appendedEntries.length - 1] as {
       data: { featureState: { workflow: { currentPhase: string } } };
       phase: string;
@@ -311,7 +311,7 @@ describe("phase_ready review loop — design phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-off-design.md";
     writeFeatureStateFile("2026-05-20-design-off", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 0 },
     });
@@ -359,7 +359,7 @@ describe("phase_ready review loop — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-min", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -390,7 +390,7 @@ describe("phase_ready review loop — design phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-nullstate-design.md";
     writeFeatureStateFile("2026-05-20-design-nullstate", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 0 },
     });
@@ -645,7 +645,7 @@ describe("phase_ready review loop — plan phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-limit-design.md";
     writeFeatureStateFile("2026-05-20-design-limit", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 3 },
     });
@@ -886,7 +886,7 @@ describe("phase_ready — design/plan loop count independence", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     // Start with both counters at 1 to verify independence (maxPlanReviewRounds=3 allows up to 3)
     writeFeatureStateFile("independence-test", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
       plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 2 },
     });
@@ -956,7 +956,7 @@ describe("phase_ready — loop count is durable in feature state after increment
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("env-sync-design", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 0 },
     });
 
@@ -1054,7 +1054,7 @@ describe("phase_ready interceptors — design phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-intercept-design.md";
     writeFeatureStateFile("2026-05-20-design-intercept", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 0 },
     });
@@ -1104,7 +1104,7 @@ describe("phase_ready interceptors — design phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-reentry-design.md";
     writeFeatureStateFile("2026-05-20-design-reentry", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 2 },
     });
@@ -1142,7 +1142,7 @@ describe("phase_ready interceptors — design phase", () => {
     // Should have fallen through to design completion (select was called)
     expect(selectFn).toHaveBeenCalled();
 
-    // Brainstorm should be completed
+    // Design should be completed
     const lastEntry = fake.appendedEntries[fake.appendedEntries.length - 1] as {
       data: { featureState: { workflow: { currentPhase: string } } };
       phase: string;
@@ -1172,7 +1172,7 @@ describe("phase_ready interceptors — design phase", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const docPath = "docs/featyard/designs/2026-05-20-design-null-state-design.md";
     writeFeatureStateFile("2026-05-20-design-null-state", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: docPath, planDoc: null },
       design: { doc: docPath, reviewActive: false, reviewLoopCount: 0 },
     });
@@ -1218,7 +1218,7 @@ describe("phase_ready interceptors — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-loopgate", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -1245,7 +1245,7 @@ describe("phase_ready interceptors — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-negative", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -1273,7 +1273,7 @@ describe("phase_ready interceptors — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-subagent", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -1302,7 +1302,7 @@ describe("phase_ready interceptors — design phase", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-design-insession", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -1837,7 +1837,7 @@ describe("phase_ready — design/plan review loop deduplication within same turn
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const slug = "2026-07-04-design-dedup";
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -1939,7 +1939,7 @@ describe("phase_ready — design/plan review loop deduplication within same turn
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const slug = "2026-07-04-design-turn-reset";
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 

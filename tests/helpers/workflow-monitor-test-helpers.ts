@@ -438,7 +438,7 @@ export const TDD_TESTS_PASSED = true;
 /** TDD state: verification flag is off */
 export const TDD_VERIFICATION_OFF = false;
 
-export const BRAINSTORM_ACTIVE_STATE = {
+export const DESIGN_ACTIVE_STATE = {
   workflow: { currentPhase: "design", designDoc: null, planDoc: null },
   completedAt: null,
 };

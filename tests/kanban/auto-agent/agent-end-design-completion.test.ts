@@ -8,8 +8,8 @@ import workflowMonitorExtension, { _resetFeatureState } from "../../../src/index
 import { setAutoAgentCallback } from "../../../src/kanban/auto-agent/auto-agent-state-machine.js";
 import { createTestAutoAgentCallback } from "../../helpers/auto-agent-callback-test-helpers.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   fireAllHandlers,
   getSingleHandler,
   NO_AUTO_AGENT_CALLBACK,
@@ -49,7 +49,7 @@ describe("agent_end design-completion detection (removed)", () => {
 
     const { fake, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-30-no-agent-end-detect", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       designReviewLoopCount: 0,
     });
 
@@ -82,7 +82,7 @@ describe("agent_end design-completion detection (removed)", () => {
 
     const { fake, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-30-review-in-progress", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       designReviewLoopCount: 1,
     });
 

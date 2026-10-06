@@ -11,9 +11,9 @@
  * - "compact>NK": compact only if context exceeds threshold
  *
  * Compact fires in these phase_ready paths:
- * 1. Brainstorm shouldLoop=true — compact between review iterations
- * 2. Brainstorm shouldLoop=false non-auto — compact before fy-plan skill
- * 3. Brainstorm shouldLoop=false auto — compact before onFeatureComplete callback
+ * 1. Design shouldLoop=true — compact between review iterations
+ * 2. Design shouldLoop=false non-auto — compact before fy-plan skill
+ * 3. Design shouldLoop=false auto — compact before onFeatureComplete callback
  * 4. Plan shouldLoop=true — compact between review iterations
  * 5. Plan shouldLoop=false — compact before execution handoff message
  */
@@ -33,8 +33,8 @@ import { loadFeatureState } from "../../src/state/feature-state.js";
 import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
@@ -77,7 +77,7 @@ describe("review iteration compact — design shouldLoop=true", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-loop-none", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -114,7 +114,7 @@ describe("review iteration compact — design shouldLoop=true", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-loop-compact", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -182,7 +182,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-false-nonauto", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/rir-bs-false-nonauto-design.md",
@@ -247,7 +247,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-false-auto", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/rir-bs-false-auto-design.md",
@@ -320,7 +320,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-bs-discuss", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: "docs/featyard/designs/rir-bs-discuss-design.md", planDoc: null },
       design: { doc: "docs/featyard/designs/rir-bs-discuss-design.md", reviewActive: false, reviewLoopCount: 1 },
     });
@@ -506,7 +506,7 @@ describe("review iteration compact — threshold behavior", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-threshold-low", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -543,7 +543,7 @@ describe("review iteration compact — threshold behavior", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-threshold-high", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -599,7 +599,7 @@ describe("review iteration compact — error handling", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-error", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -647,7 +647,7 @@ describe("review iteration compact — error handling", () => {
 
       const { fake, registeredTools, api } = createPiWithToolCapture();
       writeFeatureStateFile("rir-sync-error", {
-        ...BRAINSTORM_ACTIVE_STATE,
+        ...DESIGN_ACTIVE_STATE,
         design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
       });
 
@@ -698,7 +698,7 @@ describe("review iteration compact — error handling", () => {
 
       const { fake, registeredTools, api } = createPiWithToolCapture();
       writeFeatureStateFile("rir-subagent-error", {
-        ...BRAINSTORM_ACTIVE_STATE,
+        ...DESIGN_ACTIVE_STATE,
         design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
       });
 
@@ -765,7 +765,7 @@ describe("review iteration compact — edge cases", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-off-nocompact", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/rir-off-nocompact-design.md",
@@ -815,7 +815,7 @@ describe("review iteration compact — edge cases", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-off-auto", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       executionMode: "checkpoint",
     });
 
@@ -856,7 +856,7 @@ describe("review iteration compact — edge cases", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-no-usage", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -893,7 +893,7 @@ describe("review iteration compact — edge cases", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("rir-boundary-exact", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 
@@ -954,7 +954,7 @@ describe("review iteration compact — phase_ready dedup guard survives compact 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const slug = "rir-compact-dedup-reset";
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 

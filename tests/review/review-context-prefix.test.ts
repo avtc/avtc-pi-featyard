@@ -8,7 +8,7 @@ import { describe, expect, test } from "vitest";
 // main substitution pipeline (template-substitution.ts PLACEHOLDER_HANDLERS) which
 // resolves {{PI_FY_REVIEW_LOOP_CONTEXT}}, {{PI_FY_REVIEW_METHOD}}, and
 // {{PI_FY_DESIGN_DOC_PATH}}/{{PI_FY_PLAN_DOC_PATH}}. They are exercised via integration in
-// phase-ready-review-loop.test.ts / brainstorm-plan-context-injection.test.ts which
+// phase-ready-review-loop.test.ts / design-plan-context-injection.test.ts which
 // verify the followUp message content produced by the phase_ready handler.
 //
 // The skill files contain the three REVIEW_* placeholders that are resolved by the

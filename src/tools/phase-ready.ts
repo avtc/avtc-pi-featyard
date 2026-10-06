@@ -577,7 +577,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
         return textResult("");
       }
 
-      // --- Brainstorm phase ---
+      // --- Design phase ---
       const autoAgentCb = deps.getAutoAgentCallback();
       const isAutoMode = autoAgentCb?.isActive() === true;
 

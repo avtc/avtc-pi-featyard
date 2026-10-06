@@ -11,7 +11,7 @@ import {
   writeFeatureStateFile,
 } from "../helpers/workflow-monitor-test-helpers.js";
 
-const _BRAINSTORM_ACTIVE = {
+const _DESIGN_ACTIVE = {
   phases: {
     design: "in-progress",
     plan: "pending",

@@ -10,8 +10,8 @@ import { getPhaseReadyRef } from "../../src/shared/workflow-refs.js";
 import { loadFeatureState } from "../../src/state/feature-state.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
@@ -56,7 +56,7 @@ describe("design review loop — full lifecycle integration", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("integration-test-feature", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/integration-test-feature-design.md",
@@ -147,7 +147,7 @@ describe("design review loop — full lifecycle integration", () => {
     // Should have fallen through to design completion
     expect(selectFn2).toHaveBeenCalled();
 
-    // Brainstorm completed, plan active
+    // Design completed, plan active
     const lastEntry = fake.appendedEntries[fake.appendedEntries.length - 1];
     expect(
       isPhaseDone(
@@ -268,7 +268,7 @@ describe("design review loop — full lifecycle integration", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("min-loop-feature", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/min-loop-feature-design.md",
@@ -354,7 +354,7 @@ describe("design review loop — full lifecycle integration", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("off-feature", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: { currentPhase: "design", designDoc: "docs/featyard/designs/off-feature-design.md", planDoc: null },
       design: { doc: "docs/featyard/designs/off-feature-design.md", reviewActive: false, reviewLoopCount: 0 },
     });

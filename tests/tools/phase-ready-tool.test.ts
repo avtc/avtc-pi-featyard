@@ -19,8 +19,8 @@ import { isPhaseDone } from "../../src/phases/phase-progression.js";
 import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
@@ -168,7 +168,7 @@ describe("phase_ready tool — design non-auto mode", () => {
     // Explicitly set maxPlanReviewRounds=off to test the direct-fy-plan path
     setSetting("maxPlanReviewRounds", 0);
     const _slug = writeFeatureStateFile("2026-05-20-proceed-test", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-proceed-test-design.md",
@@ -236,7 +236,7 @@ describe("phase_ready tool — design non-auto mode", () => {
 
   test("non-auto mode: Discuss returns empty result", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    writeFeatureStateFile("2026-05-20-discuss-test", BRAINSTORM_ACTIVE_STATE);
+    writeFeatureStateFile("2026-05-20-discuss-test", DESIGN_ACTIVE_STATE);
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -270,7 +270,7 @@ describe("phase_ready tool — design non-auto mode", () => {
   test("non-auto mode: phase_ready completes design and sends fy-plan skill", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-stage-test", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-stage-test-design.md",
@@ -305,7 +305,7 @@ describe("phase_ready tool — design non-auto mode", () => {
     disableSubagentMode();
     const _result = await phaseReady.execute("tc-stage", {}, undefined, undefined, ctx);
 
-    // Brainstorm completed, plan active
+    // Design completed, plan active
     const lastEntry = fake.appendedEntries[fake.appendedEntries.length - 1] as {
       data: {
         featureState: {
@@ -328,7 +328,7 @@ describe("phase_ready tool — design non-auto mode", () => {
 
   test("non-auto mode: no UI available is a no-op", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    writeFeatureStateFile("2026-05-20-no-ui-test", BRAINSTORM_ACTIVE_STATE);
+    writeFeatureStateFile("2026-05-20-no-ui-test", DESIGN_ACTIVE_STATE);
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -355,7 +355,7 @@ describe("phase_ready tool — design non-auto mode", () => {
   test("non-auto mode: issuesFound parameter is accepted without changing behavior", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-20-real-issues-test", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-real-issues-test-design.md",
@@ -434,7 +434,7 @@ describe("phase_ready tool — design auto mode", () => {
   test("auto-mode: completes design, calls onDesignComplete, does not send skill", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-05-20-auto-test", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-auto-test-design.md",
@@ -469,7 +469,7 @@ describe("phase_ready tool — design auto mode", () => {
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
     // Track call ordering: completeCurrent → persistState → updateWidget → onDesignComplete
-    // Note: completeCurrent is internal to completeBrainstormPhase and not directly tracked here.
+    // Note: completeCurrent is internal to completeDesignPhase and not directly tracked here.
     const callOrder: string[] = [];
     // Wrap appendEntry to track persistState calls
     const origAppendEntry = api.appendEntry.bind(api);
@@ -532,7 +532,7 @@ describe("phase_ready tool — design auto mode", () => {
   test("auto-mode: onDesignComplete throwing returns error message", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const _slug = writeFeatureStateFile("2026-05-20-auto-throw", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-auto-throw-design.md",
@@ -625,7 +625,7 @@ describe("phase_ready tool — design completion kanban handoff", () => {
     const historyBefore = db.getFeatureHistory(featureId).length;
 
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-preapproved-auto-design.md",
@@ -688,7 +688,7 @@ describe("phase_ready tool — design completion kanban handoff", () => {
     const { db, featureId } = await setupKanbanFeature(slug);
 
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-design-auto-design.md",
@@ -752,7 +752,7 @@ describe("phase_ready tool — design completion kanban handoff", () => {
     const historyBefore = db.getFeatureHistory(featureId).length;
 
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-preapproved-manual-design.md",
@@ -801,7 +801,7 @@ describe("phase_ready tool — design completion kanban handoff", () => {
     const { db, featureId } = await setupKanbanFeature(slug);
 
     writeFeatureStateFile(slug, {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/2026-05-20-gate-manual-design.md",
@@ -858,7 +858,7 @@ describe("phase_ready tool — edge cases", () => {
 
   test("non-auto: ui.select returning undefined acts like Discuss", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    writeFeatureStateFile("2026-05-20-cancel-test", BRAINSTORM_ACTIVE_STATE);
+    writeFeatureStateFile("2026-05-20-cancel-test", DESIGN_ACTIVE_STATE);
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -908,7 +908,7 @@ describe("phase_ready tool — edge cases", () => {
 
   test("non-auto: no design doc on disk still proceeds (best-effort)", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    writeFeatureStateFile("2026-05-20-no-artifact", BRAINSTORM_ACTIVE_STATE);
+    writeFeatureStateFile("2026-05-20-no-artifact", DESIGN_ACTIVE_STATE);
 
     // Do NOT create design doc on disk
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -958,7 +958,7 @@ describe("phase_ready tool — edge cases", () => {
 
   test("non-auto: error during execution returns error message", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    writeFeatureStateFile("2026-05-20-error-test", BRAINSTORM_ACTIVE_STATE);
+    writeFeatureStateFile("2026-05-20-error-test", DESIGN_ACTIVE_STATE);
 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
@@ -1005,7 +1005,7 @@ describe("phase_ready tool — edge cases", () => {
     );
 
     // Write state and start session so workflow state has design phase
-    writeFeatureStateFile("2026-05-20-auto-no-slug", BRAINSTORM_ACTIVE_STATE);
+    writeFeatureStateFile("2026-05-20-auto-no-slug", DESIGN_ACTIVE_STATE);
     await fireAllHandlers(
       fake.handlers,
       "session_start",

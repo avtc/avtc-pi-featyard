@@ -6,7 +6,7 @@ import { describe, expect, test } from "vitest";
 import workflowMonitorExtension from "../../src/index.js";
 import { createFakePi, fireAllHandlers, getSingleHandler } from "../helpers/workflow-monitor-test-helpers.js";
 
-const BRAINSTORM_ACTIVE = {
+const DESIGN_ACTIVE = {
   phases: {
     design: "in-progress",
     plan: "pending",
@@ -44,7 +44,7 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
     const fake = createFakePi();
     fake.api; // trigger cwd change
     const { writeFeatureStateFile } = await import("../helpers/workflow-monitor-test-helpers.js");
-    writeFeatureStateFile("test-pwr-plans", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-pwr-plans", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -72,7 +72,7 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
     const fake = createFakePi();
     fake.api;
     const { writeFeatureStateFile } = await import("../helpers/workflow-monitor-test-helpers.js");
-    writeFeatureStateFile("test-pwr-reviews", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-pwr-reviews", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -100,7 +100,7 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
     const fake = createFakePi();
     fake.api;
     const { writeFeatureStateFile } = await import("../helpers/workflow-monitor-test-helpers.js");
-    writeFeatureStateFile("test-pwr-research", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-pwr-research", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -156,7 +156,7 @@ describe("phase-write-restriction: allowed paths during design/plan", () => {
     const fake = createFakePi();
     fake.api;
     const { writeFeatureStateFile } = await import("../helpers/workflow-monitor-test-helpers.js");
-    writeFeatureStateFile("test-pwr-src-blocked", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-pwr-src-blocked", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");

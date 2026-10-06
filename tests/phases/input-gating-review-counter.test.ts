@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState, getActiveFeatureSlug } from "../../src/index.js";
 import { clearFeatureStateCache, loadFeatureState } from "../../src/state/feature-state.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   enableSubagentMode,
   fireAllHandlers,
   getSingleHandler,
@@ -40,7 +40,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
   test("skill:fy-design-review increments designReviewLoopCount", async () => {
     const { fake, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-06-23-manual-design-review", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 0 },
     });
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -83,7 +83,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
   test("manual design-review does not touch planReviewLoopCount", async () => {
     const { fake, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-06-23-manual-design-isolated", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 0 },
       plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 3 },
     });
@@ -118,7 +118,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     // input-gating must skip these so the manual + code paths never double-count.
     const { fake, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-06-23-extension-source-design-review", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 0 },
     });
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
@@ -143,7 +143,7 @@ describe("input-gating: manual review skill invocation increments counter", () =
     // incremented loop count; designReviewLoopCount is untouched.
     const { fake, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-06-23-cross-phase-plan-review", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 2 },
       plan: { doc: null, verifyLoopCount: 0, reviewActive: false, reviewLoopCount: 0 },
     });

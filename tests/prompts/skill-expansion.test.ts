@@ -70,7 +70,7 @@ describe("expandSkillCommand", () => {
     // and returns original text. All current skills are lowercase, but this guards
     // against future mixed-case skill names.
     expect(expandSkillCommand("/skill:My-Skill", null, null)).toBe("/skill:My-Skill");
-    expect(expandSkillCommand("/skill:BRAINSTORMING", null, null)).toBe("/skill:BRAINSTORMING");
+    expect(expandSkillCommand("/skill:UPPERCASE-NAME", null, null)).toBe("/skill:UPPERCASE-NAME");
   });
 
   test("returns original text for passthrough cases (non-skill, unknown skill)", () => {

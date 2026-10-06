@@ -8,8 +8,8 @@ import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js
 import { loadFeatureState } from "../../src/state/feature-state.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
-  BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
+  DESIGN_ACTIVE_STATE,
   disableSubagentMode,
   enableSubagentMode,
   fireAllHandlers,
@@ -49,7 +49,7 @@ describe("design/plan review context prefix", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("ctx-prefix-feature", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 }, // interceptor has run, 0 completed
     });
 
@@ -119,7 +119,7 @@ describe("design/plan review context prefix", () => {
     // artifact recovery does not fire a partial-workflow patch that would wipe currentPhase
     // (known production gap — see test-migration-notes.md "recovery wipes currentPhase").
     writeFeatureStateFile("intercept-ctx-feature", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       workflow: {
         currentPhase: "design",
         designDoc: "docs/featyard/designs/intercept-ctx-feature-design.md",
@@ -168,7 +168,7 @@ describe("design/plan review context prefix", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("loop-incr-feature", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 2 }, // 1 completed iteration
     });
 
@@ -196,7 +196,7 @@ describe("design/plan review context prefix", () => {
     setSetting("maxPlanReviewRounds", 0);
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
-    writeFeatureStateFile("off-ctx-feature", BRAINSTORM_ACTIVE_STATE);
+    writeFeatureStateFile("off-ctx-feature", DESIGN_ACTIVE_STATE);
 
     fs.mkdirSync("docs/featyard/designs", { recursive: true });
     fs.writeFileSync("docs/featyard/designs/off-ctx-feature-design.md", "# Design");
@@ -228,7 +228,7 @@ describe("design/plan review context prefix", () => {
 
     const { fake, registeredTools, api } = createPiWithToolCapture();
     writeFeatureStateFile("known-issues-feature", {
-      ...BRAINSTORM_ACTIVE_STATE,
+      ...DESIGN_ACTIVE_STATE,
       design: { doc: null, reviewActive: false, reviewLoopCount: 1 },
     });
 

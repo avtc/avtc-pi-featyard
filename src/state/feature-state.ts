@@ -284,7 +284,7 @@ export function createFeatureStateFromKanban(
 
 /**
  * Create a feature state for a sub-feature registered via add_to_backlog.
- * Brainstorm stays pending so the auto-designer runs a full design session.
+ * Design stays pending so the auto-designer runs a full design session.
  * The design doc is stored as an artifact reference only if provided (non-empty).
  */
 export function createFeatureStateForSubFeature(slug: string, designDoc: string): FeatureState {

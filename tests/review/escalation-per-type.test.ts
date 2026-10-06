@@ -14,7 +14,7 @@ import {
   writeFeatureStateFile,
 } from "../helpers/workflow-monitor-test-helpers.js";
 
-const BRAINSTORM_ACTIVE = {
+const DESIGN_ACTIVE = {
   phases: {
     design: "in-progress",
     plan: "pending",
@@ -34,7 +34,7 @@ describe("per-violation-type escalation", () => {
   });
   test("second process violation of same type prompts user (interactive)", async () => {
     const fake = createFakePi();
-    writeFeatureStateFile("test-escalation", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-escalation", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -78,7 +78,7 @@ describe("per-violation-type escalation", () => {
 
   test("'allow all for this session' suppresses future prompts for that type", async () => {
     const fake = createFakePi();
-    writeFeatureStateFile("test-escalation-session", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-escalation-session", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -121,7 +121,7 @@ describe("per-violation-type escalation", () => {
 
   test("'No, stop' returns blocked on escalation", async () => {
     const fake = createFakePi();
-    writeFeatureStateFile("test-escalation-stop", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-escalation-stop", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -161,7 +161,7 @@ describe("per-violation-type escalation", () => {
   test("non-interactive mode never prompts", async () => {
     enableSubagentMode(); // simulate subagent so isSubagentSession() returns true
     const fake = createFakePi();
-    writeFeatureStateFile("test-escalation-nonint", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-escalation-nonint", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -206,7 +206,7 @@ describe("per-violation-type escalation", () => {
     // revert to ctx.hasUI would prompt (and, with a no-op select in RPC, misbehave).
     enableSubagentMode();
     const fake = createFakePi();
-    writeFeatureStateFile("test-escalation-rpc-child", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-escalation-rpc-child", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");

@@ -13,7 +13,7 @@ import {
   writeFeatureStateFile,
 } from "../helpers/workflow-monitor-test-helpers.js";
 
-const BRAINSTORM_ACTIVE = {
+const DESIGN_ACTIVE = {
   phases: {
     design: "in-progress",
     plan: "pending",
@@ -29,7 +29,7 @@ const BRAINSTORM_ACTIVE = {
 describe("phase-aware file write enforcement", () => {
   test("warns when writing outside docs/plans during design", async () => {
     const fake = createFakePi();
-    writeFeatureStateFile("test-write-enforce", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-write-enforce", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -76,7 +76,7 @@ describe("phase-aware file write enforcement", () => {
 
   test("writing to./docs/plans is allowed during design", async () => {
     const fake = createFakePi();
-    writeFeatureStateFile("test-write-allowed", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-write-allowed", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -127,7 +127,7 @@ describe("phase-aware file write enforcement", () => {
 
   test("writing to absolute path under docs/plans/ is allowed during design", async () => {
     const fake = createFakePi();
-    writeFeatureStateFile("test-write-abs", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-write-abs", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -175,7 +175,7 @@ describe("phase-aware file write enforcement", () => {
 
   test("absolute path containing docs/plans is NOT allowed unless under cwd", async () => {
     const fake = createFakePi();
-    writeFeatureStateFile("test-write-evil", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-write-evil", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
@@ -224,7 +224,7 @@ describe("phase-aware file write enforcement", () => {
   test("second process violation hard-blocks (interactive)", async () => {
     disableSubagentMode();
     const fake = createFakePi();
-    writeFeatureStateFile("test-write-block", { workflow: BRAINSTORM_ACTIVE });
+    writeFeatureStateFile("test-write-block", { workflow: DESIGN_ACTIVE });
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
 
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
