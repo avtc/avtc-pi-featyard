@@ -579,7 +579,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
 
       // --- Brainstorm phase ---
       const autoAgentCb = deps.getAutoAgentCallback();
-      const isAutoMode = autoAgentCb?.isActive?.() === true;
+      const isAutoMode = autoAgentCb?.isActive() === true;
 
       const slug = handler.getActiveFeatureSlug();
       if (!slug) {
@@ -650,8 +650,7 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
           // No kanban writes here — the auto-agent lifecycle owns the card: a card still
           // in `design` is parked at the approval gate (grace period); a card the user
           // already advanced is released and re-picked (→ fy-plan).
-          const notifyDesignComplete = () =>
-            autoAgentCb.onDesignComplete ? autoAgentCb.onDesignComplete(slug) : autoAgentCb.onFeatureComplete(slug);
+          const notifyDesignComplete = () => autoAgentCb.onDesignComplete(slug);
           if (settings.maxPlanReviewRounds !== 0) {
             if (
               await triggerContextCompact(

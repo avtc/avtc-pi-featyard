@@ -110,7 +110,7 @@ export interface CompleteFeatureDeps {
   pi: ExtensionAPI;
   ctx: ExtensionContext;
   handler: FeatureSession;
-  getAutoAgentCallback: () => { onFeatureComplete?: (slug: string) => void } | null | undefined;
+  getAutoAgentCallback: () => { onFeatureComplete: (slug: string) => void } | null | undefined;
 }
 
 /**
@@ -147,7 +147,7 @@ export async function completeFeature(
 
   try {
     const autoAgentCb = getAutoAgentCallback();
-    if (autoAgentCb?.onFeatureComplete) {
+    if (autoAgentCb) {
       autoAgentCb.onFeatureComplete(slug);
     }
   } catch (err) {
@@ -161,7 +161,7 @@ export interface UatTransitionDeps {
   pi: ExtensionAPI;
   handler: FeatureSession;
   applyModelOverrideForPhase: (pi: ExtensionAPI, ctx: ExtensionContext, stage: string) => Promise<void>;
-  getAutoAgentCallback: () => { onFeatureUatHandoff?: (slug: string) => void } | null | undefined;
+  getAutoAgentCallback: () => { onFeatureUatHandoff: (slug: string) => void } | null | undefined;
 }
 
 /**
@@ -219,7 +219,7 @@ export async function transitionToUatPhase(
 
   try {
     const autoAgentCb = getAutoAgentCallback();
-    if (autoAgentCb?.onFeatureUatHandoff) {
+    if (autoAgentCb) {
       log.info(`[workflow] notifying auto-agent UAT handoff for ${slug}`);
       autoAgentCb.onFeatureUatHandoff(slug);
     }

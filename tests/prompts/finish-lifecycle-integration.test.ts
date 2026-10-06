@@ -10,6 +10,7 @@ import workflowMonitorExtension, {
 } from "../../src/index.js";
 import { setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
 import { loadFeatureState, saveFeatureState } from "../../src/state/feature-state.js";
+import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { initGitDir } from "../helpers/git-template.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
@@ -97,7 +98,7 @@ describe("finish lifecycle integration", () => {
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_MOCK_CTX);
 
     // 4. Set up auto-agent callback to simulate auto-agent mode
-    setAutoAgentCallback({ onFeatureComplete: () => {}, onFeatureError: () => {} });
+    setAutoAgentCallback(createTestAutoAgentCallback({ onFeatureComplete: () => {}, onFeatureError: () => {} }));
 
     // 5. Expand the finishing skill — produces content but does NOT arm the flag
     disableSubagentMode();
@@ -171,11 +172,13 @@ describe("finish lifecycle integration", () => {
     setSetting("baseBranch", "main");
 
     // Set up auto-agent callback
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     // Create feature state and set active slug
     const slug = writeFeatureStateFile("lifecycle-current-branch");

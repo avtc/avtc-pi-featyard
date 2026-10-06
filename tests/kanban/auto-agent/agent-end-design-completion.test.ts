@@ -6,6 +6,7 @@ import type { ExtensionAPI, ExtensionContext, ExtensionEvent } from "@earendil-w
 import { afterEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../../src/index.js";
 import { setAutoAgentCallback } from "../../../src/kanban/auto-agent/auto-agent-state-machine.js";
+import { createTestAutoAgentCallback } from "../../helpers/auto-agent-callback-test-helpers.js";
 import {
   BRAINSTORM_ACTIVE_STATE,
   createPiWithToolCapture,
@@ -35,14 +36,16 @@ describe("agent_end design-completion detection (removed)", () => {
     // if the agent's turn ended mid-design (e.g. asking a question, context limit).
     // Design completion is now handled exclusively by the phase_ready tool.
     const onFeatureComplete = vi.fn();
-    setAutoAgentCallback({
-      isActive: () => true,
-      onFeatureComplete,
-      onFeatureError: vi.fn(),
-      onBlock: vi.fn(),
-      onUnblock: vi.fn(),
-      onFeatureUatHandoff: vi.fn(),
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        isActive: () => true,
+        onFeatureComplete,
+        onFeatureError: vi.fn(),
+        onBlock: vi.fn(),
+        onUnblock: vi.fn(),
+        onFeatureUatHandoff: vi.fn(),
+      }),
+    );
 
     const { fake, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-30-no-agent-end-detect", {
@@ -66,14 +69,16 @@ describe("agent_end design-completion detection (removed)", () => {
 
   test("does NOT fire onFeatureComplete when design doc exists and designReviewLoopCount > 0", async () => {
     const onFeatureComplete = vi.fn();
-    setAutoAgentCallback({
-      isActive: () => true,
-      onFeatureComplete,
-      onFeatureError: vi.fn(),
-      onBlock: vi.fn(),
-      onUnblock: vi.fn(),
-      onFeatureUatHandoff: vi.fn(),
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        isActive: () => true,
+        onFeatureComplete,
+        onFeatureError: vi.fn(),
+        onBlock: vi.fn(),
+        onUnblock: vi.fn(),
+        onFeatureUatHandoff: vi.fn(),
+      }),
+    );
 
     const { fake, api } = createPiWithToolCapture();
     writeFeatureStateFile("2026-05-30-review-in-progress", {

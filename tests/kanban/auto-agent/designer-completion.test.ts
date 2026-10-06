@@ -6,6 +6,7 @@ import type { ExtensionAPI, ExtensionContext, ExtensionEvent } from "@earendil-w
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../../src/index.js";
 import { setAutoAgentCallback } from "../../../src/kanban/auto-agent/auto-agent-state-machine.js";
+import { createTestAutoAgentCallback } from "../../helpers/auto-agent-callback-test-helpers.js";
 import {
   createFakePi,
   enableSubagentMode,
@@ -67,11 +68,13 @@ describe("auto-designer completion via phase_ready only", () => {
     );
 
     const onFeatureComplete = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete,
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete,
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const mockCtxUI = {
       hasUI: true,

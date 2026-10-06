@@ -16,6 +16,7 @@ import { isPhaseDone } from "../../src/phases/phase-progression.js";
 import type { PiWorkflowMonitorBridge } from "../../src/shared/types.js";
 import { getGuardrailsRef, getPhaseReadyRef } from "../../src/shared/workflow-refs.js";
 import { loadFeatureState } from "../../src/state/feature-state.js";
+import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
   BRAINSTORM_ACTIVE_STATE,
@@ -2208,10 +2209,7 @@ describe("phase_ready — finish transition deduplication within same turn", () 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
     // setAutoAgentCallback must run AFTER workflowMonitorExtension creates the
     // globalThis.__piKanban bridge (setAutoAgentCallback is a no-op without it).
-    setAutoAgentCallback({ onFeatureComplete, onFeatureError: () => {} } as unknown as {
-      onFeatureComplete: (slug: string) => void;
-      onFeatureError: (slug: string, error: string) => void;
-    });
+    setAutoAgentCallback(createTestAutoAgentCallback({ onFeatureComplete, onFeatureError: () => {} }));
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX);
 
     // Set up the UI guard AFTER session_start so the notify spy is live for the
@@ -2258,10 +2256,7 @@ describe("phase_ready — finish transition deduplication within same turn", () 
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
     // setAutoAgentCallback must run AFTER workflowMonitorExtension creates the
     // globalThis.__piKanban bridge (setAutoAgentCallback is a no-op without it).
-    setAutoAgentCallback({ onFeatureComplete: vi.fn(), onFeatureError: () => {} } as unknown as {
-      onFeatureComplete: (slug: string) => void;
-      onFeatureError: (slug: string, error: string) => void;
-    });
+    setAutoAgentCallback(createTestAutoAgentCallback({ onFeatureComplete: vi.fn(), onFeatureError: () => {} }));
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, NO_UI_CTX);
 
     // Set up the UI guard AFTER session_start so the notify spy is live for execute.

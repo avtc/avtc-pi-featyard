@@ -28,8 +28,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFERRED_COMPACT_FOLLOWUP_MS } from "../../src/compaction/compact-handler.js";
 import { _resetCompactGuard } from "../../src/compaction/compact-trigger.js";
 import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js";
-import { type AutoAgentCallback, setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
+import { setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
 import { loadFeatureState } from "../../src/state/feature-state.js";
+import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
   BRAINSTORM_ACTIVE_STATE,
@@ -239,7 +240,7 @@ describe("review iteration compact — design shouldLoop=false", () => {
     delete globalThis.__piCompactFollowUp;
   });
 
-  test("4. auto mode: reviewIterationCompact=compact → compact triggered, onFeatureComplete called in onComplete", async () => {
+  test("4. auto mode: reviewIterationCompact=compact → compact triggered, onDesignComplete called in onComplete", async () => {
     setSetting("maxPlanReviewRounds", 3);
     setSetting("minReviewLoops", 0);
     setSetting("reviewIterationCompact", "compact");
@@ -283,12 +284,14 @@ describe("review iteration compact — design shouldLoop=false", () => {
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, ctx as unknown as ExtensionToolContext);
 
-    setAutoAgentCallback({
-      isActive: () => true,
-      onFeatureComplete: (slug: string) => {
-        onFeatureCompleteCalls.push(slug);
-      },
-    } as unknown as AutoAgentCallback);
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        isActive: () => true,
+        onDesignComplete: (slug: string) => {
+          onFeatureCompleteCalls.push(slug);
+        },
+      }),
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const result = await phaseReady.execute(

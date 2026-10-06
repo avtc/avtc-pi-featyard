@@ -21,10 +21,7 @@ export function setAutoAgentCallbackGetter(getter: () => AutoAgentCallback | nul
 /** Notify auto-agent that the agent is blocked waiting for user input */
 export function notifyAutoAgentBlocked(slug: string): void {
   try {
-    const autoAgentCb = _getAutoAgentCallback?.();
-    if (autoAgentCb?.onBlock) {
-      autoAgentCb.onBlock(slug);
-    }
+    _getAutoAgentCallback?.()?.onBlock(slug);
   } catch {
     // Auto-agent notification must not disrupt workflow
   }
@@ -33,10 +30,7 @@ export function notifyAutoAgentBlocked(slug: string): void {
 /** Notify auto-agent that user provided input and agent can continue */
 export function notifyAutoAgentUnblocked(slug: string): void {
   try {
-    const autoAgentCb = _getAutoAgentCallback?.();
-    if (autoAgentCb?.onUnblock) {
-      autoAgentCb.onUnblock(slug);
-    }
+    _getAutoAgentCallback?.()?.onUnblock(slug);
   } catch {
     // Auto-agent notification must not disrupt workflow
   }

@@ -10,13 +10,13 @@ import type {
   ToolDefinition,
   ToolResultEvent,
 } from "@earendil-works/pi-coding-agent";
-
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _clearActiveFeatureSlug, _resetFeatureState } from "../../src/index.js";
 import { setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
 import { KanbanDatabase } from "../../src/kanban/data/kanban-database.js";
 import { resetInstances, setDatabase } from "../../src/kanban/kanban-bridge.js";
 import { isPhaseDone } from "../../src/phases/phase-progression.js";
+import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
   BRAINSTORM_ACTIVE_STATE,
@@ -431,7 +431,7 @@ describe("phase_ready tool — design auto mode", () => {
     setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
   });
 
-  test("auto-mode: completes design, calls onFeatureComplete, does not send skill", async () => {
+  test("auto-mode: completes design, calls onDesignComplete, does not send skill", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const slug = writeFeatureStateFile("2026-05-20-auto-test", {
       ...BRAINSTORM_ACTIVE_STATE,
@@ -457,16 +457,18 @@ describe("phase_ready tool — design auto mode", () => {
     );
 
     // Set up auto-agent callback mock
-    const onFeatureComplete = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete,
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    const onDesignComplete = vi.fn();
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onDesignComplete,
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
-    // Track call ordering: completeCurrent → persistState → updateWidget → onFeatureComplete
+    // Track call ordering: completeCurrent → persistState → updateWidget → onDesignComplete
     // Note: completeCurrent is internal to completeBrainstormPhase and not directly tracked here.
     const callOrder: string[] = [];
     // Wrap appendEntry to track persistState calls
@@ -478,15 +480,17 @@ describe("phase_ready tool — design auto mode", () => {
     const setWidget = vi.fn(() => {
       callOrder.push("updateWidget");
     });
-    const trackedOnFeatureComplete = vi.fn((...args: unknown[]) => {
-      callOrder.push("onFeatureComplete");
-      return onFeatureComplete(...args);
+    const trackedOnDesignComplete = vi.fn((...args: unknown[]) => {
+      callOrder.push("onDesignComplete");
+      return onDesignComplete(...args);
     });
-    setAutoAgentCallback({
-      onFeatureComplete: trackedOnFeatureComplete,
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onDesignComplete: trackedOnDesignComplete,
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const ctx = {
       hasUI: true,
@@ -498,12 +502,12 @@ describe("phase_ready tool — design auto mode", () => {
     disableSubagentMode();
     const _result = await phaseReady.execute("tc-auto", {}, undefined, undefined, ctx);
 
-    // Verify call ordering: persistState → updateWidget → onFeatureComplete
+    // Verify call ordering: persistState → updateWidget → onDesignComplete
     // (completeCurrent is not directly tracked but runs before persistState)
-    expect(callOrder).toEqual(["persistState", "updateWidget", "onFeatureComplete"]);
+    expect(callOrder).toEqual(["persistState", "updateWidget", "onDesignComplete"]);
 
-    // Verify onFeatureComplete was called with the slug
-    expect(onFeatureComplete).toHaveBeenCalledWith(slug);
+    // Verify onDesignComplete was called with the slug
+    expect(onDesignComplete).toHaveBeenCalledWith(slug);
 
     // Verify design completed via persistState's appendEntry
     const lastEntry = fake.appendedEntries[fake.appendedEntries.length - 1] as {
@@ -525,7 +529,7 @@ describe("phase_ready tool — design auto mode", () => {
     expect(skillMessages.length).toBe(0);
   });
 
-  test("auto-mode: onFeatureComplete throwing returns error message", async () => {
+  test("auto-mode: onDesignComplete throwing returns error message", async () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     const _slug = writeFeatureStateFile("2026-05-20-auto-throw", {
       ...BRAINSTORM_ACTIVE_STATE,
@@ -551,13 +555,15 @@ describe("phase_ready tool — design auto mode", () => {
     );
 
     // Set up auto-agent callback that throws synchronously (async rejection wouldn't be caught by try-catch)
-    setAutoAgentCallback({
-      onFeatureComplete: vi.fn().mockImplementation(() => {
-        throw new Error("kanban connection lost");
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onDesignComplete: vi.fn().mockImplementation(() => {
+          throw new Error("kanban connection lost");
+        }),
+        onFeatureError: async () => {},
+        isActive: () => true,
       }),
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
 
@@ -645,12 +651,14 @@ describe("phase_ready tool — design completion kanban handoff", () => {
 
     const onFeatureComplete = vi.fn();
     const onDesignComplete = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete,
-      onDesignComplete,
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete,
+        onDesignComplete,
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const ctx = {
@@ -706,12 +714,14 @@ describe("phase_ready tool — design completion kanban handoff", () => {
 
     const onFeatureComplete = vi.fn();
     const onDesignComplete = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete,
-      onDesignComplete,
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete,
+        onDesignComplete,
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
     const ctx = {
@@ -986,11 +996,13 @@ describe("phase_ready tool — edge cases", () => {
     const { fake, registeredTools, api } = createPiWithToolCapture();
     await workflowMonitorExtension(api as unknown as ExtensionAPI);
 
-    setAutoAgentCallback({
-      onFeatureComplete: vi.fn(),
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: vi.fn(),
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     // Write state and start session so workflow state has design phase
     writeFeatureStateFile("2026-05-20-auto-no-slug", BRAINSTORM_ACTIVE_STATE);

@@ -14,6 +14,7 @@ import {
 import workflowMonitorExtension, { expandSkillCommand, substituteTemplates } from "../../../src/index.js";
 import { setAutoAgentCallback } from "../../../src/kanban/auto-agent/auto-agent-state-machine.js";
 import { loadFeatureState } from "../../../src/state/feature-state.js";
+import { createTestAutoAgentCallback } from "../../helpers/auto-agent-callback-test-helpers.js";
 import { initGitDir } from "../../helpers/git-template.js";
 import { mockExecSync, restoreExecSync } from "../../helpers/mock-exec-sync.js";
 import { setSetting, setTestSettings } from "../../helpers/settings-test-helpers.js";
@@ -70,11 +71,13 @@ describe("auto-agent finishing skill template substitution", () => {
 
     // Set up auto-agent callback with isActive = true
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const result = expandSkillCommand("/skill:fy-finish", null, null);
 
@@ -93,11 +96,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     // Set branchPolicy to worktree
 
@@ -126,11 +131,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     // initGitDir sets HEAD to refs/heads/main, so git branch --show-current returns "main"
     const branchName = execSync("git branch --show-current", {
@@ -156,11 +163,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     // Point HEAD at a feature branch WITHOUT invoking git (initGitDir already wrote a
     // `ref: refs/heads/main` HEAD). `git symbolic-ref --short HEAD` — used by getBranchOrShortSha
@@ -205,11 +214,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     // Point HEAD at a feature branch WITHOUT invoking git (initGitDir already wrote a
     // `ref: refs/heads/main` HEAD). `git symbolic-ref --short HEAD` — used by getBranchOrShortSha
@@ -274,11 +285,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     setSetting("branchPolicy", "worktree");
     setSetting("baseBranch", "main");
@@ -375,11 +388,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     setSetting("branchPolicy", "worktree");
     setSetting("baseBranch", "main");
@@ -414,11 +429,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     setSetting("branchPolicy", "worktree");
     setSetting("baseBranch", "main");
@@ -444,11 +461,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     setSetting("branchPolicy", "worktree");
     setSetting("baseBranch", NO_BASE_BRANCH);
@@ -490,11 +509,13 @@ describe("auto-agent finishing skill template substitution", () => {
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
     setTestSettings(null);
 
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     setSetting("branchPolicy", "current-branch");
     setSetting("baseBranch", "main");

@@ -48,18 +48,18 @@ export interface AutoAgentCallback {
    * to plan when the card was already advanced) and releasing the lock. Backed by
    * the same lane-driven lifecycle as onFeatureComplete.
    */
-  onDesignComplete?: (slug: string) => void;
+  onDesignComplete: (slug: string) => void;
   onFeatureError: (slug: string, error: string) => void;
-  onBlock?: (slug: string) => void;
-  onUnblock?: (slug: string) => void;
+  onBlock: (slug: string) => void;
+  onUnblock: (slug: string) => void;
   /**
    * Called when a feature reaches UAT (after-review mode) and the agent should
    * release the lock and move to the next feature. The card stays in the UAT lane
    * for the user to accept/reject.
    */
-  onFeatureUatHandoff?: (slug: string) => void;
+  onFeatureUatHandoff: (slug: string) => void;
   /** Returns true if any auto-agent is currently active (working/polling/waiting). */
-  isActive?: () => boolean;
+  isActive: () => boolean;
 }
 
 export function setAutoAgentCallback(cb: AutoAgentCallback | null): void {

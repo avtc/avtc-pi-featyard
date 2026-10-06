@@ -14,6 +14,7 @@ import type { ExtensionAPI, ExtensionContext, ExtensionEvent } from "@earendil-w
 import { afterEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../../src/index.js";
 import { setAutoAgentCallback } from "../../../src/kanban/auto-agent/auto-agent-state-machine.js";
+import { createTestAutoAgentCallback } from "../../helpers/auto-agent-callback-test-helpers.js";
 import {
   createFakePi,
   fireAllHandlers,
@@ -69,14 +70,16 @@ describe("agent_end compact-abort is not a feature error (pi #7370)", () => {
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, UI_CTX);
 
     const onFeatureError = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError,
-      onBlock: async () => {},
-      onUnblock: async () => {},
-      onFeatureUatHandoff: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError,
+        onBlock: async () => {},
+        onUnblock: async () => {},
+        onFeatureUatHandoff: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
     await onAgentEnd(
@@ -100,14 +103,16 @@ describe("agent_end compact-abort is not a feature error (pi #7370)", () => {
     await fireAllHandlers(fake.handlers, "session_start", { reason: "new" }, UI_CTX);
 
     const onFeatureError = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError,
-      onBlock: async () => {},
-      onUnblock: async () => {},
-      onFeatureUatHandoff: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError,
+        onBlock: async () => {},
+        onUnblock: async () => {},
+        onFeatureUatHandoff: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
     await onAgentEnd(

@@ -12,6 +12,7 @@ import {
 } from "../../../src/kanban/auto-agent/auto-agent-state-machine.js";
 import { KanbanDatabase } from "../../../src/kanban/data/kanban-database.js";
 import { resetInstances, setDatabase } from "../../../src/kanban/kanban-bridge.js";
+import { createTestAutoAgentCallback } from "../../helpers/auto-agent-callback-test-helpers.js";
 import {
   createFakePi,
   fireAllHandlers,
@@ -64,7 +65,7 @@ describe("fy:auto-stop command", () => {
     );
 
     // Set up an auto-agent callback to verify it gets cleared
-    const mockCallback = { onFeatureComplete: vi.fn(), onFeatureError: vi.fn() };
+    const mockCallback = createTestAutoAgentCallback({ onFeatureComplete: vi.fn(), onFeatureError: vi.fn() });
     setAutoAgentCallback(mockCallback);
 
     // Get the registered command handler

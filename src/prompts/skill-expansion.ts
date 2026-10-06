@@ -166,7 +166,7 @@ export function substituteTemplates(
   const hasFinishPlaceholder = text.includes("{{PI_FY_FINISH_INSTRUCTIONS}}");
   if (hasFinishPlaceholder) {
     const autoAgentCb = getAutoAgentCb?.();
-    const isActive = autoAgentCb?.isActive?.();
+    const isActive = autoAgentCb?.isActive();
     const branchPolicy = settings.branchPolicy ?? "current-branch";
     const settingsBaseBranch = settings.baseBranch ?? null;
     // Feature state baseBranch takes precedence (set during worktree creation — see DD-11)

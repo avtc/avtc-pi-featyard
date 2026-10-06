@@ -7,6 +7,7 @@ import workflowMonitorExtension, { _resetFeatureState } from "../../src/index.js
 import { setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
 import { isPhaseDone, type PhaseProgressionView } from "../../src/phases/phase-progression.js";
 import { loadFeatureState } from "../../src/state/feature-state.js";
+import { createTestAutoAgentCallback } from "../helpers/auto-agent-callback-test-helpers.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
   cleanupAfterTest,
@@ -177,11 +178,13 @@ describe("fy:next from UAT (replaces former /uat-accept)", () => {
 
     // Set up auto-agent callback mock
     const onFeatureComplete = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete,
-      onFeatureError: async () => {},
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete,
+        onFeatureError: async () => {},
+        isActive: () => true,
+      }),
+    );
 
     const nextHandler = fake.registeredCommands?.get("fy:next");
     await (nextHandler as (args: string, ctx: unknown) => Promise<void>)?.("", mockCtx);

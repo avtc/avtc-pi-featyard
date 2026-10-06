@@ -5,6 +5,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { afterEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _resetFeatureState } from "../../../src/index.js";
 import { setAutoAgentCallback } from "../../../src/kanban/auto-agent/auto-agent-state-machine.js";
+import { createTestAutoAgentCallback } from "../../helpers/auto-agent-callback-test-helpers.js";
 import {
   createFakePi,
   enableSubagentMode,
@@ -64,13 +65,15 @@ describe("onBlock/onUnblock auto-agent notification", () => {
     // Set up auto-agent callback mock
     const onBlock = vi.fn();
     const onUnblock = vi.fn();
-    setAutoAgentCallback({
-      onFeatureComplete: async () => {},
-      onFeatureError: async () => {},
-      onBlock,
-      onUnblock,
-      isActive: () => true,
-    });
+    setAutoAgentCallback(
+      createTestAutoAgentCallback({
+        onFeatureComplete: async () => {},
+        onFeatureError: async () => {},
+        onBlock,
+        onUnblock,
+        isActive: () => true,
+      }),
+    );
 
     // Find the auto-agent block/unblock by triggering the execute phase via fy:resume
     const selectMock = vi.fn().mockResolvedValue("Subagent-driven (Recommended)");
