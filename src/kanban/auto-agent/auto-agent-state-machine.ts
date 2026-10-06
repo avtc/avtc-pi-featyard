@@ -42,6 +42,13 @@ const LANE_TO_SKILL: Record<string, string> = {
 
 export interface AutoAgentCallback {
   onFeatureComplete: (slug: string) => void;
+  /**
+   * Called when the DESIGN phase completes (auto mode). The feature is not done —
+   * the callback owns parking the card at the design-approval gate (or continuing
+   * to plan when the card was already advanced) and releasing the lock. Backed by
+   * the same lane-driven lifecycle as onFeatureComplete.
+   */
+  onDesignComplete?: (slug: string) => void;
   onFeatureError: (slug: string, error: string) => void;
   onBlock?: (slug: string) => void;
   onUnblock?: (slug: string) => void;

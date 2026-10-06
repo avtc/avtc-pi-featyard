@@ -14,6 +14,8 @@ import type {
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import workflowMonitorExtension, { _clearActiveFeatureSlug, _resetFeatureState } from "../../src/index.js";
 import { setAutoAgentCallback } from "../../src/kanban/auto-agent/auto-agent-state-machine.js";
+import { KanbanDatabase } from "../../src/kanban/data/kanban-database.js";
+import { resetInstances, setDatabase } from "../../src/kanban/kanban-bridge.js";
 import { isPhaseDone } from "../../src/phases/phase-progression.js";
 import { setSetting, setTestSettings } from "../helpers/settings-test-helpers.js";
 import {
@@ -572,6 +574,262 @@ describe("phase_ready tool — design auto mode", () => {
     // Should return an error message from the catch block
     expect((result.content[0] as unknown as { text: string }).text).toContain("phase_ready failed");
     expect((result.content[0] as unknown as { text: string }).text).toContain("kanban connection lost");
+  });
+});
+
+describe("phase_ready tool — design completion kanban handoff", () => {
+  beforeEach(() => {
+    enableSubagentMode();
+    setSetting("maxPlanReviewRounds", 0);
+    setSetting("minReviewLoops", 0);
+    setSetting("designApprovalEnabled", true);
+  });
+  afterEach(async () => {
+    _resetFeatureState();
+    delete globalThis.__piCtx;
+    delete process.env.PI_FY_FEATURE;
+    setAutoAgentCallback(NO_AUTO_AGENT_CALLBACK);
+    resetInstances();
+    setTestSettings(null);
+  });
+
+  /** Create an in-memory kanban DB with one design-lane feature bound to the
+   *  active feature state. Returns the db + the kanban feature id. */
+  async function setupKanbanFeature(slug: string): Promise<{ db: KanbanDatabase; featureId: number }> {
+    const db = await KanbanDatabase.createInMemory();
+    const projectId = db.createProject({ name: "test-project", repoPath: process.cwd() });
+    const featureId = db.createFeature({
+      projectId,
+      slug,
+      title: "Test Feature",
+      description: "Test",
+      lane: "design",
+    });
+    db.lockFeature(featureId, "agent-session-1");
+    setDatabase(db);
+    return { db, featureId };
+  }
+
+  test("auto-mode: user-advanced card stays in ready — onDesignComplete owns the handoff", async () => {
+    const slug = "2026-05-20-preapproved-auto";
+    const { fake, registeredTools, api } = createPiWithToolCapture();
+    const { db, featureId } = await setupKanbanFeature(slug);
+    // Simulate: user moved the card to ready while the agent was still working (pre-approval)
+    db.moveFeature({ featureId, toLane: "ready", changedBy: "user", note: "User pre-approved" });
+    const historyBefore = db.getFeatureHistory(featureId).length;
+
+    writeFeatureStateFile(slug, {
+      ...BRAINSTORM_ACTIVE_STATE,
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/2026-05-20-preapproved-auto-design.md",
+        planDoc: null,
+      },
+      design: {
+        doc: "docs/featyard/designs/2026-05-20-preapproved-auto-design.md",
+        reviewActive: false,
+        reviewLoopCount: 0,
+      },
+      featureId,
+    });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-preapproved-auto-design.md", "# Design");
+
+    await workflowMonitorExtension(api as unknown as ExtensionAPI);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
+
+    const onFeatureComplete = vi.fn();
+    const onDesignComplete = vi.fn();
+    setAutoAgentCallback({
+      onFeatureComplete,
+      onDesignComplete,
+      onFeatureError: async () => {},
+      isActive: () => true,
+    });
+
+    const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
+    const ctx = {
+      hasUI: true,
+      sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
+      ui: { setWidget: () => {} },
+    } as unknown as ExtensionToolContext;
+    setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
+
+    disableSubagentMode();
+    await phaseReady.execute("tc-preapproved-auto", {}, undefined, undefined, ctx);
+
+    // Design-phase completion hands off via onDesignComplete, not onFeatureComplete
+    expect(onDesignComplete).toHaveBeenCalledWith(slug);
+    expect(onFeatureComplete).not.toHaveBeenCalled();
+
+    // phase_ready performs NO kanban writes in auto mode — the callback owns lane + lock
+    const feature = db.getFeature(featureId);
+    expect(feature?.lane).toBe("ready"); // NOT moved back to design-approval
+    expect(db.getFeatureHistory(featureId).length).toBe(historyBefore);
+    expect(feature?.locked_at).not.toBeNull(); // lock untouched — lifecycle releases it
+  });
+
+  test("auto-mode: card still in design is not moved by phase_ready — delegated to onDesignComplete", async () => {
+    const slug = "2026-05-20-design-auto";
+    const { fake, registeredTools, api } = createPiWithToolCapture();
+    const { db, featureId } = await setupKanbanFeature(slug);
+
+    writeFeatureStateFile(slug, {
+      ...BRAINSTORM_ACTIVE_STATE,
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/2026-05-20-design-auto-design.md",
+        planDoc: null,
+      },
+      design: {
+        doc: "docs/featyard/designs/2026-05-20-design-auto-design.md",
+        reviewActive: false,
+        reviewLoopCount: 0,
+      },
+      featureId,
+    });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-design-auto-design.md", "# Design");
+
+    await workflowMonitorExtension(api as unknown as ExtensionAPI);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
+
+    const onFeatureComplete = vi.fn();
+    const onDesignComplete = vi.fn();
+    setAutoAgentCallback({
+      onFeatureComplete,
+      onDesignComplete,
+      onFeatureError: async () => {},
+      isActive: () => true,
+    });
+
+    const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
+    const ctx = {
+      hasUI: true,
+      sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
+      ui: { setWidget: () => {} },
+    } as unknown as ExtensionToolContext;
+    setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
+
+    disableSubagentMode();
+    await phaseReady.execute("tc-design-auto", {}, undefined, undefined, ctx);
+
+    expect(onDesignComplete).toHaveBeenCalledWith(slug);
+    expect(onFeatureComplete).not.toHaveBeenCalled();
+
+    // The lane move (design → design-approval) and lock release belong to the
+    // auto-agent lifecycle, not phase_ready
+    const feature = db.getFeature(featureId);
+    expect(feature?.lane).toBe("design");
+    expect(feature?.locked_at).not.toBeNull();
+  });
+
+  test("non-auto mode: user-advanced card stays in ready when design completes", async () => {
+    const slug = "2026-05-20-preapproved-manual";
+    const { fake, registeredTools, api } = createPiWithToolCapture();
+    const { db, featureId } = await setupKanbanFeature(slug);
+    db.moveFeature({ featureId, toLane: "ready", changedBy: "user", note: "User pre-approved" });
+    const historyBefore = db.getFeatureHistory(featureId).length;
+
+    writeFeatureStateFile(slug, {
+      ...BRAINSTORM_ACTIVE_STATE,
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/2026-05-20-preapproved-manual-design.md",
+        planDoc: null,
+      },
+      design: {
+        doc: "docs/featyard/designs/2026-05-20-preapproved-manual-design.md",
+        reviewActive: false,
+        reviewLoopCount: 0,
+      },
+      featureId,
+    });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-preapproved-manual-design.md", "# Design");
+
+    await workflowMonitorExtension(api as unknown as ExtensionAPI);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
+
+    const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
+    const selectFn = vi.fn().mockResolvedValue("Proceed with implementation");
+    const ctx = {
+      hasUI: true,
+      sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
+      ui: { setWidget: () => {}, select: selectFn },
+    } as unknown as ExtensionToolContext;
+    setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
+
+    disableSubagentMode();
+    await phaseReady.execute("tc-preapproved-manual", {}, undefined, undefined, ctx);
+
+    // Card keeps the user's lane — never moved backward to design-approval
+    expect(db.getFeature(featureId)?.lane).toBe("ready");
+    expect(db.getFeatureHistory(featureId).length).toBe(historyBefore);
+    // Lock is still released (non-auto: phase_ready owns the kanban writes)
+    expect(db.getFeature(featureId)?.locked_at).toBeNull();
+  });
+
+  test("non-auto mode: card still in design moves to design-approval (gate preserved)", async () => {
+    const slug = "2026-05-20-gate-manual";
+    const { fake, registeredTools, api } = createPiWithToolCapture();
+    const { db, featureId } = await setupKanbanFeature(slug);
+
+    writeFeatureStateFile(slug, {
+      ...BRAINSTORM_ACTIVE_STATE,
+      workflow: {
+        currentPhase: "design",
+        designDoc: "docs/featyard/designs/2026-05-20-gate-manual-design.md",
+        planDoc: null,
+      },
+      design: {
+        doc: "docs/featyard/designs/2026-05-20-gate-manual-design.md",
+        reviewActive: false,
+        reviewLoopCount: 0,
+      },
+      featureId,
+    });
+    fs.mkdirSync("docs/featyard/designs", { recursive: true });
+    fs.writeFileSync("docs/featyard/designs/2026-05-20-gate-manual-design.md", "# Design");
+
+    await workflowMonitorExtension(api as unknown as ExtensionAPI);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { reason: "new" },
+      NO_UI_CTX as unknown as ExtensionToolContext,
+    );
+
+    const phaseReady = registeredTools.find((t) => (t as { name: string }).name === "phase_ready") as ToolDefinition;
+    const selectFn = vi.fn().mockResolvedValue("Proceed with implementation");
+    const ctx = {
+      hasUI: true,
+      sessionManager: { getBranch: () => [], getSessionFile: () => "/tmp/session.jsonl" },
+      ui: { setWidget: () => {}, select: selectFn },
+    } as unknown as ExtensionToolContext;
+    setupPiCtx(ctx.ui as Parameters<typeof setupPiCtx>[0], TUI_MODE);
+
+    disableSubagentMode();
+    await phaseReady.execute("tc-gate-manual", {}, undefined, undefined, ctx);
+
+    // Normal gate: design → design-approval, lock released
+    expect(db.getFeature(featureId)?.lane).toBe("design-approval");
+    expect(db.getFeature(featureId)?.locked_at).toBeNull();
   });
 });
 

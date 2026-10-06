@@ -20,6 +20,7 @@ import { Text } from "@earendil-works/pi-tui";
 import { NO_COMPACT_CALLBACK, triggerContextCompact } from "../compaction/compact-trigger.js";
 import { syncWorktreeStatus } from "../git/worktrees/worktree-helpers.js";
 import { areAllTodosDone } from "../integrations/todo-integration.js";
+import { LANE_ORDER } from "../kanban/data/kanban-types.js";
 import { log, NO_ERROR } from "../log.js";
 import { syncEnvVarsFromState } from "../phases/env-sync.js";
 import { isPhaseDone } from "../phases/phase-progression.js";
@@ -639,26 +640,6 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
         completeDesignPhase(handler, slug);
 
         const featureState = handler.getActiveFeatureState();
-        if (featureState?.featureId !== null && featureState) {
-          try {
-            const { getDatabaseInstance } = await import("../kanban/kanban-bridge.js");
-            const kanbanDb = getDatabaseInstance();
-            if (kanbanDb && featureState.featureId !== null) {
-              const kanbanSettings = getSettings();
-              const targetLane = kanbanSettings.designApprovalEnabled ? "design-approval" : "ready";
-              kanbanDb.moveFeature({
-                featureId: featureState.featureId,
-                toLane: targetLane,
-                changedBy: "system",
-                note: "design complete",
-              });
-              kanbanDb.unlockFeature(featureState.featureId);
-              log.info(`phase_ready: moved feature ${featureState.featureId} to ${targetLane}`);
-            }
-          } catch (err) {
-            log.warn(`phase_ready: kanban lane move failed: ${err}`);
-          }
-        }
 
         if (isAutoMode) {
           persistState(pi, handler);
@@ -666,6 +647,11 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
           if (!autoAgentCb) {
             return textResult(MSG_NO_CALLBACK);
           }
+          // No kanban writes here — the auto-agent lifecycle owns the card: a card still
+          // in `design` is parked at the approval gate (grace period); a card the user
+          // already advanced is released and re-picked (→ fy-plan).
+          const notifyDesignComplete = () =>
+            autoAgentCb.onDesignComplete ? autoAgentCb.onDesignComplete(slug) : autoAgentCb.onFeatureComplete(slug);
           if (settings.maxPlanReviewRounds !== 0) {
             if (
               await triggerContextCompact(
@@ -675,15 +661,45 @@ export function registerPhaseReady(deps: PhaseReadyDeps): IPhaseReady {
                   message: NO_COMPACT_MESSAGE,
                   logLabel: "design shouldLoop=false auto",
                 },
-                () => autoAgentCb.onFeatureComplete(slug),
+                notifyDesignComplete,
                 recoverCompactFailure,
               )
             ) {
               return textResult("");
             }
           }
-          autoAgentCb.onFeatureComplete(slug);
+          notifyDesignComplete();
         } else {
+          if (featureState?.featureId !== null && featureState) {
+            try {
+              const { getDatabaseInstance } = await import("../kanban/kanban-bridge.js");
+              const kanbanDb = getDatabaseInstance();
+              if (kanbanDb && featureState.featureId !== null) {
+                const kanbanSettings = getSettings();
+                const targetLane = kanbanSettings.designApprovalEnabled ? "design-approval" : "ready";
+                // Never move the card backward: if the user already advanced it (e.g. to
+                // `ready` while the review loop was running), keep their lane — the manual
+                // move is the approval.
+                const feature = kanbanDb.getFeature(featureState.featureId);
+                if (feature && LANE_ORDER.indexOf(feature.lane) < LANE_ORDER.indexOf(targetLane)) {
+                  kanbanDb.moveFeature({
+                    featureId: featureState.featureId,
+                    toLane: targetLane,
+                    changedBy: "system",
+                    note: "design complete",
+                  });
+                  log.info(`phase_ready: moved feature ${featureState.featureId} to ${targetLane}`);
+                } else {
+                  log.info(
+                    `phase_ready: feature ${featureState.featureId} already at/past ${targetLane} (lane=${feature?.lane ?? "unknown"}) — keeping lane`,
+                  );
+                }
+                kanbanDb.unlockFeature(featureState.featureId);
+              }
+            } catch (err) {
+              log.warn(`phase_ready: kanban lane move failed: ${err}`);
+            }
+          }
           handler.setCurrentPhase("plan");
           await applyModelOverrideForPhase(pi, ctx, "plan");
           persistState(pi, handler);

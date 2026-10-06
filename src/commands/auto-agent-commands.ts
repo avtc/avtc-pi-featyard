@@ -532,6 +532,12 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
     async onFeatureComplete(slug: string): Promise<void> {
       return _onFeatureComplete(slug, onFCtx);
     },
+    // Design-phase completion hands off to the same lane-driven lifecycle: a card
+    // still in `design` is parked at the approval gate (grace period); a card the
+    // user already advanced is released and re-picked (→ fy-plan).
+    async onDesignComplete(slug: string): Promise<void> {
+      return _onFeatureComplete(slug, onFCtx);
+    },
     async onFeatureError(slug: string, error: string): Promise<void> {
       log.warn(`[kanban] onFeatureError called for slug "${slug}": ${error}`);
       const { findAgentForSlug } = await import("./kanban-commands.js");
