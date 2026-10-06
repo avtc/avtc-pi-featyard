@@ -95,9 +95,20 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
   }
 
   /** Try to resume a paused agent of the same role+project. Returns true if resumed. */
-  function tryResumePausedAgent(role: AutoAgentRole, projectId: number, agentCtx: ExtensionCommandContext): boolean {
+  async function tryResumePausedAgent(
+    role: AutoAgentRole,
+    projectId: number,
+    agentCtx: ExtensionCommandContext,
+  ): Promise<boolean> {
     const current = globalThis.__piKanban?.autoAgent;
     if (current && current.getRole() === role && current.projectId === projectId && current.getState() === "paused") {
+      // Re-adopt the active feature (if any) BEFORE unpausing: with a current
+      // feature unpause resumes "working" on exactly that feature; without one
+      // it resumes polling for whatever is next — the feature the user was
+      // driving in this terminal would be orphaned.
+      if (current.getCurrentFeatureId() === null) {
+        await tryMatchSessionSlug(current, projectId, current.sessionId, agentCtx);
+      }
       current.unpause();
       globalThis.__piCtx?.refresh(agentCtx);
       const pollingFn = current.getStartPollingFn();
@@ -170,7 +181,7 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
     const sessionId = crypto.randomUUID();
 
     // Pause-resume: if a paused agent of the same role+project exists, unpause it
-    if (tryResumePausedAgent(role, projectId, agentCtx)) return;
+    if (await tryResumePausedAgent(role, projectId, agentCtx)) return;
 
     // Check if the same role is already running — no-op
     const currentAgent = globalThis.__piKanban?.autoAgent;
@@ -325,7 +336,12 @@ export async function registerAutoAgent(pi: ExtensionAPI, ctx: KanbanContext): P
     function startPollingTimer() {
       const pollMs = getSettings().autoPollMs ?? 30_000;
       const timer = setTimeout(async () => {
-        if (sm.getState() !== "polling") return;
+        if (sm.getState() !== "polling") {
+          log.info(
+            `[kanban] polling timer skipped: agent state=${sm.getState()} (expected "polling") — not retrying feature pick`,
+          );
+          return;
+        }
         log.info(
           `[kanban] auto-agent (${sm.getRole()}) polling timer fired, retrying feature pick (project=${projectId})`,
         );

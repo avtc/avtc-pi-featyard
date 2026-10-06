@@ -263,7 +263,13 @@ export class AutoAgentStateMachine {
   unpause(): boolean {
     if (this.state !== "paused") return false;
     this.pauseRequested = false;
-    this.state = "working";
+    if (this.currentFeatureId === null) {
+      // Paused while polling (no current feature): resume polling. A "working"
+      // agent with no feature never polls again — the loop would be stranded.
+      this.state = "polling";
+    } else {
+      this.state = "working";
+    }
     log.info("[auto-agent] unpaused (resuming auto-loop)");
     this.persist();
     return true;

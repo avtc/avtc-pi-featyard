@@ -639,6 +639,44 @@ describe("AutoAgentStateMachine methods", () => {
   });
 });
 
+describe("unpause", () => {
+  test("resumes to polling when paused with no current feature (paused while polling)", async () => {
+    const { db, tools } = await createDb();
+    try {
+      const sm = new AutoAgentStateMachine("agent", 1, "session-1");
+      sm.start();
+      const picked = sm.pickNextFeature(tools, 1, "session-1"); // no features → polling
+      expect(picked).toBeNull();
+      expect(sm.getState()).toBe("polling");
+      expect(sm.getCurrentFeatureId()).toBeNull();
+
+      sm.pause();
+      expect(sm.getState()).toBe("paused");
+
+      expect(sm.unpause()).toBe(true);
+      // A featureless "working" agent never polls again — resume must return to polling
+      expect(sm.getState()).toBe("polling");
+    } finally {
+      db.close();
+    }
+  });
+
+  test("resumes to working when paused with a current feature", async () => {
+    const { db } = await createDb();
+    try {
+      const sm = new AutoAgentStateMachine("agent", 1, "session-1");
+      sm.start();
+      sm.adoptFeature(7, "design");
+      sm.pause();
+      expect(sm.unpause()).toBe(true);
+      expect(sm.getState()).toBe("working");
+      expect(sm.getCurrentFeatureId()).toBe(7);
+    } finally {
+      db.close();
+    }
+  });
+});
+
 describe("computeTargetLane", () => {
   test("design + designApprovalEnabled=true → design-approval", () => {
     expect(computeTargetLane("design", true)).toBe("design-approval");

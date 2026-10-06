@@ -159,4 +159,86 @@ describe("onFeatureCompletion actual lane check", () => {
     const notify = notifications.find((n) => n.message.includes("Activating next feature"));
     expect(notify).toBeDefined();
   });
+
+  test("unowned feature + live polling agent → onDesignComplete adopts and re-picks (reload regression)", async () => {
+    const tempDir = createTempDir();
+    process.chdir(tempDir);
+    const db = await KanbanDatabase.createInMemory();
+    const projectId = db.createProject({ name: "test", repoPath: tempDir });
+    setDatabase(db);
+
+    // Initialize PiCtx — the kanban notify path routes through it
+    if (!globalThis.__piCtx) {
+      const { PiCtx } = await import("../../../src/shared/types.js");
+      globalThis.__piCtx = new PiCtx();
+    }
+
+    const featureId = db.createFeature({
+      projectId,
+      slug: "test-feature",
+      title: "Test",
+      description: "Test",
+      lane: "ready", // user already advanced the card (pre-approval)
+    });
+    // Locked by another session → the agent cannot take it at startup → polls with no feature
+    db.lockFeature(featureId, "other-session");
+
+    const registeredCommands = new Map<
+      string,
+      { description: string; handler: (...args: unknown[]) => Promise<void> }
+    >();
+    const notifications: Array<{ message: string; level: string }> = [];
+    const api = {
+      on() {},
+      registerTool() {},
+      registerCommand(
+        name: string,
+        definition: { description: string; handler: (...args: unknown[]) => Promise<void> },
+      ) {
+        registeredCommands.set(name, definition);
+      },
+      appendEntry() {},
+      sendUserMessage() {},
+    } as unknown as ExtensionAPI;
+
+    const extension = kanbanExtension;
+    if (typeof extension === "function") {
+      await extension(api, null);
+    }
+
+    const ctx = {
+      ui: {
+        notify(message: string, level: string) {
+          notifications.push({ message, level });
+        },
+        onTerminalInput() {
+          return () => {};
+        },
+      },
+    };
+
+    const startCmd = registeredCommands.get("fy:auto-agent");
+    expect(startCmd).toBeDefined();
+    await startCmd?.handler("", ctx as unknown as ExtensionCommandContext);
+
+    const sm = globalThis.__piKanban?.autoAgent;
+    // Agent found nothing available (feature locked elsewhere) → polling, owns no feature
+    expect(sm?.getState()).toBe("polling");
+    expect(sm?.getCurrentFeatureId()).toBeNull();
+
+    // The owning session releases the lock, then design completes
+    db.unlockFeature(featureId);
+    const callback = globalThis.__piKanban?.autoAgentCallback;
+    expect(callback).toBeDefined();
+    await callback?.onDesignComplete?.("test-feature");
+
+    // The completion must adopt the unowned feature for the live agent and
+    // re-pick the user-advanced card (ready → in-progress → fy-plan)
+    const feature = db.getFeature(featureId) as Feature;
+    expect(feature.lane).toBe("in-progress");
+    expect(feature.locked_at).not.toBeNull();
+    expect(sm?.getState()).toBe("working");
+    expect(sm?.getCurrentFeatureId()).toBe(featureId);
+    expect(notifications.find((n) => n.message.includes("Activating next feature"))).toBeDefined();
+  });
 });

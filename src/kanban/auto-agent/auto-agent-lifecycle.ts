@@ -305,16 +305,36 @@ export async function onFeatureComplete(slug: string, deps: OnFeatureCompleteDep
   }
   // Match working, paused, and waiting agents.
   const { findAnyActiveAgent } = await import("../../commands/kanban-commands.js");
-  const match = await findAnyActiveAgent(slug, current ?? null, getDatabase);
+  let match = await findAnyActiveAgent(slug, current ?? null, getDatabase);
   log.info(`[kanban] onFeatureComplete: findAnyActiveAgent result=${match ? "found" : "not found"}`);
   if (!match) {
-    // Check actual lock state to give accurate warning
+    // No agent owns the slug (e.g. the feature was driven interactively after a
+    // reload and the auto-agent was started/resumed later). If a live agent for
+    // this project exists, adopt the feature so the completion still parks the
+    // card at the approval gate or re-picks it — otherwise the card strands in
+    // its lane with no follow-up skill.
     try {
-      const { detectProject } = await import("../data/kanban-detect-project.js");
       const database = await getDatabase();
-      const projectId = await detectProject(database, process.cwd());
-      const feature = database.findFeatureBySlug(slug, projectId ?? undefined);
-      if (feature?.locked_at) {
+      // Look the feature up across projects, then guard on the agent's own project —
+      // the sm's projectId is authoritative (resolved when the agent started).
+      const feature = database.findFeatureBySlug(slug, undefined);
+      const fallback = globalThis.__piKanban?.autoAgent ?? null;
+      const fallbackState = fallback?.getState();
+      const adoptable =
+        feature !== null &&
+        fallback !== null &&
+        feature.project_id === fallback.projectId &&
+        (fallbackState === "working" || fallbackState === "polling" || fallbackState === "waiting");
+      if (adoptable && feature && fallback) {
+        log.info(
+          `[kanban] onFeatureComplete: adopting unowned feature ${feature.id} ("${slug}") for live auto-agent (state=${fallbackState})`,
+        );
+        fallback.adoptFeature(feature.id, feature.lane);
+        // A polling agent owns nothing — transition it to "working" on the adopted
+        // feature so the completion flow below (complete → start → pick) runs.
+        if (fallbackState === "polling") fallback.featureFound();
+        match = { sm: fallback, featureId: feature.id };
+      } else if (feature?.locked_at) {
         log.warn(
           `[kanban] onFeatureComplete: no agent found for slug "${slug}" — feature will stay locked (agent may have moved to another feature)`,
         );
@@ -326,7 +346,7 @@ export async function onFeatureComplete(slug: string, deps: OnFeatureCompleteDep
     } catch {
       log.warn(`[kanban] onFeatureComplete: no agent found for slug "${slug}" — lock status unknown`);
     }
-    return;
+    if (!match) return;
   }
   if (match.sm.projectId === undefined) {
     log.warn(`[kanban] onFeatureComplete: agent for slug "${slug}" has undefined projectId`);
