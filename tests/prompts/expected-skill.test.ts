@@ -370,6 +370,26 @@ describe("getExpectedSkill", () => {
     expect(_getExpectedSkill()).toBe("fy-plan");
   });
 
+  test("returns null when phase is uat (skill-less phase)", async () => {
+    const fake = createFakePi();
+    setTestSettings(null);
+    const slug = "test-uat-skill-less";
+    writeFeatureStateFile(slug, {
+      workflow: { currentPhase: "uat", designDoc: null, planDoc: null },
+    });
+
+    workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
+    setTestSettings(null);
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { source: "user", hasUI: false },
+      { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
+    );
+
+    expect(_getExpectedSkill()).toBeNull();
+  });
+
   test("returns designing when slug set but feature state file missing", async () => {
     const fake = createFakePi();
     setTestSettings(null);

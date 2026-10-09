@@ -13,7 +13,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { notifyAutoAgentBlocked, notifyAutoAgentUnblocked } from "../kanban/auto-agent/auto-agent-notify.js";
 import { log } from "../log.js";
 import { setActiveFeatureEnv } from "../phases/env-sync.js";
-import { isPhaseDone, PHASE_TO_SKILL, type Phase } from "../phases/phase-progression.js";
+import { isPhaseDone, PHASE_TO_SKILL, type Phase, SKILL_LESS_PHASES } from "../phases/phase-progression.js";
 import { completeFeature, transitionToFinishPhase, transitionToUatPhase } from "../phases/phase-transitions.js";
 import { type RouteResult, routeNext, toRouteConfig } from "../phases/workflow-router.js";
 import { NO_REVIEW_CONTEXT } from "../review/review-loops.js";
@@ -55,10 +55,11 @@ export interface WorkflowCommandDeps extends WorkflowTransitionDeps {
   performWorkflowReset: () => void;
 }
 
-/** Resolve the skill for the next phase (review uses resolveReviewSkill; others map via PHASE_TO_SKILL) and dispatch it as a followUp user message. Shared by all phase-advance sites. */
+/** Resolve the skill for the next phase (review uses resolveReviewSkill; skill-less phases such as UAT dispatch none; others map via PHASE_TO_SKILL) and dispatch it as a followUp user message. Shared by all phase-advance sites. */
 function dispatchPhaseSkill(pi: ExtensionAPI, nextPhase: string, expandSkillCommandFn: ExpandSkillCommandFn): void {
-  const skill =
-    nextPhase === "review"
+  const skill = SKILL_LESS_PHASES.has(nextPhase as Phase)
+    ? null // skill-less phase (UAT): entry hands off interactively, no skill dispatch.
+    : nextPhase === "review"
       ? resolveReviewSkill(getSettings())
       : PHASE_TO_SKILL[nextPhase as keyof typeof PHASE_TO_SKILL];
   if (skill)

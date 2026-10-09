@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { log } from "../log.js";
-import { PHASE_TO_SKILL } from "../phases/phase-progression.js";
+import { PHASE_TO_SKILL, SKILL_LESS_PHASES } from "../phases/phase-progression.js";
 import { NO_FEATURE_STATE_OVERRIDE } from "../prompts/skill-expansion.js";
 import { EmptyLoopTracker } from "../review/review-empty-loop-tracking.js";
 import { getSettings } from "../settings/settings-ui.js";
@@ -152,6 +152,9 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     const slug = process.env.PI_FY_FEATURE;
     const featureState = handler.getActiveFeatureState();
     if (featureState?.completedAt) return null;
+    // Skill-less phase (UAT): expect no skill, so a compaction re-injection never borrows
+    // another phase's skill to fill the gap.
+    if (SKILL_LESS_PHASES.has(currentPhase)) return null;
 
     // Review iteration sub-states
     if (slug) {
@@ -275,14 +278,9 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     const state = handler.getWorkflowState();
     const phase = state?.currentPhase ?? undefined;
 
-    // Resolve skill: caller's explicit skillName wins, else the phase's expected skill.
+    // Resolve skill: caller's explicit skillName wins, else the phase's expected skill
+    // (null for skill-less phases — SKILL_LESS_PHASES, e.g. UAT has no phase skill).
     const skillName = storedFollowUp?.skillName ?? getExpectedSkill();
-
-    // Nothing to inject (no skill, no caller note, no completed item, no in-progress item) — run the callback and stop.
-    if (!skillName && !storedFollowUp?.message && !completedItemId && !inProgressItem) {
-      storedFollowUp?.onAfterFollowUp?.();
-      return;
-    }
 
     // --- Is this a user-initiated manual compact? ---
     // `reason: "manual"` covers /compact, the UI button, AND extension ctx.compact() — all route through
@@ -292,6 +290,24 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     // Such compactions must NEVER auto-inject (sendUserMessage) — the user is in control and may steer next;
     // auto-injecting would start a blocking agent turn that hangs the user's steer. (regression fix)
     const isUserInitiatedManual = reason === "manual" && !storedFollowUp && !completedItemId;
+
+    // --- Nothing-to-say guard ---
+    // Concrete content = caller note and/or todo parts. A skill-less phase (UAT) has neither a
+    // skill block nor, potentially, todo parts — an auto compaction there still gets the framing
+    // resume line ("continue from where you left off") so the resumed agent is steered instead of
+    // left with an empty follow-up. A user-initiated manual compact stays silent (staging below
+    // only happens when there is content to deliver), and so does a compaction outside an active
+    // workflow (no phase / finished feature) — featyard owns nothing to resume there.
+    const hasContent = !!(storedFollowUp?.message || completedItemId || inProgressItem);
+    const framingResume =
+      !isUserInitiatedManual &&
+      !!phase &&
+      !handler.getActiveFeatureState()?.completedAt &&
+      SKILL_LESS_PHASES.has(phase);
+    if (!skillName && !hasContent && !framingResume) {
+      storedFollowUp?.onAfterFollowUp?.();
+      return;
+    }
 
     // --- A staged post-turn followUp means a phase-transition is mid-flight (phase_ready
     // staged it in the just-ended turn; it has not been drained yet because `agent_settled`
@@ -326,8 +342,9 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     // pi-auto-compaction-supersedes case). Staging parks the message for /fy:continue instead of
     // auto-injecting, so a user who compacted manually (or whose turn just ended) stays in
     // control and resumes explicitly — no surprise editor paste, no blocking agent turn.
-    // No fallback skill: when there's no mapped skill (workflow inactive / no caller skillName),
-    // there is nothing valuable to stage — skip (the user compacted outside a workflow).
+    // Stageable content: a skill block, a caller note, or todo parts. The framing line alone
+    // (skill-less phase such as UAT with no todo in progress) has nothing the user would ask
+    // /fy:continue to resume from — skip it.
     //
     // The `!extensionTriggered` clause guards a pi 0.84.0 regression (#7370): ctx.compact() now
     // aborts the in-flight run up front (`await this.abort()`), and that abort emits agent_end,
@@ -341,7 +358,7 @@ export function createCompaction(pi: ExtensionAPI, deps: CompactionDeps): ICompa
     const routeToContinue =
       isUserInitiatedManual || (agentJustFinishedRef.value && !hadStagedPostTurnFollowUp && !extensionTriggered);
     if (routeToContinue) {
-      if (!skillName) {
+      if (!skillName && !hasContent && !framingResume) {
         const route = isUserInitiatedManual ? "user-initiated manual" : "turn-end";
         log.info(`Compaction followUp has no skill — skipping /fy:continue stage (${route}), phase: ${phase}`);
       } else {

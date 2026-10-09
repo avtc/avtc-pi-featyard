@@ -31,6 +31,7 @@ import {
   setupPiCtx,
   TUI_MODE,
   withTempCwd,
+  writeFeatureStateFile,
 } from "../helpers/workflow-monitor-test-helpers.js";
 
 describe("session_compact skill injection", () => {
@@ -1186,5 +1187,103 @@ describe("session_compact routing by reason (regression: manual user-initiated)"
     vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
     expect(sendUserMessageCalls.length).toBe(1);
     expect(sendUserMessageCalls[0]).toMatch(/^<skill name="fy-implement"/);
+  });
+});
+
+describe("session_compact skill-less phase (uat)", () => {
+  beforeEach(() => {
+    setTestSettings(null);
+    delete globalThis.__piCtx;
+    vi.useFakeTimers();
+    withTempCwd();
+    _resetFeatureState();
+    _resetContinueFollowUp();
+    delete process.env.PI_SUBAGENT_CHILD_AGENT;
+    delete process.env.PI_FY_FEATURE;
+    enableSubagentMode();
+  });
+
+  afterEach(() => {
+    delete globalThis.__piCtx;
+    vi.useRealTimers();
+    _resetFeatureState();
+    _resetContinueFollowUp();
+    delete process.env.PI_SUBAGENT_CHILD_AGENT;
+    delete process.env.PI_FY_FEATURE;
+  });
+
+  function createUatPhaseState(slug: string) {
+    writeFeatureStateFile(slug, {
+      workflow: {
+        currentPhase: "uat",
+        designDoc: "docs/featyard/designs/2026-05-10-test-design.md",
+        planDoc: ".featyard/task-plans/2026-05-10-test-task-plan.md",
+      },
+    });
+  }
+
+  /** UAT feature + captured sendUserMessage calls. createFakePi first: it switches the temp cwd. */
+  function setupUatSession(slug: string) {
+    const fake = createFakePi();
+    createUatPhaseState(slug);
+    const sendUserMessageCalls: string[] = [];
+    const piApi = {
+      ...fake.api,
+      sendUserMessage(msg: string) {
+        sendUserMessageCalls.push(msg);
+      },
+    };
+    workflowMonitorExtension(piApi as unknown as ExtensionAPI);
+    return { fake, sendUserMessageCalls };
+  }
+
+  async function startSession(fake: Awaited<ReturnType<typeof createFakePi>>) {
+    await fireAllHandlers(
+      fake.handlers,
+      "session_start",
+      { source: "user", hasUI: false },
+      { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
+    );
+  }
+
+  test("auto compaction resumes with framing only — no skill block", async () => {
+    const { fake, sendUserMessageCalls } = setupUatSession("test-uat-auto-compact");
+    await startSession(fake);
+
+    const onCompact = getSingleHandler(fake.handlers, "session_compact");
+    await onCompact(
+      {
+        compactionEntry: { id: "c1", type: "compaction" } as unknown as unknown,
+        fromExtension: false,
+        reason: "threshold",
+        willRetry: false,
+      } as unknown as ExtensionEvent,
+      { hasUI: false } as unknown as ExtensionContext,
+    );
+    vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
+
+    // UAT has no phase skill: the resume steer is the framing line alone.
+    expect(sendUserMessageCalls.length).toBe(1);
+    expect(sendUserMessageCalls[0]).toContain("Context was compacted. Reminder of planned work: you are in uat phase");
+    expect(sendUserMessageCalls[0]).not.toContain("<skill");
+  });
+
+  test("user-initiated manual compaction stays silent (nothing staged, nothing injected)", async () => {
+    const { fake, sendUserMessageCalls } = setupUatSession("test-uat-manual-compact");
+    await startSession(fake);
+
+    const onCompact = getSingleHandler(fake.handlers, "session_compact");
+    await onCompact(
+      {
+        compactionEntry: { id: "c1", type: "compaction" } as unknown as unknown,
+        fromExtension: false,
+        reason: "manual",
+      } as unknown as ExtensionEvent,
+      { hasUI: false } as unknown as ExtensionContext,
+    );
+    vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
+
+    expect(sendUserMessageCalls.length).toBe(0);
+    expect(hasContinueFollowUp()).toBe(false);
   });
 });

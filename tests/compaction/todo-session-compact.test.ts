@@ -97,6 +97,34 @@ describe("workflow-monitor session_compact — todo re-injection", () => {
     expect(todoMessages[0].options).toEqual({ deliverAs: "followUp" });
   });
 
+  test("UAT todo-triggered compaction injects todo content without a skill block", async () => {
+    const fake = createFakePi();
+    workflowMonitorExtension(fake.api as unknown as ExtensionAPI);
+
+    process.env.PI_FY_FEATURE = "2026-08-12-todo-uat";
+    writeFeatureStateFile("2026-08-12-todo-uat", {
+      workflow: {
+        currentPhase: "uat",
+        designDoc: "docs/featyard/designs/test-design.md",
+        planDoc: null,
+      },
+    });
+    emitTodoReady(fake, "▶ 7: Verify release build\nRun the build together with the user");
+
+    const compactHandler = getSingleHandler(fake.handlers, "session_compact");
+    await compactHandler({} as unknown as ExtensionEvent, { hasUI: false } as unknown as ExtensionContext);
+    vi.advanceTimersByTime(DEFERRED_COMPACT_FOLLOWUP_MS);
+
+    const todoMessages = fake.sentMessages.filter(
+      (m) => typeof m.message === "string" && m.message.includes("Verify release build"),
+    );
+    expect(todoMessages).toHaveLength(1);
+    // Task continues from the todo item — the framing reminder, without borrowing a skill.
+    expect(todoMessages[0].message).toContain("Context was compacted.");
+    expect(todoMessages[0].message).not.toContain("<skill");
+    expect(todoMessages[0].options).toEqual({ deliverAs: "followUp" });
+  });
+
   test("does not inject when no in_progress item exists", async () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as unknown as ExtensionAPI);

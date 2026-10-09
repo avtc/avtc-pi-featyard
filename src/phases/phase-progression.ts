@@ -63,6 +63,13 @@ export const PHASE_TO_SKILL: Record<Phase, string> = {
   finish: "fy-finish",
 };
 
+/**
+ * Phases that have no dedicated skill. Compaction and skill dispatch consult this before the
+ * phase map: for these phases a skill must be named explicitly (caller-provided follow-up),
+ * never derived from the phase — the derived entry only exists so the inverse map stays total.
+ */
+export const SKILL_LESS_PHASES: ReadonlySet<Phase> = new Set<Phase>(["uat"]);
+
 /** Resolve a skill name for a phase, falling back to the phase name. */
 export function resolveSkillForPhase(phase: string): string {
   return PHASE_TO_SKILL[phase as Phase] ?? phase;

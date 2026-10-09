@@ -169,7 +169,7 @@ For single-iteration stages (design, plan, implement, verify, finish), only `mod
 | `review` | `fy-review` | Code review with loop support (skipped when `maxFeatureReviewRounds: 0`) |
 | `finish` | `fy-finish` | Merge, PR, or cleanup |
 
-> `uat` reuses the `fy-review` skill.
+> The `uat` stage has no phase skill — UAT is collaborative; compaction resumes with a framing reminder plus the in-progress todo item, if any.
 
 ### Subagents
 
